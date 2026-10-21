@@ -67,12 +67,18 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private var isScreenLocked: Bool = false
     private var windowScreenDidChangeObserver: Any?
     private var dragDetectors: [String: DragDetector] = [:] // UUID -> DragDetector
+    private var talkify: TalkifyRuntime?
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
         return false
     }
 
+    func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
+        return talkify?.shouldTerminate(sender) ?? .terminateNow
+    }
+
     func applicationWillTerminate(_ notification: Notification) {
+        talkify?.willTerminate()
         NotificationCenter.default.removeObserver(self)
         if let observer = screenLockedObserver {
             DistributedNotificationCenter.default().removeObserver(observer)
@@ -436,6 +442,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         previousScreens = NSScreen.screens
+
+        let talkify = TalkifyRuntime()
+        self.talkify = talkify
+        talkify.start()
     }
 
     func playWelcomeSound() {
