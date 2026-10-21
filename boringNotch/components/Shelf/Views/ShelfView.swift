@@ -18,12 +18,15 @@ struct ShelfView: View {
     var body: some View {
         HStack(spacing: 12) {
             FileShareView()
-                .aspectRatio(1, contentMode: .fit)
+                .frame(maxWidth: .infinity)
                 .environmentObject(vm)
             panel
+                .frame(maxWidth: .infinity)
                 .onDrop(of: [.fileURL, .url, .utf8PlainText, .plainText, .data], isTargeted: $vm.dragDetectorTargeting) { providers in
                     handleDrop(providers: providers)
                 }
+            TranscribePanelPlaceholder()
+                .frame(maxWidth: .infinity)
         }
         // Bind Quick Look to shelf selection
         .onChange(of: selection.selectedIDs) {

@@ -349,6 +349,18 @@ struct ContentView: View {
                         NotchHomeView(albumArtNamespace: albumArtNamespace)
                     case .shelf:
                         ShelfView()
+                    case .agents:
+                        TabPlaceholderView(
+                            icon: "terminal.fill",
+                            title: "Agents",
+                            detail: "Claude Code and other agent sessions will live here."
+                        )
+                    case .meetings:
+                        TabPlaceholderView(
+                            icon: "mic.fill",
+                            title: "Meetings",
+                            detail: "Call recording and summaries will live here."
+                        )
                     }
                 }
                 .transition(
