@@ -17,6 +17,13 @@ final class TalkifyRuntime {
   private let settingsRuntimeState = SettingsRuntimeState()
   private let updaterService = SparkleUpdaterService()
   private let launchAtLoginService = LaunchAtLoginService()
+  private let hostSettings: HostMenuItem
+  private let hostRestart: HostMenuItem
+
+  init(hostSettings: HostMenuItem, hostRestart: HostMenuItem) {
+    self.hostSettings = hostSettings
+    self.hostRestart = hostRestart
+  }
 
   /// True while this process hosts the test suite rather than a user.
   ///
@@ -89,7 +96,8 @@ final class TalkifyRuntime {
       toggleReadAloud: { readAloudController.toggle() },
       transcribeFile: { dropTranscriptionController.pickFile() },
       openSettings: { [weak self] in self?.showSettings() },
-      checkForUpdates: { [weak self] in self?.updaterService.checkForUpdates() }
+      hostSettings: hostSettings,
+      hostRestart: hostRestart
     )
     self.statusItemController = statusItemController
 

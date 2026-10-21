@@ -1,5 +1,13 @@
 import AppKit
 
+/// A menu entry the host app adds to Talkify's status menu, so the two apps
+/// share one menu-bar icon.
+struct HostMenuItem {
+  let title: String
+  let keyEquivalent: String
+  let action: () -> Void
+}
+
 @MainActor
 final class StatusItemController: NSObject {
   private let statusItem: NSStatusItem
@@ -7,7 +15,8 @@ final class StatusItemController: NSObject {
   private let toggleReadAloud: () -> Void
   private let transcribeFile: () -> Void
   private let openSettings: () -> Void
-  private let checkForUpdates: () -> Void
+  private let hostSettings: HostMenuItem
+  private let hostRestart: HostMenuItem
   private let dictationItem: NSMenuItem
   private let readAloudItem: NSMenuItem
   private var blinkTimer: Timer?
@@ -27,13 +36,15 @@ final class StatusItemController: NSObject {
     toggleReadAloud: @escaping () -> Void,
     transcribeFile: @escaping () -> Void,
     openSettings: @escaping () -> Void,
-    checkForUpdates: @escaping () -> Void
+    hostSettings: HostMenuItem,
+    hostRestart: HostMenuItem
   ) {
     self.toggleDictation = toggleDictation
     self.toggleReadAloud = toggleReadAloud
     self.transcribeFile = transcribeFile
     self.openSettings = openSettings
-    self.checkForUpdates = checkForUpdates
+    self.hostSettings = hostSettings
+    self.hostRestart = hostRestart
     statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
     dictationItem = NSMenuItem(title: "Start Dictation", action: nil, keyEquivalent: "")
     readAloudItem = NSMenuItem(title: "Read Selected Text", action: nil, keyEquivalent: "")
@@ -61,24 +72,20 @@ final class StatusItemController: NSObject {
     menu.addItem(transcribeItem)
     menu.addItem(.separator())
 
+    menu.addItem(hostMenuItem(hostSettings))
+
     let settingsItem = NSMenuItem(
-      title: "Settings…",
+      title: "Dictation Settings…",
       action: #selector(openSettingsItem),
-      keyEquivalent: ","
+      keyEquivalent: ""
     )
     settingsItem.target = self
     menu.addItem(settingsItem)
+    menu.addItem(.separator())
 
-    let updatesItem = NSMenuItem(
-      title: "Check for Updates…",
-      action: #selector(checkForUpdatesItem),
-      keyEquivalent: ""
-    )
-    updatesItem.target = self
-    menu.addItem(updatesItem)
-
+    menu.addItem(hostMenuItem(hostRestart))
     menu.addItem(NSMenuItem(
-      title: "Quit Talkify",
+      title: "Quit",
       action: #selector(NSApplication.terminate(_:)),
       keyEquivalent: "q"
     ))
@@ -248,8 +255,19 @@ final class StatusItemController: NSObject {
     transcribeFile()
   }
 
-  @objc private func checkForUpdatesItem() {
-    checkForUpdates()
+  private func hostMenuItem(_ host: HostMenuItem) -> NSMenuItem {
+    let item = NSMenuItem(
+      title: host.title,
+      action: #selector(hostItemSelected(_:)),
+      keyEquivalent: host.keyEquivalent
+    )
+    item.target = self
+    item.representedObject = host.action
+    return item
+  }
+
+  @objc private func hostItemSelected(_ sender: NSMenuItem) {
+    (sender.representedObject as? () -> Void)?()
   }
 
   @objc private func openSettingsItem() {

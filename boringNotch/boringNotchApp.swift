@@ -29,7 +29,8 @@ struct DynamicNotchApp: App {
     }
 
     var body: some Scene {
-        MenuBarExtra("boring.notch", systemImage: "sparkle", isInserted: $showMenuBarIcon) {
+        // Never inserted: Talkify's status item is the app's single menu-bar icon.
+        MenuBarExtra("boring.notch", systemImage: "sparkle", isInserted: .constant(false)) {
             Button("Settings") {
                 DispatchQueue.main.async {
                     SettingsWindowController.shared.showWindow()
@@ -443,7 +444,15 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         previousScreens = NSScreen.screens
 
-        let talkify = TalkifyRuntime()
+        // One menu-bar icon: Talkify's status item carries Boring's entries too.
+        let talkify = TalkifyRuntime(
+            hostSettings: HostMenuItem(title: "Settings…", keyEquivalent: ",") {
+                SettingsWindowController.shared.showWindow()
+            },
+            hostRestart: HostMenuItem(title: "Restart", keyEquivalent: "") {
+                ApplicationRelauncher.restart()
+            }
+        )
         self.talkify = talkify
         talkify.start()
     }
