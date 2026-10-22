@@ -28,3 +28,9 @@ app adds sits in `CoucouHost.swift` and `AgentsTabView.swift`.
    the dictation. Notes (the "Open" on the "notes ready" pill) now open the
    Meetings window and everything else opens Agents Settings. The original is
    kept as `showUpstreamHub`.
+6. `App/SettingsView.swift`: a Notetaker section (sidebar row, title, content) holding
+   the recording pill's position (bottom, left, right) and the summary engine.
+   Upstream keeps both on the Coucou Flow settings page, which this app lacks.
+   The section itself is `NotetakerSettingsSection.swift`.
+7. `App/SettingsView.swift`, Voice page: the Coucou Flow dictation box is left out. A
+   second dictation engine on Right Option would compete with Talkify's.

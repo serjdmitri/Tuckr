@@ -194,6 +194,7 @@ struct SettingsView: View {
                         SettingsSidebarRow(title: "Voice",        icon: "mic.fill",                          color: "#F97316").tag("voice")
                         #endif
                         SettingsSidebarRow(title: "Shortcuts",    icon: "keyboard.fill",                     color: "#6366F1").tag("shortcuts")
+                        SettingsSidebarRow(title: "Notetaker",    icon: "waveform",                          color: "#34D399").tag("notetaker")
                     }
                     .listStyle(.sidebar)
                     .scrollContentBackground(.hidden)
@@ -268,6 +269,7 @@ struct SettingsView: View {
         case "integrations": return String(localized: "Integrations")
         case "voice":        return String(localized: "Voice")
         case "shortcuts":    return String(localized: "Shortcuts")
+        case "notetaker":    return "Notetaker"
         default:             return String(localized: "General")
         }
     }
@@ -282,6 +284,7 @@ struct SettingsView: View {
         case "voice":        voiceSection
         #endif
         case "shortcuts":    ShortcutsSettingsView()
+        case "notetaker":    NotetakerSettingsSection()
         default:             generalSection
         }
     }
@@ -1410,7 +1413,8 @@ struct SettingsView: View {
 
     @ViewBuilder private var voiceSection: some View {
         // Flow dictation: hold a key anywhere, speak, the words are pasted where you type.
-        FlowSettingsBox()
+        // Patched out: Coucou's own Flow dictation would compete with Talkify's, which does
+        // the dictation here (Dictation Settings, in the menu).
 
         // Claude is Coucou's brain: no model, language or feature switches any more,
         // only the wake word, the Anthropic key it needs, and Coucou's voice.
