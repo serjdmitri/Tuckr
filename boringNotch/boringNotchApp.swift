@@ -473,8 +473,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         BluetoothMonitor.shared.start()
         // Typing in a note ended: tuck the notch away if the pointer is not on it.
         NotchKeyboard.onEndTyping = { [weak self] in
-            guard let self, !self.vm.pointerInside else { return }
-            self.vm.close()
+            guard let self else { return }
+            // Give the hover state a moment to settle before judging where the pointer is.
+            Task { @MainActor [weak self] in
+                try? await Task.sleep(for: .milliseconds(600))
+                guard let self, !NotchKeyboard.isTyping, !self.vm.pointerInside else { return }
+                self.vm.close()
+            }
         }
         CoucouHost.onUsageAlert = { alert in UsagePopup.shared.present(alert) }
         // Time's up: the notch opens on the timer, and tucks away after a while if nobody
