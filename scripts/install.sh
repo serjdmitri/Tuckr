@@ -30,12 +30,25 @@ if [ -z "$IDENTITY" ]; then
   fi
 fi
 
+# Built ad hoc: a named identity passed as a build setting also reaches the
+# Swift packages' own targets, which then demand a development team.
 xcodebuild -project boringNotch.xcodeproj -scheme boringNotch -configuration Release \
-  -derivedDataPath build CODE_SIGN_IDENTITY="$IDENTITY" CODE_SIGNING_ALLOWED=YES \
+  -derivedDataPath build CODE_SIGN_IDENTITY="-" CODE_SIGNING_ALLOWED=YES \
   CODE_SIGNING_REQUIRED=YES ENABLE_HARDENED_RUNTIME=NO build | tail -3
 
 BUILT="build/Build/Products/Release/$APP_NAME.app"
 [ -d "$BUILT" ] || { echo "Build did not produce $BUILT" >&2; exit 1; }
+
+if [ "$IDENTITY" != "-" ]; then
+  # Re-sign inside out with the certificate, keeping each piece's entitlements.
+  echo "Signing with $IDENTITY"
+  while IFS= read -r nested; do
+    codesign --force --sign "$IDENTITY" --preserve-metadata=entitlements,requirements,flags "$nested"
+  done < <(find "$BUILT/Contents" \( -name "*.framework" -o -name "*.xpc" -o -name "*.app" -o -name "*.dylib" \) -print \
+            | awk '{ print length($0) " " $0 }' | sort -rn | cut -d' ' -f2-)
+  codesign --force --sign "$IDENTITY" --preserve-metadata=entitlements,requirements,flags "$BUILT"
+  codesign --verify --deep --strict "$BUILT"
+fi
 
 osascript -e "tell application id \"$BUNDLE_ID\" to quit" >/dev/null 2>&1 || true
 sleep 2
