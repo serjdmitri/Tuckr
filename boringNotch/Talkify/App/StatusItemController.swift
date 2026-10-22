@@ -51,7 +51,7 @@ final class StatusItemController: NSObject {
     super.init()
 
     statusItem.button?.image = templateIcon
-    statusItem.button?.image?.accessibilityDescription = "Talkify"
+    statusItem.button?.image?.accessibilityDescription = "The BoringCoucouify"
 
     let menu = NSMenu()
 
