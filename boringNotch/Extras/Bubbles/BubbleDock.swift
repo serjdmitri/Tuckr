@@ -44,7 +44,7 @@ struct BubbleDockView: View {
     @State private var leftID: String?
 
     private var diameter: CGFloat { max(22, height - 4) }
-    private let gap: CGFloat = 12
+    private let gap: CGFloat = 7
     private var span: CGFloat { gap + diameter + 14 }
 
     private var rightWanted: String? { visible ? dock.items.first : nil }
@@ -116,7 +116,7 @@ private struct GooLayer: View, Animatable {
         Canvas { context, size in
             guard tLeft > 0.01 || tRight > 0.01 else { return }
             context.addFilter(.alphaThreshold(min: 0.5, color: .black))
-            context.addFilter(.blur(radius: 4.5))
+            context.addFilter(.blur(radius: 3.5))
             context.drawLayer { layer in
                 let midX = size.width / 2
                 let midY = size.height / 2
@@ -124,8 +124,10 @@ private struct GooLayer: View, Animatable {
                     let edge = midX + direction * chin / 2
                     // The notch's own edge, so the neck has something to hold on to.
                     let anchorWidth: CGFloat = 16
+                    // Held a little inside the edge, so the blur does not bulge the notch.
+                    let inset: CGFloat = 3
                     let anchor = CGRect(
-                        x: direction > 0 ? edge - anchorWidth : edge,
+                        x: direction > 0 ? edge - anchorWidth - inset : edge + inset,
                         y: midY - height * 0.32, width: anchorWidth, height: height * 0.64)
                     layer.fill(Path(anchor), with: .color(.black))
                     let r = diameter / 2

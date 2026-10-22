@@ -56,10 +56,15 @@ struct BoringHeader: View {
                                 .fill(coordinator.currentView == .timer ? Color(nsColor: .secondarySystemFill) : .black)
                                 .frame(width: 30, height: 30)
                                 .overlay {
-                                    Image(systemName: "timer")
-                                        .foregroundColor(notchTimer.isActive ? timerOrange : .white)
-                                        .padding()
-                                        .imageScale(.medium)
+                                    if notchTimer.isActive {
+                                        // The stopwatch itself, its hand moving with the time.
+                                        TimerGlyph(size: 18)
+                                    } else {
+                                        Image(systemName: "timer")
+                                            .foregroundColor(.white)
+                                            .padding()
+                                            .imageScale(.medium)
+                                    }
                                 }
                         }
                         .buttonStyle(PlainButtonStyle())
