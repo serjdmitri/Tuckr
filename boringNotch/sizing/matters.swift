@@ -21,6 +21,8 @@ func openNotchSize(for view: NotchViews) -> CGSize {
     case .agents, .meetings:
         // Coucou's 620-point band of cards plus the notch's 31-point padding each side.
         return .init(width: 682, height: 158)
+    case .timer:
+        return .init(width: 640, height: 172)
     default:
         return openNotchSize
     }

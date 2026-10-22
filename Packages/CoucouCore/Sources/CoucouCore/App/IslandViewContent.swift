@@ -5206,9 +5206,9 @@ extension Color {
 
 
 /// The pill's "working" signal: a bright arc running around its edge and three dots
-/// bouncing at the trailing end. Paused when the island view is not shown. Drawn at no
-/// more than 24 frames a second, and with plain stroked arcs: a conic gradient is shaded
-/// on the CPU every frame and cost half a core with the notch open.
+/// bouncing at the trailing end. Paused when the island view is not shown. Drawn at the
+/// display's rate, with plain stroked arcs: a conic gradient is shaded on the CPU every
+/// frame and cost half a core with the notch open.
 struct PillWorkingActivity: View {
     let color: String
     @Environment(\.islandViewActive) private var viewActive
@@ -5218,7 +5218,7 @@ struct PillWorkingActivity: View {
     private static let tail: [(behind: Double, opacity: Double)] = [(0.30, 0.22), (0.20, 0.5), (0.10, 1)]
 
     var body: some View {
-        TimelineView(.animation(minimumInterval: max(frameInterval ?? 0, 1.0 / 24), paused: !viewActive)) { timeline in
+        TimelineView(.animation(minimumInterval: frameInterval, paused: !viewActive)) { timeline in
             let t = timeline.date.timeIntervalSinceReferenceDate
             let head = (t.truncatingRemainder(dividingBy: 1.6)) / 1.6
             let tint = Color(hex: color)

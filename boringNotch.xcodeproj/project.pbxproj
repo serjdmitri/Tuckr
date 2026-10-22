@@ -332,6 +332,7 @@
 		112FB72F2CCF12CC0015238C /* private */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = private; sourceTree = "<group>"; };
 		11F748502EC9AABA00F841DB /* BoringNotchXPCHelper */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (11F7485C2EC9AABA00F841DB /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = BoringNotchXPCHelper; sourceTree = "<group>"; };
 		7B1C00032F0000010000A003 /* Talkify */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Talkify; sourceTree = "<group>"; };
+		7B1C000E2F0000010000A00E /* Extras */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Extras; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -595,6 +596,7 @@
 				14CEF41B2C5CAED400855D72 /* Preview Content */,
 				112FB72F2CCF12CC0015238C /* private */,
 				7B1C00032F0000010000A003 /* Talkify */,
+				7B1C000E2F0000010000A00E /* Extras */,
 				11CC44A12CEE614100C7244B /* BoringViewCoordinator.swift */,
 			);
 			path = boringNotch;
@@ -813,6 +815,7 @@
 			fileSystemSynchronizedGroups = (
 				112FB72F2CCF12CC0015238C /* private */,
 				7B1C00032F0000010000A003 /* Talkify */,
+				7B1C000E2F0000010000A00E /* Extras */,
 			);
 			name = boringNotch;
 			packageProductDependencies = (

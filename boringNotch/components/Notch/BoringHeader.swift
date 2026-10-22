@@ -14,6 +14,7 @@ struct BoringHeader: View {
     @ObservedObject var batteryModel = BatteryStatusViewModel.shared
     @ObservedObject var coordinator = BoringViewCoordinator.shared
     @StateObject var tvm = ShelfStateViewModel.shared
+    @ObservedObject var notchTimer = NotchTimer.shared
     var body: some View {
         HStack(spacing: 0) {
             HStack {
@@ -46,6 +47,23 @@ struct BoringHeader: View {
                         if coordinator.currentView == .agents {
                             CoucouHost.makeAgentsHeaderAccessory()
                         }
+                        Button(action: {
+                            withAnimation(.smooth) {
+                                coordinator.currentView = coordinator.currentView == .timer ? .home : .timer
+                            }
+                        }) {
+                            Capsule()
+                                .fill(coordinator.currentView == .timer ? Color(nsColor: .secondarySystemFill) : .black)
+                                .frame(width: 30, height: 30)
+                                .overlay {
+                                    Image(systemName: "timer")
+                                        .foregroundColor(notchTimer.isActive ? timerOrange : .white)
+                                        .padding()
+                                        .imageScale(.medium)
+                                }
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                        .help("Timer")
                         if Defaults[.showMirror] {
                             Button(action: {
                                 vm.toggleCameraPreview()

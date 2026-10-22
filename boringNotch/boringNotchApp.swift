@@ -470,6 +470,21 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             }
             self.scheduleAgentsAutoClose()
         }
+        // Time's up: the notch opens on the timer, and closes again after a while if nobody
+        // is at it.
+        NotchTimer.shared.onFinished = { [weak self] in
+            guard let self else { return }
+            BoringViewCoordinator.shared.currentView = .timer
+            withAnimation(.spring(response: 0.38, dampingFraction: 0.8)) {
+                self.vm.open()
+            }
+            Task { @MainActor [weak self] in
+                try? await Task.sleep(for: .seconds(12))
+                guard let self, NotchTimer.shared.phase == .finished, !self.vm.pointerInside else { return }
+                NotchTimer.shared.dismiss()
+                self.vm.close()
+            }
+        }
         CoucouHost.onCollapseRequested = { [weak self] in
             self?.vm.close()
         }
