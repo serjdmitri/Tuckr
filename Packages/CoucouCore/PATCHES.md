@@ -46,3 +46,6 @@ app adds sits in `CoucouHost.swift` and `AgentsTabView.swift`.
 10. `App/AppState.swift` and `App/BotCanvasView.swift`: `hostBotAnchor`, a view the host
     places on Mochi; when set, his gaze is measured from it instead of from where
     Coucou's own island would draw him.
+11. `App/AppState.swift`, `App/IslandViewContent.swift`: `pinnedId`, `pin(_:)` and `lookAt(_:)`.
+    A pinned agent keeps the big Mochi; picking another pill shows it for a few seconds,
+    then the big Mochi returns. Pills get a "Pin to the big Mochi" context menu.

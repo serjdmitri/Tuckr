@@ -155,6 +155,38 @@ final class AppState: ObservableObject {
         didSet { UserDefaults.standard.set(lmstudioServerURL, forKey: "lmstudioServerURL") }
     }
 
+    // Patched: the pinned agent keeps the big Mochi; the other pills still work as small ones.
+    // Nil: the big Mochi follows what you pick and the agent that is working.
+    @Published var pinnedId: String? = UserDefaults.standard.string(forKey: "pinnedPill") {
+        didSet { UserDefaults.standard.set(pinnedId, forKey: "pinnedPill") }
+    }
+    private var lookRevert: DispatchWorkItem?
+
+    /// How long a click on another pill shows it on the big Mochi before the pin takes it back.
+    static let lookDuration: TimeInterval = 8
+
+    func pin(_ id: String?) {
+        pinnedId = id
+        lookRevert?.cancel()
+        if let id, tasks.contains(where: { $0.id == id }) { setFocus(id) }
+    }
+
+    /// A pill picked by the user. With a pin set it is a look, not a move: the big Mochi
+    /// returns to the pinned agent after a few seconds (not while a request is on screen).
+    func lookAt(_ id: String) {
+        setFocus(id)
+        lookRevert?.cancel()
+        guard let pinned = pinnedId, id != pinned else { return }
+        let work = DispatchWorkItem { [weak self] in
+            guard let self, self.pinnedId == pinned, self.focusId == id,
+                  self.tasks.contains(where: { $0.id == pinned }) else { return }
+            if self.view == .approval || self.view == .question { return }
+            self.setFocus(pinned)
+        }
+        lookRevert = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + Self.lookDuration, execute: work)
+    }
+
     // The always-on workspace pill (default: VS Code). Persisted.
     @Published var mainPillId: String = PillCatalog.defaultMainPillId {
         didSet { UserDefaults.standard.set(mainPillId, forKey: "mainPill") }
@@ -595,7 +627,7 @@ final class AppState: ObservableObject {
     func addTask(_ task: AgentTask) {
         guard !tasks.contains(where: { $0.id == task.id }) else { return }
         tasks.append(task)
-        if focusId == nil { focusId = task.id }
+        if focusId == nil || task.id == pinnedId { focusId = task.id }
         syncMode()
         syncView()
     }
@@ -618,7 +650,9 @@ final class AppState: ObservableObject {
         }
         // Undeclared or declared-but-not-active: remove
         tasks.removeAll { $0.id == id }
-        if focusId == id { focusId = mainPillId }
+        if focusId == id {
+            focusId = pinnedId.flatMap { p in tasks.contains { $0.id == p } ? p : nil } ?? mainPillId
+        }
         syncMode()
         syncView()
     }
@@ -702,7 +736,9 @@ final class AppState: ObservableObject {
             }
         }
         sortTasksByCatalog()
-        if focusId == nil { focusId = mainPillId }
+        if focusId == nil {
+            focusId = pinnedId.flatMap { p in tasks.contains { $0.id == p } ? p : nil } ?? mainPillId
+        }
         syncMode()
     }
 

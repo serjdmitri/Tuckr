@@ -77,11 +77,27 @@ struct AgentsTabView: View {
     return Color.clear
       .frame(width: size, height: size)
       .background(BotAnchor())
+      .overlay(alignment: .topLeading) {
+        if let pinned = state.pinnedId, pinned == state.focusId {
+          Image(systemName: "pin.fill")
+            .font(.system(size: 10, weight: .bold))
+            .foregroundColor(.white.opacity(0.85))
+            .rotationEffect(.degrees(35))
+            .allowsHitTesting(false)
+        }
+      }
       .contentShape(Circle())
       .position(x: cx - Self.contentOrigin.x, y: cy - Self.contentOrigin.y)
       .onHover { inside in inside ? hoverIn() : hoverOut() }
       .onTapGesture {
         NotificationCenter.default.post(name: .triggerSlap, object: nil)
+      }
+      .contextMenu {
+        if state.pinnedId != nil && state.pinnedId == state.focusId {
+          Button("Unpin") { state.pin(nil) }
+        } else if let id = state.focusId {
+          Button("Pin to the big Mochi") { state.pin(id) }
+        }
       }
   }
 
