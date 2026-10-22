@@ -51,3 +51,5 @@ app adds sits in `CoucouHost.swift` and `AgentsTabView.swift`.
     then the big Mochi returns. Pills get a "Pin to the big Mochi" context menu.
 12. `App/IslandViewContent.swift`: `AgentPill` shows a sweeping edge and bouncing dots
     (`PillWorkingActivity`) while its agent is mid-turn.
+    The edge sweep is stroked arcs at 24 fps, not a conic gradient (a conic fill is shaded
+    on the CPU every frame). The host also caps the open Agents tab at 30 fps.

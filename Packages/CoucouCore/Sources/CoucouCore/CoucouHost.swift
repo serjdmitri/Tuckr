@@ -278,7 +278,10 @@ public enum CoucouHost {
 
   /// Coucou's agent cards and Mochi, for the Agents tab.
   public static func makeAgentsView() -> some View {
+    // 30 frames a second is plenty for Mochi (his speed does not depend on the rate) and
+    // keeps the open notch from drawing at the display's 120 Hz.
     AgentsTabView()
+      .environment(\.mochiFrameInterval, 1.0 / 30)
   }
 }
 

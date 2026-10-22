@@ -5206,29 +5206,28 @@ extension Color {
 
 
 /// The pill's "working" signal: a bright arc running around its edge and three dots
-/// bouncing at the trailing end. Paused when the island view is not shown, and drawn at
-/// the Mochi frame rate.
+/// bouncing at the trailing end. Paused when the island view is not shown. Drawn at no
+/// more than 24 frames a second, and with plain stroked arcs: a conic gradient is shaded
+/// on the CPU every frame and cost half a core with the notch open.
 struct PillWorkingActivity: View {
     let color: String
     @Environment(\.islandViewActive) private var viewActive
     @Environment(\.mochiFrameInterval) private var frameInterval
 
+    /// The arc's tail, from the oldest (faintest) to the head: (length behind the head, opacity).
+    private static let tail: [(behind: Double, opacity: Double)] = [(0.30, 0.22), (0.20, 0.5), (0.10, 1)]
+
     var body: some View {
-        TimelineView(.animation(minimumInterval: frameInterval, paused: !viewActive)) { timeline in
+        TimelineView(.animation(minimumInterval: max(frameInterval ?? 0, 1.0 / 24), paused: !viewActive)) { timeline in
             let t = timeline.date.timeIntervalSinceReferenceDate
-            let angle = (t.truncatingRemainder(dividingBy: 1.6) / 1.6) * 360
+            let head = (t.truncatingRemainder(dividingBy: 1.6)) / 1.6
             let tint = Color(hex: color)
             ZStack(alignment: .trailing) {
-                Capsule()
-                    .strokeBorder(
-                        AngularGradient(
-                            stops: [
-                                .init(color: tint.opacity(0), location: 0),
-                                .init(color: tint.opacity(0), location: 0.55),
-                                .init(color: tint, location: 1),
-                            ],
-                            center: .center, angle: .degrees(angle)),
-                        lineWidth: 1.6)
+                ForEach(0..<Self.tail.count, id: \.self) { i in
+                    let seg = Self.tail[i]
+                    let end = i + 1 < Self.tail.count ? Self.tail[i + 1].behind : 0
+                    arc(from: head - seg.behind, to: head - end, color: tint.opacity(seg.opacity))
+                }
                 HStack(spacing: 3) {
                     ForEach(0..<3, id: \.self) { i in
                         let phase = sin(t * 7 - Double(i) * 0.8)
@@ -5241,6 +5240,20 @@ struct PillWorkingActivity: View {
                 }
                 .padding(.trailing, 10)
             }
+        }
+    }
+
+    /// A stretch of the capsule's edge, `from` and `to` as fractions of the way round
+    /// (wrapping past either end).
+    @ViewBuilder
+    private func arc(from: Double, to: Double, color: Color) -> some View {
+        let a = from < 0 ? from + 1 : from
+        let b = to < 0 ? to + 1 : to
+        if a <= b {
+            Capsule().trim(from: a, to: b).stroke(color, style: StrokeStyle(lineWidth: 1.6, lineCap: .round))
+        } else {
+            Capsule().trim(from: a, to: 1).stroke(color, style: StrokeStyle(lineWidth: 1.6, lineCap: .round))
+            Capsule().trim(from: 0, to: b).stroke(color, style: StrokeStyle(lineWidth: 1.6, lineCap: .round))
         }
     }
 }
