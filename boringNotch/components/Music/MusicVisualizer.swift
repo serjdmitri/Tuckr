@@ -70,7 +70,7 @@ class AudioSpectrum: NSView {
     private func updateBars() {
         for (i, barLayer) in barLayers.enumerated() {
             let currentScale = barScales[i]
-            let targetScale = CGFloat.random(in: 0.35 ... 1.0)
+            let targetScale = CGFloat.random(in: 0.55 ... 1.0)
             barScales[i] = targetScale
             let animation = CABasicAnimation(keyPath: "transform.scale.y")
             animation.fromValue = currentScale

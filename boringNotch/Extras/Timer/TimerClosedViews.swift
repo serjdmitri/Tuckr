@@ -16,8 +16,10 @@ struct TimerGlyph: View {
 
     /// Red for the last minute.
     private var tint: Color {
-        timer.isActive && timer.secondsLeft <= 60 ? timerRed : timerOrange
+        timer.isFinished || (timer.isActive && timer.secondsLeft <= 60) ? timerRed : timerOrange
     }
+
+    @State private var pulsing = false
 
     var body: some View {
         let line = size * 0.12
@@ -47,5 +49,11 @@ struct TimerGlyph: View {
         .frame(width: size, height: size)
         .opacity(timer.phase == .paused ? 0.55 : 1)
         .animation(.easeInOut(duration: 0.6), value: tint)
+        // Time's up: the stopwatch throbs until the alarm is dismissed.
+        .scaleEffect(timer.isFinished && pulsing ? 1.22 : 1)
+        .animation(
+            timer.isFinished ? .easeInOut(duration: 0.45).repeatForever(autoreverses: true) : .default,
+            value: pulsing)
+        .onChange(of: timer.isFinished, initial: true) { _, finished in pulsing = finished }
     }
 }

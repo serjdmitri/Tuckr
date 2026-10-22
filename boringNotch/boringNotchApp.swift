@@ -470,7 +470,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             }
             self.scheduleAgentsAutoClose()
         }
-        // Time's up: the notch opens on the timer, and closes again after a while if nobody
+        // Time's up: the notch opens on the timer, and tucks away after a while if nobody
         // is at it.
         NotchTimer.shared.onFinished = { [weak self] in
             guard let self else { return }
@@ -480,8 +480,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             }
             Task { @MainActor [weak self] in
                 try? await Task.sleep(for: .seconds(12))
+                // The notch tucks away, but the alarm keeps sounding and its bubble stays
+                // until it is dismissed.
                 guard let self, NotchTimer.shared.phase == .finished, !self.vm.pointerInside else { return }
-                NotchTimer.shared.dismiss()
                 self.vm.close()
             }
         }

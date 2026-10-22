@@ -56,7 +56,7 @@ struct BoringHeader: View {
                                 .fill(coordinator.currentView == .timer ? Color(nsColor: .secondarySystemFill) : .black)
                                 .frame(width: 30, height: 30)
                                 .overlay {
-                                    if notchTimer.isActive {
+                                    if notchTimer.phase != .idle {
                                         // The stopwatch itself, its hand moving with the time.
                                         TimerGlyph(size: 18)
                                     } else {

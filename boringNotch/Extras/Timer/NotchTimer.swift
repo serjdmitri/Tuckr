@@ -59,7 +59,8 @@ final class NotchTimer: ObservableObject {
     var elapsedSeconds: Int { max(0, Int(total) - secondsLeft) }
 
     private func syncBubble() {
-        if isActive { BubbleDock.shared.show("timer") } else { BubbleDock.shared.hide("timer") }
+        // The bubble stays through "Time's up", so the alarm can always be reached.
+        if phase != .idle { BubbleDock.shared.show("timer") } else { BubbleDock.shared.hide("timer") }
     }
 
     /// Fraction of the time still left, 1 at the start and 0 at the end.
@@ -100,7 +101,7 @@ final class NotchTimer: ObservableObject {
 
     /// Stops the timer and goes back to the dial.
     func cancel() {
-        chimeTask?.cancel()
+        silence()
         stopTicker()
         clearSaved()
         endDate = nil
@@ -111,19 +112,29 @@ final class NotchTimer: ObservableObject {
     /// Time's up acknowledged.
     func dismiss() { cancel() }
 
-    /// Three dings, a second apart, from the system's own Glass sound.
+    /// The system's Glass sound, over and over until the timer is dismissed or restarted,
+    /// or the alarm is silenced. It gives up by itself after half an hour.
     private func playChime() {
         chimeTask?.cancel()
         chimeTask = Task { @MainActor [weak self] in
-            for _ in 0..<3 {
+            for _ in 0..<1300 {
                 guard let self, !Task.isCancelled else { return }
                 let sound = NSSound(contentsOfFile: "/System/Library/Sounds/Glass.aiff", byReference: true)
                 self.chime = sound
                 if sound?.play() != true { NSSound.beep() }
-                try? await Task.sleep(for: .seconds(1.1))
+                try? await Task.sleep(for: .seconds(1.4))
             }
         }
     }
+
+    /// Stops the sound but leaves the "Time's up" page as it is.
+    func silence() {
+        chimeTask?.cancel()
+        chime?.stop()
+    }
+
+    /// Time's up and still sounding or waiting to be dismissed.
+    var isFinished: Bool { phase == .finished }
 
     // MARK: - Ticking
 

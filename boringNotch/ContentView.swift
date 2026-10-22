@@ -237,12 +237,15 @@ struct ContentView: View {
                 // Out of the way of the volume and brightness HUDs and the battery popup,
                 // which widen the notch over where the bubbles sit.
                 visible: vm.notchState == .closed && !vm.hideOnClosed
-                    && !coordinator.sneakPeek.show
+                    && !(coordinator.sneakPeek.show && coordinator.sneakPeek.type != .music)
                     && !(coordinator.expandingView.show && coordinator.expandingView.type == .battery),
                 chinWidth: computedChinWidth,
                 height: max(24, vm.effectiveClosedNotchHeight)
             ) { id in
-                if id == "timer" { coordinator.currentView = .timer }
+                if id == "timer" {
+                    NotchTimer.shared.silence()
+                    coordinator.currentView = .timer
+                }
                 doOpen()
             }
         }
