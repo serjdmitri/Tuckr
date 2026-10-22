@@ -35,15 +35,13 @@ struct TabSelectionView: View {
                     .frame(height: 26)
                     .foregroundStyle(tab.view == coordinator.currentView ? .white : .gray)
                     .background {
+                        // Only the selected tab carries the capsule. With more than two tabs the
+                        // hidden copies the upstream code kept on the others all claimed the same
+                        // matched-geometry id, and the glow could land on the wrong tab.
                         if tab.view == coordinator.currentView {
                             Capsule()
-                                .fill(coordinator.currentView == tab.view ? Color(nsColor: .secondarySystemFill) : Color.clear)
+                                .fill(Color(nsColor: .secondarySystemFill))
                                 .matchedGeometryEffect(id: "capsule", in: animation)
-                        } else {
-                            Capsule()
-                                .fill(coordinator.currentView == tab.view ? Color(nsColor: .secondarySystemFill) : Color.clear)
-                                .matchedGeometryEffect(id: "capsule", in: animation)
-                                .hidden()
                         }
                     }
             }

@@ -242,6 +242,11 @@ struct ContentView: View {
         .preferredColorScheme(.dark)
         .environmentObject(vm)
         .onAppear { CoucouHost.setSurface(agentSurface) }
+        .onChange(of: coordinator.currentView) { _, view in
+            // Each tab has its own open size.
+            guard vm.notchState == .open else { return }
+            withAnimation(.smooth) { vm.notchSize = openNotchSize(for: view) }
+        }
         .onChange(of: agentSurface) { _, surface in CoucouHost.setSurface(surface) }
         .onChange(of: vm.anyDropZoneTargeting) { _, isTargeted in
             anyDropDebounceTask?.cancel()

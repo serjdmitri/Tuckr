@@ -67,14 +67,6 @@ class BoringViewModel: NSObject, ObservableObject {
             }
             .assign(to: \.anyDropZoneTargeting, on: self)
             .store(in: &cancellables)
-
-        coordinator.$currentView
-            .removeDuplicates()
-            .sink { [weak self] view in
-                guard let self, self.notchState == .open else { return }
-                withAnimation(.smooth) { self.notchSize = openNotchSize(for: view) }
-            }
-            .store(in: &cancellables)
         
         setupDetectorObserver()
     }
