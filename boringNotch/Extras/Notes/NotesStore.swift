@@ -27,7 +27,8 @@ enum NotchKeyboard {
         if on { typingSources.insert(source) } else { typingSources.remove(source) }
     }
 
-    static func stopTyping() { typingSources.removeAll() }
+    /// An open popover keeps the notch up even when the keyboard moves to it.
+    static func stopTyping() { typingSources = typingSources.filter { $0 == "popover" } }
     /// Called when typing ends, so the host can close the notch if nobody is hovering.
     static var onEndTyping: (() -> Void)?
 
@@ -216,6 +217,12 @@ final class NotesStore: ObservableObject {
                 status = .failed(Self.describe(error))
             }
         }
+    }
+
+    /// One note's plain text, for other pages that borrow it (the teleprompter).
+    func plainText(for id: String) async -> String? {
+        if let note = notes.first(where: { $0.id == id }), note.isLoaded, !note.text.isEmpty { return note.text }
+        return try? await bridge.load(id: id).1
     }
 
     func select(_ id: String) {

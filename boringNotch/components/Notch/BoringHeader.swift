@@ -47,45 +47,30 @@ struct BoringHeader: View {
                         if coordinator.currentView == .agents {
                             CoucouHost.makeAgentsHeaderAccessory()
                         }
-                        Button(action: {
-                            withAnimation(.smooth) {
-                                coordinator.currentView = coordinator.currentView == .notes ? .home : .notes
-                            }
-                        }) {
+                        // One drop-down for the extras, so the header does not fill up: Notes,
+                        // Timer and Teleprompter. While a timer runs, its stopwatch is the icon.
+                        Menu {
+                            Button { open(.notes) } label: { Label("Notes", systemImage: "note.text") }
+                            Button { open(.timer) } label: { Label("Timer", systemImage: "timer") }
+                            Button { open(.teleprompter) } label: { Label("Teleprompter", systemImage: "text.alignleft") }
+                        } label: {
                             Capsule()
-                                .fill(coordinator.currentView == .notes ? Color(nsColor: .secondarySystemFill) : .black)
-                                .frame(width: 30, height: 30)
-                                .overlay {
-                                    Image(systemName: "note.text")
-                                        .foregroundColor(.white)
-                                        .padding()
-                                        .imageScale(.medium)
-                                }
-                        }
-                        .buttonStyle(PlainButtonStyle())
-                        .help("Notes")
-                        Button(action: {
-                            withAnimation(.smooth) {
-                                coordinator.currentView = coordinator.currentView == .timer ? .home : .timer
-                            }
-                        }) {
-                            Capsule()
-                                .fill(coordinator.currentView == .timer ? Color(nsColor: .secondarySystemFill) : .black)
+                                .fill([.notes, .timer, .teleprompter].contains(coordinator.currentView) ? Color(nsColor: .secondarySystemFill) : .black)
                                 .frame(width: 30, height: 30)
                                 .overlay {
                                     if notchTimer.phase != .idle {
-                                        // The stopwatch itself, its hand moving with the time.
                                         TimerGlyph(size: 18)
                                     } else {
-                                        Image(systemName: "timer")
+                                        Image(systemName: "square.grid.2x2")
                                             .foregroundColor(.white)
-                                            .padding()
                                             .imageScale(.medium)
                                     }
                                 }
                         }
-                        .buttonStyle(PlainButtonStyle())
-                        .help("Timer")
+                        .menuStyle(.borderlessButton)
+                        .menuIndicator(.hidden)
+                        .fixedSize()
+                        .help("Notes, Timer, Teleprompter")
                         // The mirror is for the music (Home) and call-recording (Meetings) tabs.
                         if Defaults[.showMirror] && (coordinator.currentView == .home || coordinator.currentView == .meetings) {
                             Button(action: {
@@ -145,6 +130,10 @@ struct BoringHeader: View {
         }
         .foregroundColor(.gray)
         .environmentObject(vm)
+    }
+
+    private func open(_ view: NotchViews) {
+        withAnimation(.smooth) { coordinator.currentView = view }
     }
 
     func isHUDType(_ type: SneakContentType) -> Bool {

@@ -441,6 +441,8 @@ struct ContentView: View {
                         TimerView()
                     case .notes:
                         NotesView()
+                    case .teleprompter:
+                        TeleprompterView()
                     }
                 }
                 .transition(
