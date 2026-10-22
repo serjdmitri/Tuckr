@@ -23,6 +23,13 @@ final class TalkifyRuntime {
   /// Called with true while the HUD holds the notch and false once it is gone.
   var onHUDOccupiedChange: ((Bool) -> Void)?
 
+  /// Called with Boring's two notch bindings at launch and after every change
+  /// on the Shortcuts board: open the notch, then peek at the media.
+  var onHostBindingsChange: ((KeyBinding, KeyBinding) -> Void)?
+
+  /// Talkify's preferences, for the host's Shortcuts pane.
+  var sharedSettings: AppSettings? { settings }
+
   /// Called with a transcription's progress, 0...1, and nil when it ends.
   var onTranscriptionProgress: ((Double?) -> Void)?
 
@@ -189,6 +196,8 @@ final class TalkifyRuntime {
       _ = settings.dictationTriggerBinding
       _ = settings.secondaryTriggerBinding
       _ = settings.readAloudBinding
+      _ = settings.boringOpenNotchBinding
+      _ = settings.boringSneakPeekBinding
       _ = settings.translateTriggerBinding
       _ = settings.isRecordingKeybind
       // The second trigger is only installed once a second language exists,
@@ -228,6 +237,7 @@ final class TalkifyRuntime {
   private func applyKeyBindings() {
     guard let settings else { return }
     dictationController?.applyKeyBindings()
+    onHostBindingsChange?(settings.boringOpenNotchBinding, settings.boringSneakPeekBinding)
     statusItemController?.setKeyBindings(
       trigger: settings.dictationTriggerBinding,
       readAloud: settings.readAloudBinding

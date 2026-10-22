@@ -75,6 +75,31 @@ struct ShortcutsSettingsView: View {
   private var isArmed: Bool { armed != nil }
 
   private var keysCard: some View {
+    VStack(spacing: 16) {
+      dictationCard
+      notchCard
+    }
+  }
+
+  private var notchCard: some View {
+    SettingsCard(title: "Notch") {
+      row(
+        .boringOpenNotch,
+        allowsBareModifier: false,
+        allowsMouseButton: false,
+        sentence: "Press %@ to open or close the notch."
+      )
+
+      row(
+        .boringSneakPeek,
+        allowsBareModifier: false,
+        allowsMouseButton: false,
+        sentence: "Press %@ to peek at the music under the notch."
+      )
+    }
+  }
+
+  private var dictationCard: some View {
     SettingsCard(title: "Bindings") {
       row(
         .dictation,
@@ -217,6 +242,8 @@ struct ShortcutsSettingsView: View {
       // the trigger is the right command and not the left.
       highlight(.translate, settings.translateTriggerBinding),
       highlight(.readAloud, settings.readAloudBinding),
+      highlight(.boringOpenNotch, settings.boringOpenNotchBinding),
+      highlight(.boringSneakPeek, settings.boringSneakPeekBinding),
     ]
     if settings.isSecondLanguageEnabled {
       result.append(highlight(.secondLanguage, settings.secondaryTriggerBinding))
@@ -245,6 +272,8 @@ private extension BindingRole {
     case .secondLanguage: Color(red: 0.45, green: 0.82, blue: 0.6)
     case .translate: Color(red: 0.66, green: 0.55, blue: 0.95)
     case .readAloud: Color(red: 0.95, green: 0.7, blue: 0.35)
+    case .boringOpenNotch: Color(red: 0.95, green: 0.45, blue: 0.55)
+    case .boringSneakPeek: Color(red: 0.4, green: 0.75, blue: 0.95)
     }
   }
 }

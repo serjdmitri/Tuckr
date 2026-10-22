@@ -29,6 +29,8 @@ final class AppSettings {
     static let readAloudTranslates = "readAloudTranslates"
     static let dictationTriggerBinding = "dictationTriggerBinding"
     static let readAloudBinding = "readAloudBinding"
+    static let boringOpenNotchBinding = "boringOpenNotchBinding"
+    static let boringSneakPeekBinding = "boringSneakPeekBinding"
     static let recognitionLocale = "recognitionLocale"
     static let secondaryRecognitionLocale = "recognitionLocaleSecondary"
     static let secondaryTriggerBinding = "dictationTriggerBindingSecondary"
@@ -217,6 +219,17 @@ final class AppSettings {
     didSet { Self.store(readAloudBinding, in: defaults, key: Keys.readAloudBinding) }
   }
 
+  /// Boring's two notch shortcuts, kept here so they share the Shortcuts
+  /// board with the dictation keys. The host app mirrors them into its own
+  /// shortcut store.
+  var boringOpenNotchBinding: KeyBinding {
+    didSet { Self.store(boringOpenNotchBinding, in: defaults, key: Keys.boringOpenNotchBinding) }
+  }
+
+  var boringSneakPeekBinding: KeyBinding {
+    didSet { Self.store(boringSneakPeekBinding, in: defaults, key: Keys.boringSneakPeekBinding) }
+  }
+
   /// The dictation language, as a locale identifier; empty means follow the
   /// Mac's own language, which is what every session did before the Language
   /// section existed.
@@ -361,6 +374,16 @@ final class AppSettings {
       key: Keys.readAloudBinding,
       allowsMouseButton: false
     ) ?? .optionEscape
+    boringOpenNotchBinding = Self.storedBinding(
+      in: defaults,
+      key: Keys.boringOpenNotchBinding,
+      allowsMouseButton: false
+    ) ?? .boringOpenNotch
+    boringSneakPeekBinding = Self.storedBinding(
+      in: defaults,
+      key: Keys.boringSneakPeekBinding,
+      allowsMouseButton: false
+    ) ?? .boringSneakPeek
     recognitionLocaleIdentifier = defaults.string(forKey: Keys.recognitionLocale) ?? ""
     secondaryRecognitionLocaleIdentifier =
       defaults.string(forKey: Keys.secondaryRecognitionLocale) ?? ""
@@ -425,6 +448,8 @@ final class AppSettings {
     case .secondLanguage: secondaryTriggerBinding
     case .translate: translateTriggerBinding
     case .readAloud: readAloudBinding
+    case .boringOpenNotch: boringOpenNotchBinding
+    case .boringSneakPeek: boringSneakPeekBinding
     }
   }
 
@@ -434,6 +459,8 @@ final class AppSettings {
     case .secondLanguage: secondaryTriggerBinding = binding
     case .translate: translateTriggerBinding = binding
     case .readAloud: readAloudBinding = binding
+    case .boringOpenNotch: boringOpenNotchBinding = binding
+    case .boringSneakPeek: boringSneakPeekBinding = binding
     }
   }
 
@@ -464,6 +491,8 @@ enum BindingRole: Hashable, CaseIterable {
   case secondLanguage
   case translate
   case readAloud
+  case boringOpenNotch
+  case boringSneakPeek
 
   var title: String {
     switch self {
@@ -471,6 +500,8 @@ enum BindingRole: Hashable, CaseIterable {
     case .secondLanguage: "Second Language"
     case .translate: "Translate"
     case .readAloud: "Read Aloud"
+    case .boringOpenNotch: "Toggle Notch Open"
+    case .boringSneakPeek: "Toggle Sneak Peek"
     }
   }
 }

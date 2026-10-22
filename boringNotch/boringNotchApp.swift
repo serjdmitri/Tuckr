@@ -453,6 +453,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 ApplicationRelauncher.restart()
             }
         )
+        talkify.onHostBindingsChange = { openNotch, sneakPeek in
+            KeyboardShortcuts.setShortcut(openNotch.hostShortcut, for: .toggleNotchOpen)
+            KeyboardShortcuts.setShortcut(sneakPeek.hostShortcut, for: .toggleSneakPeek)
+        }
         talkify.onTranscriptionProgress = { fraction in
             TranscribeProgress.shared.fraction = fraction
         }

@@ -1724,25 +1724,8 @@ struct AccentCircleButton: View {
 
 struct Shortcuts: View {
     var body: some View {
-        Form {
-            Section {
-                KeyboardShortcuts.Recorder("Toggle Sneak Peek:", name: .toggleSneakPeek)
-            } header: {
-                Text("Media")
-            } footer: {
-                Text(
-                    "Sneak Peek shows the media title and artist under the notch for a few seconds."
-                )
-                .multilineTextAlignment(.trailing)
-                .foregroundStyle(.secondary)
-                .font(.caption)
-            }
-            Section {
-                KeyboardShortcuts.Recorder("Toggle Notch Open:", name: .toggleNotchOpen)
-            }
-        }
-        .accentColor(.effectiveAccent)
-        .navigationTitle("Shortcuts")
+        TalkifyShortcutsPane()
+            .navigationTitle("Shortcuts")
     }
 }
 
