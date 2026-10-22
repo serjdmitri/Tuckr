@@ -58,7 +58,22 @@ final class HookServer: @unchecked Sendable {
     private var focusBeforeApproval: String? = nil    // saved focus to restore after approval
     private var focusBeforeAlert: String? = nil       // saved focus while another pill's card shows
     private var alertPill: String? = nil              // the pill that took the focus for its alert
-    private var sessions = PillSessionRegistry()      // live sessions behind each pill
+    private var sessions = PillSessionRegistry() {    // live sessions behind each pill
+        didSet { publishWorkingSessions() }
+    }
+
+    /// Patched: tells the UI how many sessions of each agent are working, for the x2 badge.
+    private func publishWorkingSessions() {
+        DispatchQueue.main.async { [self] in
+            let state = AppState.shared
+            var counts: [String: Int] = [:]
+            for task in state.tasks {
+                let n = sessions.workingCount(pill: task.id)
+                if n > 0 { counts[task.id] = n }
+            }
+            if counts != state.workingSessions { state.workingSessions = counts }
+        }
+    }
     private var lastSeen: [String: Date] = [:]        // patched: when each pill last had an event
 
     private init() {}

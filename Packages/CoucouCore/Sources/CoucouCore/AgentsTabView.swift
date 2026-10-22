@@ -22,6 +22,16 @@ struct AgentsTabView: View {
   private static let islandSize = CGSize(width: 640, height: 160)
   private static let contentOrigin = CGPoint(x: 10, y: 42)
 
+  /// The room the big Mochi has at the left of the cards (the text starts right of it),
+  /// where several take its place.
+  private static let squareSize = CGSize(width: 98, height: 98)
+
+  /// Agents mid-turn, in the tab's pill order.
+  private var workingTasks: [AgentTask] { state.tasks.filter { $0.isWorking } }
+
+  /// Two or more agents working at once: the big Mochi gives way to one per agent.
+  private var showsSquare: Bool { effectiveView == .overview && workingTasks.count >= 2 }
+
   private var effectiveView: IslandView {
     Self.shown.contains(state.view) ? state.view : .overview
   }
@@ -35,11 +45,19 @@ struct AgentsTabView: View {
       .frame(width: Self.contentSize.width, height: Self.contentSize.height)
       // Mochi's layer is an overlay, so its 640-point frame never widens the notch.
       .overlay(alignment: .topLeading) {
-        BotPlacement(state: state, islandW: Self.islandSize.width, islandH: Self.islandSize.height)
-          .frame(width: Self.islandSize.width, height: Self.islandSize.height, alignment: .topLeading)
-          .offset(x: -Self.contentOrigin.x, y: -Self.contentOrigin.y)
+        if showsSquare {
+          MochiSquare(
+            tasks: workingTasks, focusId: state.focusId, counts: state.workingSessions
+          ) { state.setFocus($0) }
+          .frame(width: Self.squareSize.width, height: Self.squareSize.height)
+          .offset(x: 4, y: 0)
+        } else {
+          BotPlacement(state: state, islandW: Self.islandSize.width, islandH: Self.islandSize.height)
+            .frame(width: Self.islandSize.width, height: Self.islandSize.height, alignment: .topLeading)
+            .offset(x: -Self.contentOrigin.x, y: -Self.contentOrigin.y)
+        }
       }
-      .overlay(alignment: .topLeading) { mochiHitArea }
+      .overlay(alignment: .topLeading) { if !showsSquare { mochiHitArea } }
       .foregroundColor(Color(hex: "#F5F6F8"))
       .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
   }
@@ -77,6 +95,10 @@ struct AgentsTabView: View {
     return Color.clear
       .frame(width: size, height: size)
       .background(BotAnchor())
+      .overlay(alignment: .topTrailing) {
+        SessionBadge(count: state.workingSessions[state.focusId ?? ""] ?? 0)
+          .offset(x: 4, y: -2)
+      }
       .contentShape(Circle())
       .position(x: cx - Self.contentOrigin.x, y: cy - Self.contentOrigin.y)
       .onHover { inside in inside ? hoverIn() : hoverOut() }
@@ -124,5 +146,82 @@ private struct BotAnchor: NSViewRepresentable {
   func makeNSView(context: Context) -> AnchorView { AnchorView() }
   func updateNSView(_ view: AnchorView, context: Context) {
     if view.window != nil { AppState.shared.hostBotAnchor = view }
+  }
+}
+
+/// "x2": that many sessions of one agent are working at once (they share its Mochi).
+struct SessionBadge: View {
+  let count: Int
+
+  var body: some View {
+    if count >= 2 {
+      Text("\u{00D7}\(count)")
+        .font(.system(size: 11, weight: .bold, design: .rounded))
+        .foregroundColor(.white)
+        .padding(.horizontal, 6)
+        .padding(.vertical, 2)
+        .background(Capsule().fill(Color.black.opacity(0.75)))
+        .overlay(Capsule().strokeBorder(Color.white.opacity(0.3), lineWidth: 1))
+        .allowsHitTesting(false)
+    }
+  }
+}
+
+/// One Mochi per working agent: side by side for two, a 2 x 2 square for three or four,
+/// and from five on the fourth place is a +N circle for the agents that do not fit.
+struct MochiSquare: View {
+  let tasks: [AgentTask]
+  let focusId: String?
+  let counts: [String: Int]
+  let onSelect: (String) -> Void
+
+  /// Up to four; past that, three, and the one whose details the card shows is always
+  /// among them.
+  private var shown: [AgentTask] {
+    guard tasks.count > 4 else { return tasks }
+    var picked = Array(tasks.prefix(3))
+    if let focused = tasks.first(where: { $0.id == focusId }), !picked.contains(where: { $0.id == focused.id }) {
+      picked[2] = focused
+    }
+    return picked
+  }
+  private var overflow: Int { tasks.count > 4 ? tasks.count - 3 : 0 }
+
+  var body: some View {
+    let cell: CGFloat = 46
+    let columns = 2
+    let items: [AnyHashable] = shown.map { AnyHashable($0.id) } + (overflow > 0 ? [AnyHashable("+N")] : [])
+    LazyVGrid(
+      columns: Array(repeating: GridItem(.fixed(cell), spacing: 6), count: columns),
+      spacing: 6
+    ) {
+      ForEach(items, id: \.self) { item in
+        if let id = item as? String, id == "+N" {
+          ZStack {
+            Circle().fill(Color.white.opacity(0.14))
+            Text("+\(overflow)")
+              .font(.system(size: 15, weight: .bold, design: .rounded))
+              .foregroundColor(.white)
+          }
+          .frame(width: cell - 12, height: cell - 12)
+          .frame(width: cell, height: cell)
+          .help("\(overflow) more working")
+        } else if let id = item as? String, let task = shown.first(where: { $0.id == id }) {
+          MiniBotCanvasView(task: task)
+            .frame(width: cell, height: cell)
+            .overlay(
+              Circle()
+                .strokeBorder(Color(hex: task.color).opacity(0.9), lineWidth: 2)
+                .padding(2)
+                .opacity(focusId == task.id ? 1 : 0)
+            )
+            .overlay(alignment: .topTrailing) { SessionBadge(count: counts[task.id] ?? 0) }
+            .contentShape(Rectangle())
+            .onTapGesture { onSelect(task.id) }
+            .help(task.name)
+        }
+      }
+    }
+    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
   }
 }

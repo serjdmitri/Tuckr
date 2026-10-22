@@ -86,6 +86,11 @@ struct AgentTask: Identifiable, Equatable {
     var hostApp: String?     = nil  // bundle id of the terminal running a Claude Code session; nil = VS Code
 }
 
+extension AgentTask {
+    /// Mid-turn: working, thinking or searching (not waiting on you, not idle).
+    var isWorking: Bool { state == .working || state == .thinking || state == .searching }
+}
+
 enum AgentSource: Equatable {
     case claudeCode
     case n8n

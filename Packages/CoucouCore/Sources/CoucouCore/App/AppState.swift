@@ -37,6 +37,8 @@ final class AppState: ObservableObject {
     /// Set by a host that draws Mochi in its own window: the view centred on him, so his gaze
     /// is measured from where he really is rather than from where Coucou's island would put him.
     weak var hostBotAnchor: NSView?
+    /// Patched: how many sessions are mid-turn behind each pill (several can share one).
+    @Published var workingSessions: [String: Int] = [:]
     var lastMouseMove: Date = .now
     var lastActivity: Date = .now
     var isPresent: Bool = true
