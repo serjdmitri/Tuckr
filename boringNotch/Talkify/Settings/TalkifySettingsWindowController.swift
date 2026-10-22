@@ -43,7 +43,7 @@ final class TalkifySettingsWindowController: NSWindowController {
     )
 
     window.contentViewController = hosting
-    window.title = "Talkify Settings"
+    window.title = "Dictation Settings"
     window.level = .normal
     window.isOpaque = false
     window.backgroundColor = .clear
