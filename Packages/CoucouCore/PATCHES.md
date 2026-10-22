@@ -46,6 +46,3 @@ app adds sits in `CoucouHost.swift` and `AgentsTabView.swift`.
 10. `App/AppState.swift` and `App/BotCanvasView.swift`: `hostBotAnchor`, a view the host
     places on Mochi; when set, his gaze is measured from it instead of from where
     Coucou's own island would draw him.
-11. `App/AppState.swift`, `App/HookServer.swift`, `CoucouKit/IslandTypes.swift`: `workingSessions`
-    (how many sessions are mid-turn behind each pill, published from the session
-    registry) and `AgentTask.isWorking`, for the x2 badge and the Mochi square.

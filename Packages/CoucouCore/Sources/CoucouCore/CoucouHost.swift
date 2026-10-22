@@ -95,16 +95,6 @@ public enum CoucouHost {
     AgentPresence.shared.start()
     MeetingPresence.shared.start()
 
-    // Whichever agent starts working takes the big Mochi, when it is the only one working.
-    // With several working the tab shows them all (AgentsTabView).
-    autoFocusCancellable = state.$tasks
-      .map { tasks in tasks.filter { $0.isWorking }.map(\.id) }
-      .removeDuplicates()
-      .sink { workingIds in
-        guard workingIds.count == 1, let id = workingIds.first, state.focusId != id else { return }
-        state.setFocus(id)
-      }
-
     // Coucou's global shortcuts (Settings > Shortcuts), the ones this app handles.
     HotKeyCenter.shared.start { action in handle(action) }
 
@@ -204,7 +194,6 @@ public enum CoucouHost {
   }
 
   private static var dizzyRecovery: DispatchWorkItem?
-  private static var autoFocusCancellable: AnyCancellable?
 
   private static func handleDizzy() {
     let state = AppState.shared
