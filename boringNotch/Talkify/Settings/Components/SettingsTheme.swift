@@ -6,9 +6,11 @@ import SwiftUI
 /// (CONTEXT.md: Settings navigation uses a fixed accent; Glow palettes never
 /// recolor the shell).
 enum SettingsTheme {
-  static let background = Color(red: 0.025, green: 0.027, blue: 0.035)
-  static let sidebar = Color(red: 0.035, green: 0.038, blue: 0.049)
-  static let card = Color(red: 0.065, green: 0.069, blue: 0.087)
+  // The greys of Boring Notch's own settings pages, so every page of the one Settings
+  // window looks alike (Talkify's originals were a near-black blue).
+  static let background = Color(red: 0.118, green: 0.118, blue: 0.118)
+  static let sidebar = Color(red: 0.118, green: 0.118, blue: 0.118)
+  static let card = Color(red: 0.149, green: 0.149, blue: 0.149)
   static let accent = Color(nsColor: accentColor)
   /// The same blue for the places that draw into an `NSImage` rather than into
   /// SwiftUI — the status item's icons. Defined once here so the two can never

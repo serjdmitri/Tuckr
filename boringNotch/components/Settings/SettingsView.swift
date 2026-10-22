@@ -53,7 +53,7 @@ struct SettingsView: View {
             .listStyle(SidebarListStyle())
             .tint(.effectiveAccent)
             .toolbar(removing: .sidebarToggle)
-            .navigationSplitViewColumnWidth(200)
+            .navigationSplitViewColumnWidth(min: 200, ideal: 200, max: 200)
         } detail: {
             Group {
                 switch selectedTab {
