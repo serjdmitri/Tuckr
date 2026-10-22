@@ -1,78 +1,108 @@
-# The BoringCoucouify
+<h1 align="center">
+  <br>
+  <img src="docs/images/icon.png" alt="The BoringCoucouify" width="140">
+  <br>
+  The BoringCoucouify
+  <br>
+</h1>
 
-One notch app for the Mac, made of three open-source projects:
+<p align="center"><b>Your Mac's notch, doing everything: music, agents, dictation and meetings.</b></p>
 
-| Tab / feature | What it does | From |
-| --- | --- | --- |
-| **Home** | Music (Spotify, Apple Music), calendar, mirror, battery and volume HUDs | [Boring Notch](https://github.com/TheBoredTeam/boring.notch) (GPL-3.0) — the base app |
-| **Shelf** | Three panels: AirDrop and share, file shelf, drop-to-transcribe | Boring Notch, plus Talkify's transcription |
-| **Agents** | Live cards for Claude Code, Codex, Gemini CLI, Cursor and others, approvals and questions in the notch, Mochi, plan-usage pill, global shortcuts | [Coucou](https://github.com/Louis-CFM/coucou) (MIT) |
-| **Meetings** | Call recorder with local transcription and a summary | Coucou's Notetaker |
-| **Dictation** | Hold Fn to dictate into any app, read aloud, a HUD that takes over the notch while it works, a keyboard board to change shortcuts | [Talkify](https://github.com/tornikegomareli/Talkify) (MIT) |
+<p align="center">
+  <img src="https://img.shields.io/badge/macOS-26%2B-000000?logo=apple&logoColor=white" alt="macOS 26+">
+  <img src="https://img.shields.io/badge/Swift-6-F05138?logo=swift&logoColor=white" alt="Swift">
+  <img src="https://img.shields.io/badge/license-GPL--3.0-blue" alt="GPL-3.0">
+  <img src="https://img.shields.io/badge/status-personal%20build-orange" alt="Personal build">
+</p>
 
-The closed notch shows music on the left and the agent Mochi on the right. Hovering the left half opens Home, the right half opens Agents. Agent pills hide after 3 minutes of inactivity (changeable in Settings → Agents → General).
+<p align="center">
+  <img src="docs/images/hero.png" alt="The notch showing an agent card with Mochi" />
+</p>
 
-This is a personal-use build. It is not released, notarized or supported.
+One menu-bar-free app that lives in the notch and brings three open-source projects together: [Boring Notch](https://github.com/TheBoredTeam/boring.notch) for music, calendar and a file shelf, [Coucou](https://github.com/Louis-CFM/coucou) for coding agents and a call recorder, and [Talkify](https://github.com/tornikegomareli/Talkify) for hold-Fn dictation. Four tabs at the top switch between them. When the notch is closed, music shows on the left and the agent's Mochi on the right; hover the left half to open Home, the right half to open Agents.
 
-## Requirements
+> **Status: personal build.** It runs daily on one Mac. There are no releases, no notarized downloads and no updates yet; you build it yourself (below). Expect rough edges, and see [Licensing](#licensing) before sharing it.
 
-- macOS 26 or later (the deployment target), a Mac with a notch works best
-- Xcode with the Metal Toolchain (`xcodebuild -downloadComponent MetalToolchain`)
-- About 650 MB of disk for the Parakeet speech models, downloaded on first use of Meetings or Dictation (shared with a standalone Coucou if you have one)
+## What's in it
+
+| | |
+| --- | --- |
+| **Home** | Now playing with controls (Spotify, Apple Music), a calendar with your events, a camera mirror, and the usual volume, brightness and battery HUDs |
+| **Shelf** | Three panels: AirDrop and share on the left, a file shelf in the middle, and drop-to-transcribe on the right |
+| **Agents** | Live cards for Claude Code, Codex, Gemini CLI, Cursor and more. Approve or deny permission requests and answer questions from the notch, jump to the terminal, mute with one key. Mochi reacts to your pointer |
+| **Meetings** | One press records your microphone and what your Mac plays, transcribes it on device, and writes a summary into your notes folder |
+| **Dictation** | Hold Fn and talk; the words are typed where your cursor is. Read-aloud, a HUD that takes over the notch while it works, and a keyboard board for changing every shortcut |
+
+## See it
+
+<p align="center">
+  <img src="docs/images/tabs.png" alt="Home, Shelf, Agents and Meetings tabs" />
+</p>
+
+<p align="center"><i>Home, Shelf, Agents and Meetings.</i></p>
+
+## How it works
+
+<p align="center">
+  <img src="docs/images/how-it-works.svg" alt="How The BoringCoucouify works" />
+</p>
+
+Coucou's hook relay (`nb-hook`) sends each agent event to a local unix socket the app listens on, which is what drives the Agents tab. Speech to text runs on device (Parakeet for meetings and Talkify's own engine for dictation), so audio does not leave the Mac.
 
 ## Build and install
 
+You need macOS 26 or later, Xcode, and the Metal Toolchain (`xcodebuild -downloadComponent MetalToolchain`).
+
 ```bash
+git clone https://github.com/serjdmitri/TheBoringCoucouify.git
+cd TheBoringCoucouify
 scripts/install.sh              # Release build, sign, copy to /Applications, launch
-scripts/install.sh --no-launch  # same, without launching
 ```
 
-The result is `/Applications/The BoringCoucouify.app`. The build is signed in two steps (ad hoc build, then re-signed inside out) because the hardened runtime is off: it makes macOS refuse the vendored MediaRemoteAdapter framework.
+That produces `/Applications/The BoringCoucouify.app`. Use `scripts/install.sh --no-launch` to install without starting it. Speech models (about 650 MB) download the first time you use Meetings or Dictation.
 
-### Signing, so permissions stay granted
+### Sign it once, so permissions stick
 
-macOS ties Accessibility and Input Monitoring to the code signature. Create a local self-signed certificate named `TheBoringCoucouify Local Signing` once (steps in [docs/SIGNING.md](docs/SIGNING.md)); `install.sh` finds it and every later install keeps your permissions. Without it the app is signed ad hoc and you re-grant permissions after each install.
+macOS ties Accessibility and Input Monitoring to the app's code signature, and an ad hoc signature changes on every build. Create a local self-signed certificate named `TheBoringCoucouify Local Signing` once ([step by step](docs/SIGNING.md)); `install.sh` finds it and every later install keeps your permissions. Without it the app still works, but you grant those permissions again after each install.
 
-### Permissions
+On first launch it asks for Accessibility and Input Monitoring (Fn dictation and global shortcuts), Microphone and audio capture (dictation and the call recorder), and Calendar. If Fn stops working after a reinstall, run `tccutil reset Accessibility` and grant it again.
 
-- **Accessibility and Input Monitoring** — Fn dictation and global shortcuts
-- **Microphone** and **Audio capture** — dictation and the call recorder
-- **Calendar** — the Home calendar
-- **Automation / media** — music controls
+## Using it
 
-If Fn stops working after a reinstall, run `tccutil reset Accessibility` and grant it again.
+| To | Do this |
+| --- | --- |
+| Open Home or Agents | Hover the left or right half of the notch, or press ⌘⇧I |
+| Dictate | Hold **Fn**, talk, release |
+| Change any shortcut | Settings → Dictation, then the keyboard board |
+| Open or close Agents | ⌘⇧N (off by default; switch it on in Settings → Agents → Shortcuts) |
+| Jump to an agent's alert | ⌃⌥A |
+| Jump to its terminal | ⌃⌥T |
+| Next or previous agent | ⌃⌥] and ⌃⌥[ |
+| Mute Mochi | ⌃⌥M |
+| Record a call | Meetings tab → **Record a call** |
+| Transcribe a file | Drop audio or video on the Shelf's right panel |
+| Hide agent pills sooner or later | Settings → Agents → General → Hide after N min (default 3) |
 
-## Settings
-
-One home: the Boring Notch settings window, with Dictation, Agents and Meetings pages hosted inside it. The menu bar icon can be switched off there.
-
-## Agents
-
-Coucou's hook server listens on `~/Library/Application Support/NotchBuddy/nb.sock`; the hook relay is `nb-hook` in the same folder. If you already had Coucou installed, your Claude hooks keep working with no changes. Other agents (Codex, Gemini CLI, Cursor, Copilot and more) are installed from Settings → Agents, which shows a preview of the file it will write before it writes anything.
-
-Global shortcuts (Settings → Agents → Shortcuts), the ones this app handles: open or close the Agents tab (off by default, ⌘⇧N), go to alert ⌃⌥A, jump to terminal ⌃⌥T, next and previous pill ⌃⌥] and ⌃⌥[, mute Mochi ⌃⌥M.
-
-Pills are kept in memory, so restarting the app clears them until each agent sends its next event.
+Hooks for Claude Code usually work straight away. Codex, Gemini CLI, Cursor and others are installed from Settings → Agents, which shows the exact file change for you to confirm first.
 
 ## Repository layout
 
 | Path | What |
 | --- | --- |
-| `boringNotch/` | The app target: Boring Notch plus the changes listed below |
-| `boringNotch/Talkify/` | Talkify's sources, compiled into the app (a synchronized Xcode group) |
-| `Packages/CoucouCore/` | Coucou as a local Swift package; `CoucouHost.swift`, `AgentsTabView.swift`, `MeetingsTabView.swift` and `NotetakerSettingsSection.swift` are the added glue |
+| `boringNotch/` | The app target: Boring Notch plus the changes that join the three |
+| `boringNotch/Talkify/` | Talkify's sources, compiled into the app |
+| `Packages/CoucouCore/` | Coucou as a local Swift package, with the glue (`CoucouHost`, `AgentsTabView`, `MeetingsTabView`) |
 | `Packages/CoucouCore/PATCHES.md` | Every change made to Coucou's own files |
 | `UPSTREAM.md` | The upstream commit each part was taken from |
-| `scripts/` | `install.sh`, and `make-icon.swift` which renders the app icon set |
-| `docs/` | Signing guide and the original Boring Notch README |
-| `licenses/`, `THIRD_PARTY_LICENSES` | Licenses of the parts |
+| `scripts/` | `install.sh`, plus the generators for the app icon and these README images |
+| `docs/` | Signing guide, images, and the original Boring Notch README |
 
-Notes for working in the code:
+For contributors: the Xcode project lists files explicitly, so a new file is added to `project.pbxproj` (except inside `boringNotch/Talkify`). Talkify builds in Swift 5 mode inside the app target; Coucou is a Swift 6 package. Talkify's entry point is replaced by `TalkifyRuntime`, its Sparkle updater is never started, and the app is not sandboxed.
 
-- The Xcode project lists files explicitly; a new file must be added to `project.pbxproj`, except inside `boringNotch/Talkify`.
-- Talkify is built in Swift 5 mode inside the app target; Coucou is a Swift 6 package. Talkify's entry point is replaced by `TalkifyRuntime`, and three names were changed to avoid collisions (`TalkifyRuntime`, `TalkifySettingsView`, `TalkifySettingsWindowController`).
-- Talkify's Sparkle updater is never started, and the app is not sandboxed.
+## Credits
+
+Built on the work of the three projects above: **Boring Notch** by the Boring.Notch team (base app, GPL-3.0), **Coucou** by Louis-CFM (agents, Mochi and the call recorder, MIT), and **Talkify** by Tornike Gomareli (dictation, MIT).
 
 ## Licensing
 
-The combined app is distributed under GPL-3.0 because of Boring Notch (see `LICENSE`). Talkify and Coucou are MIT; their licenses are in `licenses/`. Not everything is free to redistribute: Coucou's name, the Mochi character and its sounds are not MIT (`licenses/Coucou/LICENSE-ASSETS.md`), Talkify's Pop sounds are CC-BY-NC, and one Siri-style image in Talkify has no license. That is fine for personal use and has to be sorted out before any public release.
+The combined app is GPL-3.0 because Boring Notch is (see [LICENSE](LICENSE)); the other licenses are in [licenses/](licenses). Not everything is free to redistribute: Coucou's name, the Mochi character and its sounds are not MIT ([details](licenses/Coucou/LICENSE-ASSETS.md)), Talkify's Pop sounds are CC-BY-NC, and one Siri-style image in Talkify has no license. That is fine for personal use and has to be sorted out before any public release.
