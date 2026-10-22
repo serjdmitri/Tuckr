@@ -835,17 +835,20 @@ func lighterColor(from nsColor: NSColor, amount: CGFloat = 0.14) -> Color {
 struct About: View {
     @State private var showBuildNumber: Bool = false
     let updaterController: SPUStandardUpdaterController
-    @Environment(\.openWindow) var openWindow
+
+    private let parts: [(name: String, license: String, role: String, url: String)] = [
+        ("Boring Notch", "GPL-3.0", "The notch, music, calendar, shelf and mirror",
+         "https://github.com/TheBoredTeam/boring.notch"),
+        ("Talkify", "MIT", "Dictation, read aloud and transcribing files",
+         "https://github.com/tornikegomareli/Talkify"),
+        ("Coucou", "MIT", "Agents, Mochi and the call recorder",
+         "https://github.com/Louis-CFM/coucou"),
+    ]
+
     var body: some View {
         VStack {
             Form {
                 Section {
-                    HStack {
-                        Text("Release name")
-                        Spacer()
-                        Text(Defaults[.releaseName])
-                            .foregroundStyle(.secondary)
-                    }
                     HStack {
                         Text("Version")
                         Spacer()
@@ -853,7 +856,7 @@ struct About: View {
                             Text("(\(Bundle.main.buildVersionNumber ?? ""))")
                                 .foregroundStyle(.secondary)
                         }
-                        Text(Bundle.main.releaseVersionNumber ?? "unkown")
+                        Text(Bundle.main.releaseVersionNumber ?? "unknown")
                             .foregroundStyle(.secondary)
                     }
                     .onTapGesture {
@@ -862,34 +865,38 @@ struct About: View {
                         }
                     }
                 } header: {
-                    Text("Version info")
+                    Text("The BoringCoucouify")
                 }
 
-                UpdaterSettingsView(updater: updaterController.updater)
-
-                HStack(spacing: 30) {
-                    Spacer(minLength: 0)
-                    Button {
-                        if let url = URL(string: "https://github.com/TheBoredTeam/boring.notch") {
-                            NSWorkspace.shared.open(url)
+                Section {
+                    ForEach(parts, id: \.name) { part in
+                        Button {
+                            if let url = URL(string: part.url) {
+                                NSWorkspace.shared.open(url)
+                            }
+                        } label: {
+                            HStack {
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text("\(part.name) · \(part.license)")
+                                    Text(part.role)
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+                                Spacer()
+                                Image(systemName: "arrow.up.right")
+                                    .foregroundStyle(.secondary)
+                            }
+                            .contentShape(Rectangle())
                         }
-                    } label: {
-                        VStack(spacing: 5) {
-                            Image("Github")
-                                .resizable()
-                                .aspectRatio(contentMode: .fit)
-                                .frame(width: 18)
-                            Text("GitHub")
-                        }
-                        .contentShape(Rectangle())
+                        .buttonStyle(PlainButtonStyle())
                     }
-                    Spacer(minLength: 0)
+                } header: {
+                    Text("Built from")
                 }
-                .buttonStyle(PlainButtonStyle())
             }
             VStack(spacing: 0) {
                 Divider()
-                Text("Made with 🫶🏻 by not so boring not.people")
+                Text("Three open-source notch apps in one. Updates are installed by hand with scripts/install.sh.")
                     .foregroundStyle(.secondary)
                     .padding(.top, 5)
                     .padding(.bottom, 7)
@@ -897,13 +904,6 @@ struct About: View {
                     .padding(.horizontal, 10)
             }
             .frame(maxWidth: .infinity, alignment: .center)
-        }
-        .toolbar {
-            //            Button("Welcome window") {
-            //                openWindow(id: "onboarding")
-            //            }
-            //            .controlSize(.extraLarge)
-            CheckForUpdatesView(updater: updaterController.updater)
         }
         .navigationTitle("About")
     }

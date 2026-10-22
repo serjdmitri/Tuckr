@@ -7,8 +7,10 @@ enum SettingsSectionGroup: String, CaseIterable, Identifiable {
   var id: Self { self }
   var title: String { rawValue.uppercased() }
 
+  /// General (Launch at login) and Updates are left out here: Boring's own Settings
+  /// has the login switch, and nothing updates this app through Talkify's updater.
   var sections: [SettingsSection] {
-    SettingsSection.allCases.filter { $0.group == self }
+    SettingsSection.allCases.filter { $0.group == self && $0 != .general && $0 != .updates }
   }
 }
 

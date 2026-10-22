@@ -34,3 +34,8 @@ app adds sits in `CoucouHost.swift` and `AgentsTabView.swift`.
    The section itself is `NotetakerSettingsSection.swift`.
 7. `App/SettingsView.swift`, Voice page: the Coucou Flow dictation box is left out. A
    second dictation engine on Right Option would compete with Talkify's.
+8. `App/BotCanvasView.swift`, `BotCanvasView` and `MiniBotCanvasView`: their
+   `TimelineView` takes its minimum frame interval from an environment value
+   (`MochiFrameRate.swift`, nil by default, so nothing changes). The closed
+   notch's ears set it to 20 frames a second: Mochi's speed does not depend on
+   the frame rate, and drawing at the display's rate cost about a quarter of a core.

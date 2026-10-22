@@ -14,11 +14,13 @@ struct BotCanvasView: View {
 
     // One engine per view instance (main bot)
     @StateObject private var engine = BotEngine()
+    @Environment(\.mochiFrameInterval) private var frameInterval
 
     var body: some View {
         // Display refresh rate — every frame on a 60 Hz screen, every frame on ProMotion.
         // MochiFrameClock.advance accumulates the step debt so Mochi's speed never changes.
-        TimelineView(.animation(paused: state.mode == .hidden || paused)) { timeline in
+        // Patched: the frame interval comes from the environment (closed-notch ears draw less often).
+        TimelineView(.animation(minimumInterval: frameInterval, paused: state.mode == .hidden || paused)) { timeline in
             // The Canvas must capture the frame's date: a closure that doesn't change from
             // one tick to the next is not redrawn, and Mochi froze.
             let frame = timeline.date
@@ -244,11 +246,12 @@ struct MiniBotCanvasView: View {
     }
 
     @Environment(\.islandViewActive) private var viewActive
+    @Environment(\.mochiFrameInterval) private var frameInterval
 
 
     var body: some View {
         // Display refresh rate. Paused in island views that are not shown.
-        TimelineView(.animation(paused: !viewActive)) { timeline in
+        TimelineView(.animation(minimumInterval: frameInterval, paused: !viewActive)) { timeline in
             let frame = timeline.date   // see BotCanvasView: redraw on every tick
             Canvas { context, size in
                 _ = frame

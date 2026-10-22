@@ -231,6 +231,13 @@ private struct ClosedEarView: View {
   @ObservedObject private var state = AppState.shared
 
   var body: some View {
+    earContent
+      // The ears are 20 points wide: 20 frames a second is plenty and far cheaper.
+      .environment(\.mochiFrameInterval, 1.0 / 20)
+  }
+
+  @ViewBuilder
+  private var earContent: some View {
     switch ear {
     case .leading, .focusedMochi:
       // Coucou's compact Mochi: 20 points across, drawn on a canvas 1/0.6 as big.
@@ -245,6 +252,7 @@ private struct ClosedEarView: View {
         .frame(width: height, height: height)
     }
   }
+
 }
 
 /// Whether a call is being recorded, for the closed notch's red dot.
