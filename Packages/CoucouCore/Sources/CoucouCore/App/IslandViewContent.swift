@@ -4165,6 +4165,9 @@ struct AgentPill: View {
 
     private var effectiveColor: String { task.color }
 
+    // Patched: a pill whose agent is mid-turn shows it (a sweeping edge and bouncing dots).
+    private var isWorking: Bool { [.working, .thinking, .searching].contains(task.state) }
+
     // The Claude pill shows "VS Code" (or "Claude Code" for a terminal session) regardless of project name
     private var displayName: String {
         task.id == "integration_claude" ? ClaudeHost.pillName(hostApp: task.hostApp) : task.name
@@ -4180,6 +4183,11 @@ struct AgentPill: View {
                               : Color(hex: "#0E0F11"))
                     Capsule()
                         .stroke(Color(hex: effectiveColor).opacity(isHovered ? 0.55 : 0.14), lineWidth: 1)
+                    if isWorking {
+                        PillWorkingActivity(color: effectiveColor)
+                            .allowsHitTesting(false)
+                            .transition(.opacity)
+                    }
                     HStack(spacing: 0) {
                         MiniBotCanvasView(task: task)
                             .frame(width: 22 / 0.6, height: 22 / 0.6)
@@ -4196,11 +4204,12 @@ struct AgentPill: View {
                         .truncationMode(.tail)
                         // Patched: keep a long name clear of the mini Mochi, as MusicPill does.
                         .padding(.leading, 34)
-                        .padding(.trailing, 10)
+                        .padding(.trailing, isWorking ? 28 : 10)
                         .frame(maxWidth: .infinity, alignment: .center)
                 }
                 .frame(maxWidth: .infinity)
                 .frame(height: 28)
+                .animation(.easeInOut(duration: 0.25), value: isWorking)
                 .shadow(color: Color(hex: effectiveColor).opacity(isHovered ? 0.35 : 0), radius: 10, x: 0, y: 2)
 
                 // Alert badge (approval / finished / error)
@@ -5192,5 +5201,46 @@ extension Color {
             green: min(1, Double(components.greenComponent) + amount),
             blue: min(1, Double(components.blueComponent) + amount)
         )
+    }
+}
+
+
+/// The pill's "working" signal: a bright arc running around its edge and three dots
+/// bouncing at the trailing end. Paused when the island view is not shown, and drawn at
+/// the Mochi frame rate.
+struct PillWorkingActivity: View {
+    let color: String
+    @Environment(\.islandViewActive) private var viewActive
+    @Environment(\.mochiFrameInterval) private var frameInterval
+
+    var body: some View {
+        TimelineView(.animation(minimumInterval: frameInterval, paused: !viewActive)) { timeline in
+            let t = timeline.date.timeIntervalSinceReferenceDate
+            let angle = (t.truncatingRemainder(dividingBy: 1.6) / 1.6) * 360
+            let tint = Color(hex: color)
+            ZStack(alignment: .trailing) {
+                Capsule()
+                    .strokeBorder(
+                        AngularGradient(
+                            stops: [
+                                .init(color: tint.opacity(0), location: 0),
+                                .init(color: tint.opacity(0), location: 0.55),
+                                .init(color: tint, location: 1),
+                            ],
+                            center: .center, angle: .degrees(angle)),
+                        lineWidth: 1.6)
+                HStack(spacing: 3) {
+                    ForEach(0..<3, id: \.self) { i in
+                        let phase = sin(t * 7 - Double(i) * 0.8)
+                        Circle()
+                            .fill(tint)
+                            .frame(width: 3.5, height: 3.5)
+                            .offset(y: -2.5 * phase)
+                            .opacity(0.55 + 0.45 * (phase + 1) / 2)
+                    }
+                }
+                .padding(.trailing, 10)
+            }
+        }
     }
 }

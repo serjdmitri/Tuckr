@@ -49,3 +49,5 @@ app adds sits in `CoucouHost.swift` and `AgentsTabView.swift`.
 11. `App/AppState.swift`, `App/IslandViewContent.swift`: `pinnedId`, `pin(_:)` and `lookAt(_:)`.
     A pinned agent keeps the big Mochi; picking another pill shows it for a few seconds,
     then the big Mochi returns. Pills get a "Pin to the big Mochi" context menu.
+12. `App/IslandViewContent.swift`: `AgentPill` shows a sweeping edge and bouncing dots
+    (`PillWorkingActivity`) while its agent is mid-turn.
