@@ -25,6 +25,7 @@ struct ContentView: View {
     @ObservedObject var brightnessManager = BrightnessManager.shared
     @ObservedObject var volumeManager = VolumeManager.shared
     @ObservedObject var agentPresence = AgentPresence.shared
+    @ObservedObject var meetingPresence = MeetingPresence.shared
     @State private var hoverPointX: CGFloat = 0
     @State private var hoverTask: Task<Void, Never>?
     @State private var isHovering: Bool = false
@@ -114,6 +115,16 @@ struct ContentView: View {
                             .fill(.black)
                             .frame(height: 1)
                             .padding(.horizontal, topCornerRadius)
+                    }
+                    .overlay(alignment: .topTrailing) {
+                        if meetingPresence.isRecording && vm.notchState == .closed {
+                            Circle()
+                                .fill(Color(red: 1.0, green: 0.27, blue: 0.23))
+                                .frame(width: 7, height: 7)
+                                .padding(.top, 5)
+                                .padding(.trailing, 9)
+                                .transition(.opacity)
+                        }
                     }
                     .shadow(
                         color: ((vm.notchState == .open || isHovering) && Defaults[.enableShadow])
@@ -373,11 +384,7 @@ struct ContentView: View {
                     case .agents:
                         CoucouHost.makeAgentsView()
                     case .meetings:
-                        TabPlaceholderView(
-                            icon: "mic.fill",
-                            title: "Meetings",
-                            detail: "Call recording and summaries will live here."
-                        )
+                        CoucouHost.makeMeetingsView()
                     }
                 }
                 .transition(

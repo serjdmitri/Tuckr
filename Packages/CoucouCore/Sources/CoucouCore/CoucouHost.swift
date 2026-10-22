@@ -53,6 +53,7 @@ public enum CoucouHost {
 
     // nb-hook closing its socket early must not crash the app.
     signal(SIGPIPE, SIG_IGN)
+    _ = KeychainStore.shared
     // Coucou warms its Keychain wrapper here in the standalone app. It is left
     // cold on purpose: the agents need none of the saved keys, and reading the
     // standalone app's items makes macOS block the main thread on a prompt.
@@ -84,6 +85,7 @@ public enum CoucouHost {
     }
 
     AgentPresence.shared.start()
+    MeetingPresence.shared.start()
     HookServer.shared.start()
   }
 
@@ -117,6 +119,45 @@ public enum CoucouHost {
     settingsWindow = window
     window.makeKeyAndOrderFront(nil)
     NSApp.activate(ignoringOtherApps: true)
+  }
+
+  private static var meetingsWindow: NSWindow?
+
+  /// The Notetaker page in its own window: every call, its transcript by
+  /// speaker, the summary and to-dos, and the speech-model setup.
+  public static func showMeetings() {
+    if let window = meetingsWindow, window.isVisible {
+      window.makeKeyAndOrderFront(nil)
+      NSApp.activate(ignoringOtherApps: true)
+      return
+    }
+    let window = NSWindow(
+      contentRect: NSRect(x: 0, y: 0, width: 980, height: 640),
+      styleMask: [.titled, .closable, .miniaturizable, .resizable],
+      backing: .buffered, defer: false
+    )
+    window.title = "Meetings"
+    window.appearance = NSAppearance(named: .darkAqua)
+    window.backgroundColor = .black
+    let page = HubNotesPage()
+      .environment(\.hubPage, .notes)
+      .background(HubTheme.window)
+    let host = NSHostingView(rootView: page)
+    // The page asks for far more height than a screen has: size the window ourselves.
+    host.sizingOptions = []
+    window.contentView = host
+    window.setContentSize(NSSize(width: 980, height: 640))
+    window.contentMinSize = NSSize(width: 820, height: 520)
+    window.isReleasedWhenClosed = false
+    window.center()
+    meetingsWindow = window
+    window.makeKeyAndOrderFront(nil)
+    NSApp.activate(ignoringOtherApps: true)
+  }
+
+  /// The call recorder, for the Meetings tab.
+  public static func makeMeetingsView() -> some View {
+    MeetingsTabView()
   }
 
   /// Coucou's agent cards and Mochi, for the Agents tab.
@@ -203,5 +244,22 @@ private struct ClosedEarView: View {
         .scaleEffect(min(1, max(0, height - 4) / 28))
         .frame(width: height, height: height)
     }
+  }
+}
+
+/// Whether a call is being recorded, for the closed notch's red dot.
+@MainActor
+public final class MeetingPresence: ObservableObject {
+  public static let shared = MeetingPresence()
+
+  @Published public private(set) var isRecording = false
+  private var cancellable: AnyCancellable?
+
+  func start() {
+    cancellable = NoteTaker.shared.$recording
+      .map { $0 != nil }
+      .removeDuplicates()
+      .receive(on: DispatchQueue.main)
+      .sink { [weak self] recording in self?.isRecording = recording }
   }
 }

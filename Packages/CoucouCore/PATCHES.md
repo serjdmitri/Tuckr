@@ -17,3 +17,9 @@ app adds sits in `CoucouHost.swift` and `AgentsTabView.swift`.
    the focused pill's color for integration pills only, so an external agent
    (Claude Desktop and the like) showed a white Mochi next to its colored pill.
    External agents now tint him too.
+4. `App/ClaudeService.swift`, `Keychain.service`: upstream reads its saved keys
+   under "fr.louisraille.NotchBuddy". The standalone Coucou's items there are
+   not readable by this app, and macOS shows a Keychain prompt for each one
+   that freezes the app until answered. This app uses its own service name, so
+   the lookups find nothing and never prompt; keys saved from here are read
+   back without a prompt.
