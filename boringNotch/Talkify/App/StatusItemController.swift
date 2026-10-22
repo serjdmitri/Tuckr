@@ -96,6 +96,11 @@ final class StatusItemController: NSObject {
     statusItem.menu = menu
   }
 
+  /// The host's "Show menu bar icon" switch.
+  func setVisible(_ visible: Bool) {
+    statusItem.isVisible = visible
+  }
+
   /// Mirrors the session state on the shell: the ghost pulses between
   /// full and dimmed tint while recording, and the menu item flips.
   /// An Edge Glow session passes its palette accent so the pulse speaks

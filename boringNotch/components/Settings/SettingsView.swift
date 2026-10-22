@@ -6,6 +6,7 @@
 //
 
 import AVFoundation
+import CoucouCore
 import Defaults
 import EventKit
 import KeyboardShortcuts
@@ -16,6 +17,22 @@ import SwiftUIIntrospect
 
 struct SettingsView: View {
     @State private var selectedTab = "General"
+
+    private static let sidebarItems: [(value: String, title: String, icon: String)] = [
+        ("General", "General", "gear"),
+        ("Appearance", "Appearance", "eye"),
+        ("Media", "Media", "play.laptopcomputer"),
+        ("Calendar", "Calendar", "calendar"),
+        ("HUD", "HUDs", "dial.medium.fill"),
+        ("Battery", "Battery", "battery.100.bolt"),
+        ("Shelf", "Shelf", "books.vertical"),
+        ("Shortcuts", "Shortcuts", "keyboard"),
+        ("Dictation", "Dictation", "waveform.badge.mic"),
+        ("Agents", "Agents", "terminal"),
+        ("Meetings", "Meetings", "mic"),
+        ("Advanced", "Advanced", "gearshape.2"),
+        ("About", "About", "info.circle"),
+    ]
     @State private var accentColorUpdateTrigger = UUID()
 
     let updaterController: SPUStandardUpdaterController?
@@ -27,41 +44,10 @@ struct SettingsView: View {
     var body: some View {
         NavigationSplitView {
             List(selection: $selectedTab) {
-                NavigationLink(value: "General") {
-                    Label("General", systemImage: "gear")
-                }
-                NavigationLink(value: "Appearance") {
-                    Label("Appearance", systemImage: "eye")
-                }
-                NavigationLink(value: "Media") {
-                    Label("Media", systemImage: "play.laptopcomputer")
-                }
-                NavigationLink(value: "Calendar") {
-                    Label("Calendar", systemImage: "calendar")
-                }
-                NavigationLink(value: "HUD") {
-                    Label("HUDs", systemImage: "dial.medium.fill")
-                }
-                NavigationLink(value: "Battery") {
-                    Label("Battery", systemImage: "battery.100.bolt")
-                }
-//                NavigationLink(value: "Downloads") {
-//                    Label("Downloads", systemImage: "square.and.arrow.down")
-//                }
-                NavigationLink(value: "Shelf") {
-                    Label("Shelf", systemImage: "books.vertical")
-                }
-                NavigationLink(value: "Shortcuts") {
-                    Label("Shortcuts", systemImage: "keyboard")
-                }
-                // NavigationLink(value: "Extensions") {
-                //     Label("Extensions", systemImage: "puzzlepiece.extension")
-                // }
-                NavigationLink(value: "Advanced") {
-                    Label("Advanced", systemImage: "gearshape.2")
-                }
-                NavigationLink(value: "About") {
-                    Label("About", systemImage: "info.circle")
+                ForEach(Self.sidebarItems, id: \.value) { item in
+                    NavigationLink(value: item.value) {
+                        Label(item.title, systemImage: item.icon)
+                    }
                 }
             }
             .listStyle(SidebarListStyle())
@@ -87,6 +73,27 @@ struct SettingsView: View {
                     Shelf()
                 case "Shortcuts":
                     Shortcuts()
+                case "Dictation":
+                    HostedSettingsPage(
+                        title: "Dictation",
+                        icon: "waveform.badge.mic",
+                        text: "Hold Fn and speak: your words are typed where you were. Languages, voices, translation, sounds, the HUD's look, read aloud and file transcribing live in their own window.",
+                        button: "Open Dictation Settings…"
+                    ) { TalkifyRuntime.current?.showSettings() }
+                case "Agents":
+                    HostedSettingsPage(
+                        title: "Agents",
+                        icon: "terminal",
+                        text: "Which agents and pills show, the hook installers for Claude Code, Codex, Gemini CLI and Cursor, how long an agent stays after its last use, the call-recording pill and the summary engine.",
+                        button: "Open Agents Settings…"
+                    ) { CoucouHost.showSettings() }
+                case "Meetings":
+                    HostedSettingsPage(
+                        title: "Meetings",
+                        icon: "mic",
+                        text: "Your recorded calls: transcript by speaker, summary and to-dos, and the speech-model setup.",
+                        button: "Open Meetings…"
+                    ) { CoucouHost.showMeetings() }
                 case "Extensions":
                     GeneralSettings()
                 case "Advanced":
@@ -1726,6 +1733,33 @@ struct Shortcuts: View {
     var body: some View {
         TalkifyShortcutsPane()
             .navigationTitle("Shortcuts")
+    }
+}
+
+/// A Settings page that points at a feature's own window.
+struct HostedSettingsPage: View {
+    let title: String
+    let icon: String
+    let text: String
+    let button: String
+    let action: () -> Void
+
+    var body: some View {
+        Form {
+            Section {
+                VStack(alignment: .leading, spacing: 12) {
+                    Label(title, systemImage: icon)
+                        .font(.headline)
+                    Text(text)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Button(button, action: action)
+                        .buttonStyle(.borderedProminent)
+                }
+                .padding(.vertical, 4)
+            }
+        }
+        .navigationTitle(title)
     }
 }
 

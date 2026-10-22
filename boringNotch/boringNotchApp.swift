@@ -504,7 +504,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             BoringViewCoordinator.shared.hudOccupied = occupied
         }
         self.talkify = talkify
+        Defaults.publisher(.menubarIcon)
+            .map(\.newValue)
+            .sink { [weak talkify] visible in talkify?.setStatusItemVisible(visible) }
+            .store(in: &agentCancellables)
         talkify.start()
+        talkify.setStatusItemVisible(Defaults[.menubarIcon])
     }
 
     func playWelcomeSound() {

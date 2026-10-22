@@ -44,6 +44,11 @@ final class TalkifyRuntime {
     Self.current = self
   }
 
+  /// The host's "Show menu bar icon" switch.
+  func setStatusItemVisible(_ visible: Bool) {
+    statusItemController?.setVisible(visible)
+  }
+
   func transcribeDropped(_ url: URL) {
     dropTranscriptionController?.transcribe(url)
   }
