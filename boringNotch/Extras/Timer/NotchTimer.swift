@@ -21,7 +21,9 @@ final class NotchTimer: ObservableObject {
     @Published var minutes: Int {
         didSet { UserDefaults.standard.set(minutes, forKey: Keys.minutes) }
     }
-    @Published private(set) var phase: Phase = .idle
+    @Published private(set) var phase: Phase = .idle {
+        didSet { syncBubble() }
+    }
     /// Whole seconds left, published only when the second changes.
     @Published private(set) var secondsLeft = 0
 
@@ -32,21 +34,33 @@ final class NotchTimer: ObservableObject {
         static let minutes = "timerMinutes"
         static let end = "timerEndDate"
         static let total = "timerTotalSeconds"
+        static let paused = "timerPausedRemaining"
     }
 
     private var endDate: Date?
     private var total: TimeInterval = 0
     private var pausedRemaining: TimeInterval = 0
     private var ticker: Timer?
+    // Kept so the sound is not released while it plays.
+    private var chime: NSSound?
+    private var chimeTask: Task<Void, Never>?
 
     private init() {
         let saved = UserDefaults.standard.integer(forKey: Keys.minutes)
         minutes = Self.minuteRange.contains(saved) ? saved : 25
         restore()
+        syncBubble()
     }
 
     /// Running or paused: the closed notch shows it.
     var isActive: Bool { phase == .running || phase == .paused }
+
+    /// Seconds that have passed since the start, for the stopwatch hand.
+    var elapsedSeconds: Int { max(0, Int(total) - secondsLeft) }
+
+    private func syncBubble() {
+        if isActive { BubbleDock.shared.show("timer") } else { BubbleDock.shared.hide("timer") }
+    }
 
     /// Fraction of the time still left, 1 at the start and 0 at the end.
     var progress: Double {
@@ -55,6 +69,7 @@ final class NotchTimer: ObservableObject {
     }
 
     func start() {
+        chimeTask?.cancel()
         total = TimeInterval(minutes * 60)
         endDate = Date().addingTimeInterval(total)
         secondsLeft = Int(total)
@@ -69,11 +84,15 @@ final class NotchTimer: ObservableObject {
         phase = .paused
         stopTicker()
         clearSaved()
+        // A paused timer survives a relaunch too.
+        UserDefaults.standard.set(pausedRemaining, forKey: Keys.paused)
+        UserDefaults.standard.set(total, forKey: Keys.total)
     }
 
     func resume() {
         guard phase == .paused else { return }
         endDate = Date().addingTimeInterval(pausedRemaining)
+        UserDefaults.standard.removeObject(forKey: Keys.paused)
         phase = .running
         save()
         startTicker()
@@ -81,6 +100,7 @@ final class NotchTimer: ObservableObject {
 
     /// Stops the timer and goes back to the dial.
     func cancel() {
+        chimeTask?.cancel()
         stopTicker()
         clearSaved()
         endDate = nil
@@ -90,6 +110,20 @@ final class NotchTimer: ObservableObject {
 
     /// Time's up acknowledged.
     func dismiss() { cancel() }
+
+    /// Three dings, a second apart, from the system's own Glass sound.
+    private func playChime() {
+        chimeTask?.cancel()
+        chimeTask = Task { @MainActor [weak self] in
+            for _ in 0..<3 {
+                guard let self, !Task.isCancelled else { return }
+                let sound = NSSound(contentsOfFile: "/System/Library/Sounds/Glass.aiff", byReference: true)
+                self.chime = sound
+                if sound?.play() != true { NSSound.beep() }
+                try? await Task.sleep(for: .seconds(1.1))
+            }
+        }
+    }
 
     // MARK: - Ticking
 
@@ -125,7 +159,7 @@ final class NotchTimer: ObservableObject {
         endDate = nil
         secondsLeft = 0
         phase = .finished
-        NSSound(named: NSSound.Name("Glass"))?.play()
+        playChime()
         onFinished?()
     }
 
@@ -140,9 +174,18 @@ final class NotchTimer: ObservableObject {
     private func clearSaved() {
         UserDefaults.standard.removeObject(forKey: Keys.end)
         UserDefaults.standard.removeObject(forKey: Keys.total)
+        UserDefaults.standard.removeObject(forKey: Keys.paused)
     }
 
     private func restore() {
+        let pausedLeft = UserDefaults.standard.double(forKey: Keys.paused)
+        if pausedLeft > 0 {
+            total = UserDefaults.standard.double(forKey: Keys.total)
+            pausedRemaining = pausedLeft
+            secondsLeft = Int(pausedLeft.rounded(.up))
+            phase = .paused
+            return
+        }
         guard let end = UserDefaults.standard.object(forKey: Keys.end) as? Date,
             end.timeIntervalSinceNow > 0
         else {

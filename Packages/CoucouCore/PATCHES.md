@@ -53,3 +53,6 @@ app adds sits in `CoucouHost.swift` and `AgentsTabView.swift`.
     (`PillWorkingActivity`) while its agent is mid-turn.
     The edge sweep is stroked arcs, not a conic gradient (a conic fill is shaded on the
     CPU every frame).
+    The edge sweep is now a still ring seen through a conic gradient that is drawn once
+    and only turned (a repeating rotation), so it is a smooth gradient and costs the CPU
+    nothing per frame.

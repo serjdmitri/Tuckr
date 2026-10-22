@@ -71,10 +71,6 @@ struct ContentView: View {
         {
             chinWidth = 640
         } else if (!coordinator.expandingView.show || coordinator.expandingView.type == .music)
-            && vm.notchState == .closed && notchTimer.isActive && !musicIsShowing && !vm.hideOnClosed
-        {
-            chinWidth += 2 * (ClosedTimerActivity.earWidth + 4) + 10
-        } else if (!coordinator.expandingView.show || coordinator.expandingView.type == .music)
             && vm.notchState == .closed && agentPresence.isActive && !vm.hideOnClosed
         {
             chinWidth += (2 * max(0, vm.effectiveClosedNotchHeight - 12) + 20)
@@ -129,14 +125,6 @@ struct ContentView: View {
                                 .padding(.top, 5)
                                 .padding(.trailing, 9)
                                 .transition(.opacity)
-                        }
-                    }
-                    .overlay(alignment: .bottomTrailing) {
-                        // Music holds the ears, so a running timer hangs below as a bubble.
-                        if notchTimer.isActive && musicIsShowing && vm.notchState == .closed && !vm.hideOnClosed {
-                            TimerBubble()
-                                .offset(x: 6, y: 44)
-                                .transition(.scale.combined(with: .opacity))
                         }
                     }
                     .shadow(
@@ -242,6 +230,22 @@ struct ContentView: View {
         }
         .padding(.bottom, 8)
         .frame(maxWidth: windowSize.width, maxHeight: windowSize.height, alignment: .top)
+        .overlay(alignment: .top) {
+            // Live items as bubbles on either side of the closed notch. At the window's
+            // level, not the notch's, so taps on them reach it.
+            BubbleDockView(
+                // Out of the way of the volume and brightness HUDs and the battery popup,
+                // which widen the notch over where the bubbles sit.
+                visible: vm.notchState == .closed && !vm.hideOnClosed
+                    && !coordinator.sneakPeek.show
+                    && !(coordinator.expandingView.show && coordinator.expandingView.type == .battery),
+                chinWidth: computedChinWidth,
+                height: max(24, vm.effectiveClosedNotchHeight)
+            ) { id in
+                if id == "timer" { coordinator.currentView = .timer }
+                doOpen()
+            }
+        }
         .opacity(coordinator.hudOccupied && !isHovering ? 0 : 1)
         .animation(.smooth(duration: 0.2), value: coordinator.hudOccupied)
         .compositingGroup()
@@ -334,11 +338,6 @@ struct ContentView: View {
                       } else if coordinator.sneakPeek.show && Defaults[.inlineHUD] && (coordinator.sneakPeek.type != .music) && (coordinator.sneakPeek.type != .battery) && vm.notchState == .closed {
                           InlineHUD(type: $coordinator.sneakPeek.type, value: $coordinator.sneakPeek.value, icon: $coordinator.sneakPeek.icon, hoverAnimation: $isHovering, gestureProgress: $gestureProgress)
                               .transition(.opacity)
-                      } else if (!coordinator.expandingView.show || coordinator.expandingView.type == .music) && vm.notchState == .closed && notchTimer.isActive && !musicIsShowing && !vm.hideOnClosed {
-                          ClosedTimerActivity(
-                              gap: vm.closedNotchSize.width - cornerRadiusInsets.closed.top
-                          )
-                          .frame(height: vm.effectiveClosedNotchHeight, alignment: .center)
                       } else if (!coordinator.expandingView.show || coordinator.expandingView.type == .music) && vm.notchState == .closed && agentPresence.isActive && !vm.hideOnClosed {
                           ClosedAgentsActivity()
                               .frame(alignment: .center)
@@ -483,10 +482,6 @@ struct ContentView: View {
     /// With music and agents both showing, the side of the closed notch the
     /// pointer is over picks the tab: left for music, right for agents.
     private func pickTabForPointer() {
-        if vm.notchState == .closed, notchTimer.isActive, !musicIsShowing {
-            coordinator.currentView = .timer
-            return
-        }
         guard vm.notchState == .closed, agentPresence.isActive else { return }
         if musicIsShowing {
             coordinator.currentView = hoverPointX < computedChinWidth / 2 ? .home : .agents

@@ -5205,29 +5205,41 @@ extension Color {
 }
 
 
-/// The pill's "working" signal: a bright arc running around its edge and three dots
-/// bouncing at the trailing end. Paused when the island view is not shown. Drawn at the
-/// display's rate, with plain stroked arcs: a conic gradient is shaded on the CPU every
-/// frame and cost half a core with the notch open.
+/// The pill's "working" signal: a smooth comet of colour running round its edge and three
+/// dots bouncing at the trailing end. The comet is a still ring seen through a conic
+/// gradient that is drawn once and then only turned, which the GPU does for nothing; shading
+/// a conic gradient anew every frame cost half a core with the notch open. It turns while
+/// the island view is shown.
 struct PillWorkingActivity: View {
     let color: String
     @Environment(\.islandViewActive) private var viewActive
     @Environment(\.mochiFrameInterval) private var frameInterval
-
-    /// The arc's tail, from the oldest (faintest) to the head: (length behind the head, opacity).
-    private static let tail: [(behind: Double, opacity: Double)] = [(0.30, 0.22), (0.20, 0.5), (0.10, 1)]
+    @State private var turning = false
 
     var body: some View {
-        TimelineView(.animation(minimumInterval: frameInterval, paused: !viewActive)) { timeline in
-            let t = timeline.date.timeIntervalSinceReferenceDate
-            let head = (t.truncatingRemainder(dividingBy: 1.6)) / 1.6
-            let tint = Color(hex: color)
-            ZStack(alignment: .trailing) {
-                ForEach(0..<Self.tail.count, id: \.self) { i in
-                    let seg = Self.tail[i]
-                    let end = i + 1 < Self.tail.count ? Self.tail[i + 1].behind : 0
-                    arc(from: head - seg.behind, to: head - end, color: tint.opacity(seg.opacity))
+        let tint = Color(hex: color)
+        ZStack(alignment: .trailing) {
+            Capsule()
+                .strokeBorder(tint, lineWidth: 1.8)
+                .mask {
+                    AngularGradient(
+                        stops: [
+                            .init(color: .clear, location: 0),
+                            .init(color: .clear, location: 0.5),
+                            .init(color: .white.opacity(0.35), location: 0.8),
+                            .init(color: .white, location: 1),
+                        ],
+                        center: .center
+                    )
+                    .frame(width: 240, height: 240)
+                    .drawingGroup()
+                    .rotationEffect(.degrees(turning ? 360 : 0))
+                    .animation(
+                        turning ? .linear(duration: 1.7).repeatForever(autoreverses: false) : nil,
+                        value: turning)
                 }
+            TimelineView(.animation(minimumInterval: frameInterval, paused: !viewActive)) { timeline in
+                let t = timeline.date.timeIntervalSinceReferenceDate
                 HStack(spacing: 3) {
                     ForEach(0..<3, id: \.self) { i in
                         let phase = sin(t * 7 - Double(i) * 0.8)
@@ -5241,19 +5253,7 @@ struct PillWorkingActivity: View {
                 .padding(.trailing, 10)
             }
         }
-    }
-
-    /// A stretch of the capsule's edge, `from` and `to` as fractions of the way round
-    /// (wrapping past either end).
-    @ViewBuilder
-    private func arc(from: Double, to: Double, color: Color) -> some View {
-        let a = from < 0 ? from + 1 : from
-        let b = to < 0 ? to + 1 : to
-        if a <= b {
-            Capsule().trim(from: a, to: b).stroke(color, style: StrokeStyle(lineWidth: 1.6, lineCap: .round))
-        } else {
-            Capsule().trim(from: a, to: 1).stroke(color, style: StrokeStyle(lineWidth: 1.6, lineCap: .round))
-            Capsule().trim(from: 0, to: b).stroke(color, style: StrokeStyle(lineWidth: 1.6, lineCap: .round))
-        }
+        .onAppear { turning = viewActive }
+        .onChange(of: viewActive) { _, active in turning = active }
     }
 }
