@@ -23,3 +23,8 @@ app adds sits in `CoucouHost.swift` and `AgentsTabView.swift`.
    that freezes the app until answered. This app uses its own service name, so
    the lookups find nothing and never prompt; keys saved from here are read
    back without a prompt.
+5. `App/FlowHub.swift`, `FlowHubController.show`: upstream opens the Coucou Flow
+   window (dictation, notes, words, settings). This app has none: Talkify does
+   the dictation. Notes (the "Open" on the "notes ready" pill) now open the
+   Meetings window and everything else opens Agents Settings. The original is
+   kept as `showUpstreamHub`.

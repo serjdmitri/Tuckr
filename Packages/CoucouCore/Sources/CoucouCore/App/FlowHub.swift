@@ -167,7 +167,17 @@ final class FlowHubController {
         return ProcessInfo.processInfo.systemUptime < 180
     }
 
+    /// Patched: this app has no Coucou Flow window (Talkify does the dictation). Notes
+    /// open the Meetings window; everything else opens Agents Settings.
     func show(_ page: HubPage? = nil) {
+        switch page {
+        case nil, .notes: CoucouHost.showMeetings()
+        default: CoucouHost.showSettings()
+        }
+    }
+
+    /// Upstream's Coucou Flow window, no longer reachable.
+    func showUpstreamHub(_ page: HubPage? = nil) {
         if let page { router.page = page }
         if let window {
             window.makeKeyAndOrderFront(nil)
