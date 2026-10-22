@@ -47,12 +47,12 @@ struct BotCanvasView: View {
                         : ClaudePlanGauge.color(for: state.claudePlanUsage.flatMap { ClaudePlanGauge.dominantPct($0) })
                     engine.bodyColor = cgColorFromHex(hex)
                 } else {
-                    engine.bodyColor = (state.focusTask?.isIntegration == true)
+                    engine.bodyColor = (state.focusTask.map { $0.isIntegration || $0.source == .agent } == true) // patched: external agents keep their color
                         ? cgColorFromHex(state.focusTask!.color)
                         : nil
                 }
                 #else
-                engine.bodyColor = (state.focusTask?.isIntegration == true)
+                engine.bodyColor = (state.focusTask.map { $0.isIntegration || $0.source == .agent } == true) // patched: external agents keep their color
                     ? cgColorFromHex(state.focusTask!.color)
                     : nil
                 #endif

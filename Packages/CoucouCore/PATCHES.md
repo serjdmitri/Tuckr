@@ -13,3 +13,7 @@ app adds sits in `CoucouHost.swift` and `AgentsTabView.swift`.
    unused for the "Hide after" delay (`AppState.absenceInterval`, 3 minutes by
    default, editable in Agents Settings > General). A later event pushes the
    removal back (`lastSeen`).
+3. `App/BotCanvasView.swift`, the big Mochi's body color: upstream tints him with
+   the focused pill's color for integration pills only, so an external agent
+   (Claude Desktop and the like) showed a white Mochi next to its colored pill.
+   External agents now tint him too.
