@@ -18,6 +18,7 @@ final class TalkifyRuntime {
   private let updaterService = SparkleUpdaterService()
   private let launchAtLoginService = LaunchAtLoginService()
   private let hostSettings: HostMenuItem
+  private let hostAgentsSettings: HostMenuItem
   private let hostRestart: HostMenuItem
 
   /// Called with true while the HUD holds the notch and false once it is gone.
@@ -36,8 +37,9 @@ final class TalkifyRuntime {
   /// The running instance, for the Shelf's transcribe panel to reach.
   private(set) static weak var current: TalkifyRuntime?
 
-  init(hostSettings: HostMenuItem, hostRestart: HostMenuItem) {
+  init(hostSettings: HostMenuItem, hostAgentsSettings: HostMenuItem, hostRestart: HostMenuItem) {
     self.hostSettings = hostSettings
+    self.hostAgentsSettings = hostAgentsSettings
     self.hostRestart = hostRestart
     Self.current = self
   }
@@ -128,6 +130,7 @@ final class TalkifyRuntime {
       transcribeFile: { dropTranscriptionController.pickFile() },
       openSettings: { [weak self] in self?.showSettings() },
       hostSettings: hostSettings,
+      hostAgentsSettings: hostAgentsSettings,
       hostRestart: hostRestart
     )
     self.statusItemController = statusItemController

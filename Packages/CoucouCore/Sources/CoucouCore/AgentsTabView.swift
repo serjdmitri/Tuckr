@@ -23,17 +23,22 @@ struct AgentsTabView: View {
     Self.shown.contains(state.view) ? state.view : .overview
   }
 
+  /// Two cards side by side, as in Coucou's overview, plus the notch's own padding.
+  private static let contentSize = CGSize(width: 560, height: 98)
+
   var body: some View {
-    ZStack(alignment: .topLeading) {
-      cards
-      BotPlacement(state: state, islandW: Self.islandSize.width, islandH: Self.islandSize.height)
-        .frame(width: Self.islandSize.width, height: Self.islandSize.height, alignment: .topLeading)
-        .offset(x: -Self.contentOrigin.x, y: -Self.contentOrigin.y)
-    }
-    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-    .foregroundColor(Color(hex: "#F5F6F8"))
-    .onAppear { state.mode = .expanded }
-    .onDisappear { state.mode = .hidden }
+    cards
+      .frame(width: Self.contentSize.width, height: Self.contentSize.height)
+      // Mochi's layer is an overlay, so its 640-point frame never widens the notch.
+      .overlay(alignment: .topLeading) {
+        BotPlacement(state: state, islandW: Self.islandSize.width, islandH: Self.islandSize.height)
+          .frame(width: Self.islandSize.width, height: Self.islandSize.height, alignment: .topLeading)
+          .offset(x: -Self.contentOrigin.x, y: -Self.contentOrigin.y)
+      }
+      .foregroundColor(Color(hex: "#F5F6F8"))
+      .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+      .onAppear { state.mode = .expanded }
+      .onDisappear { state.mode = .hidden }
   }
 
   private var cards: some View {

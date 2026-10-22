@@ -16,6 +16,7 @@ final class StatusItemController: NSObject {
   private let transcribeFile: () -> Void
   private let openSettings: () -> Void
   private let hostSettings: HostMenuItem
+  private let hostAgentsSettings: HostMenuItem
   private let hostRestart: HostMenuItem
   private let dictationItem: NSMenuItem
   private let readAloudItem: NSMenuItem
@@ -37,6 +38,7 @@ final class StatusItemController: NSObject {
     transcribeFile: @escaping () -> Void,
     openSettings: @escaping () -> Void,
     hostSettings: HostMenuItem,
+    hostAgentsSettings: HostMenuItem,
     hostRestart: HostMenuItem
   ) {
     self.toggleDictation = toggleDictation
@@ -44,6 +46,7 @@ final class StatusItemController: NSObject {
     self.transcribeFile = transcribeFile
     self.openSettings = openSettings
     self.hostSettings = hostSettings
+    self.hostAgentsSettings = hostAgentsSettings
     self.hostRestart = hostRestart
     statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
     dictationItem = NSMenuItem(title: "Start Dictation", action: nil, keyEquivalent: "")
@@ -73,6 +76,7 @@ final class StatusItemController: NSObject {
     menu.addItem(.separator())
 
     menu.addItem(hostMenuItem(hostSettings))
+    menu.addItem(hostMenuItem(hostAgentsSettings))
 
     let settingsItem = NSMenuItem(
       title: "Dictation Settings…",

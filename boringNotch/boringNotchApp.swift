@@ -459,6 +459,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             hostSettings: HostMenuItem(title: "Settings…", keyEquivalent: ",") {
                 SettingsWindowController.shared.showWindow()
             },
+            hostAgentsSettings: HostMenuItem(title: "Agents Settings…", keyEquivalent: "") {
+                CoucouHost.showSettings()
+            },
             hostRestart: HostMenuItem(title: "Restart", keyEquivalent: "") {
                 ApplicationRelauncher.restart()
             }
