@@ -470,6 +470,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             }
             self.scheduleAgentsAutoClose()
         }
+        CoucouHost.onCollapseRequested = { [weak self] in
+            self?.vm.close()
+        }
         CoucouHost.onToggleRequested = { [weak self] in
             guard let self else { return }
             if self.vm.notchState == .open && BoringViewCoordinator.shared.currentView == .agents {

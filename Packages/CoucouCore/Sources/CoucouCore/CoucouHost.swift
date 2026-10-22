@@ -43,6 +43,10 @@ public enum CoucouHost {
   /// Agents tab, or closes it when it is already there.
   public static var onToggleRequested: (() -> Void)?
 
+  /// Called when a card asks the island to close (its OK button, or Open terminal after it
+  /// has jumped): the host closes its notch.
+  public static var onCollapseRequested: (() -> Void)?
+
   /// Called when an agent event wants the notch open on the Agents tab: a
   /// permission request, a question, or a session that finished or failed.
   public static var onExpandRequested: (() -> Void)?
@@ -93,6 +97,16 @@ public enum CoucouHost {
 
     // Coucou's global shortcuts (Settings > Shortcuts), the ones this app handles.
     HotKeyCenter.shared.start { action in handle(action) }
+
+    // Coucou's own island answers this itself; here the host closes the notch.
+    NotificationCenter.default.addObserver(
+      forName: .islandCollapse, object: nil, queue: .main
+    ) { _ in
+      MainActor.assumeIsolated {
+        AppState.shared.isPinned = false
+        onCollapseRequested?()
+      }
+    }
 
     // Slapping Mochi three times makes him dizzy for a moment.
     NotificationCenter.default.addObserver(
