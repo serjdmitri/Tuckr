@@ -39,3 +39,7 @@ app adds sits in `CoucouHost.swift` and `AgentsTabView.swift`.
    (`MochiFrameRate.swift`, nil by default, so nothing changes). The closed
    notch's ears set it to 20 frames a second: Mochi's speed does not depend on
    the frame rate, and drawing at the display's rate cost about a quarter of a core.
+9. `App/ShortcutsSettingsView.swift`: the global shortcut list shows only the six
+   actions this app handles (open/close, go to alert, jump to terminal, next and
+   previous pill, mute). The others belong to chat, voice, screen capture and
+   the desktop Mochi, which are off here.

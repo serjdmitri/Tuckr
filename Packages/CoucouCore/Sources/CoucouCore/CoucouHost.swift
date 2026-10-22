@@ -39,6 +39,10 @@ public enum CoucouHost {
   /// Coucou's own "Close after" setting.
   public static var autoCloseInterval: TimeInterval { AppState.shared.autoCloseInterval }
 
+  /// Called by the "open or close" global shortcut: the host opens its notch on the
+  /// Agents tab, or closes it when it is already there.
+  public static var onToggleRequested: (() -> Void)?
+
   /// Called when an agent event wants the notch open on the Agents tab: a
   /// permission request, a question, or a session that finished or failed.
   public static var onExpandRequested: (() -> Void)?
@@ -86,6 +90,16 @@ public enum CoucouHost {
 
     AgentPresence.shared.start()
     MeetingPresence.shared.start()
+
+    // Coucou's global shortcuts (Settings > Shortcuts), the ones this app handles.
+    HotKeyCenter.shared.start { action in handle(action) }
+
+    // Slapping Mochi three times makes him dizzy for a moment.
+    NotificationCenter.default.addObserver(
+      forName: .botDizzy, object: nil, queue: .main
+    ) { _ in
+      MainActor.assumeIsolated { handleDizzy() }
+    }
     HookServer.shared.start()
   }
 
@@ -158,6 +172,74 @@ public enum CoucouHost {
   /// The call recorder, for the Meetings tab.
   public static func makeMeetingsView() -> some View {
     MeetingsTabView()
+  }
+
+  private static var dizzyRecovery: DispatchWorkItem?
+
+  private static func handleDizzy() {
+    let state = AppState.shared
+    let previous = state.view
+    state.stateOverride = .dizzy
+    state.view = .confused
+    dizzyRecovery?.cancel()
+    let recovery = DispatchWorkItem {
+      state.stateOverride = nil
+      if state.view == .confused {
+        let fallback: IslandView = state.tasks.isEmpty ? .empty : .overview
+        state.view = previous == .confused ? fallback : previous
+      }
+      NotificationCenter.default.post(name: .triggerEmote, object: BotEmote.happy)
+    }
+    dizzyRecovery = recovery
+    DispatchQueue.main.asyncAfter(deadline: .now() + 3.3, execute: recovery)
+  }
+
+  private static func handle(_ action: ShortcutAction) {
+    let state = AppState.shared
+    func refuse() {
+      NotificationCenter.default.post(name: .triggerEmote, object: BotEmote.annoyed)
+      SoundEngine.shared.play("error")
+    }
+    switch action {
+    case .toggleIsland:
+      onToggleRequested?()
+    case .goToAlert:
+      if state.pendingApproval != nil {
+        state.view = .approval
+        onExpandRequested?()
+      } else if state.pendingQuestion != nil {
+        state.view = .question
+        onExpandRequested?()
+      } else {
+        refuse()
+      }
+    case .jumpToTerminal:
+      guard state.focusTask != nil else { return refuse() }
+      if !TerminalTarget.activate(sessionBundleId: state.focusTask?.sessionBundleId) {
+        NSWorkspace.shared.open(URL(fileURLWithPath: "/System/Applications/Utilities/Terminal.app"))
+      }
+    case .nextPill, .prevPill:
+      guard !state.tasks.isEmpty else { return }
+      let ids = state.tasks.map { $0.id }
+      let current = ids.firstIndex(of: state.focusId ?? "") ?? 0
+      let delta = action == .nextPill ? 1 : -1
+      state.setFocus(ids[(current + delta + ids.count) % ids.count])
+      state.cardSelection = nil
+      state.view = .overview
+      onExpandRequested?()
+    case .muteToggle:
+      state.soundEnabled.toggle()
+      if state.soundEnabled { SoundEngine.shared.play("tick") }
+      NotificationCenter.default.post(
+        name: .triggerEmote, object: state.soundEnabled ? BotEmote.happy : BotEmote.annoyed)
+    default:
+      break
+    }
+  }
+
+  /// The plan-usage pill and the sound switch, for the notch header on the Agents tab.
+  public static func makeAgentsHeaderAccessory() -> some View {
+    AgentsAccessoryView()
   }
 
   /// Coucou's agent cards and Mochi, for the Agents tab.

@@ -470,6 +470,17 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             }
             self.scheduleAgentsAutoClose()
         }
+        CoucouHost.onToggleRequested = { [weak self] in
+            guard let self else { return }
+            if self.vm.notchState == .open && BoringViewCoordinator.shared.currentView == .agents {
+                self.vm.close()
+            } else {
+                BoringViewCoordinator.shared.currentView = .agents
+                withAnimation(.spring(response: 0.38, dampingFraction: 0.8)) {
+                    self.vm.open()
+                }
+            }
+        }
         // A waiting permission or question holds the notch open; once it is
         // answered the usual auto-close countdown starts.
         AgentPresence.shared.$isHoldingForAnswer

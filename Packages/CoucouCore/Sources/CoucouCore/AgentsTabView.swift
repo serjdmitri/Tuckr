@@ -9,6 +9,9 @@ import SwiftUI
 /// the tab's top-left corner and Mochi's layer is shifted by the same amount.
 struct AgentsTabView: View {
   @ObservedObject private var state = AppState.shared
+  @State private var hovering = false
+  @State private var loveTimer: DispatchWorkItem?
+  @State private var lastLove: TimeInterval = 0
 
   /// The views an agent can put on screen. Chat, mail, upload and the rest
   /// belong to features this app does not surface.
@@ -36,6 +39,7 @@ struct AgentsTabView: View {
           .frame(width: Self.islandSize.width, height: Self.islandSize.height, alignment: .topLeading)
           .offset(x: -Self.contentOrigin.x, y: -Self.contentOrigin.y)
       }
+      .overlay(alignment: .topLeading) { mochiHitArea }
       .foregroundColor(Color(hex: "#F5F6F8"))
       .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
   }
@@ -60,5 +64,48 @@ struct AgentsTabView: View {
       }
     }
     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+  }
+
+  /// Mochi's reactions to the pointer, as in Coucou's own island: a blink and a nudge on
+  /// hover, love after a moment on him, and a slap on a click (three make him dizzy).
+  private var mochiHitArea: some View {
+    let (cx, cy, diameter, _) = botPosition(
+      mode: .expanded, view: effectiveView,
+      islandW: Self.islandSize.width, islandH: Self.islandSize.height,
+      uploadProgress: 0, hasNotch: true)
+    let size = max(diameter, 48) + 12
+    return Color.clear
+      .frame(width: size, height: size)
+      .contentShape(Circle())
+      .position(x: cx - Self.contentOrigin.x, y: cy - Self.contentOrigin.y)
+      .onHover { inside in inside ? hoverIn() : hoverOut() }
+      .onTapGesture {
+        NotificationCenter.default.post(name: .triggerSlap, object: nil)
+      }
+  }
+
+  private func hoverIn() {
+    hovering = true
+    guard state.stateOverride == nil, ProcessInfo.processInfo.systemUptime - lastLove > 6 else { return }
+    NotificationCenter.default.post(name: .botBlink, object: nil)
+    NotificationCenter.default.post(name: .botSetTgEs, object: CGFloat(1.08))
+    SoundEngine.shared.play("hover")
+    loveTimer?.cancel()
+    let work = DispatchWorkItem {
+      guard hovering, state.stateOverride == nil,
+        ProcessInfo.processInfo.systemUptime - lastLove > 6
+      else { return }
+      lastLove = ProcessInfo.processInfo.systemUptime
+      NotificationCenter.default.post(name: .triggerEmote, object: BotEmote.love)
+      SoundEngine.shared.play("love")
+    }
+    loveTimer = work
+    DispatchQueue.main.asyncAfter(deadline: .now() + 1.9, execute: work)
+  }
+
+  private func hoverOut() {
+    hovering = false
+    loveTimer?.cancel()
+    NotificationCenter.default.post(name: .botSetTgEs, object: CGFloat(1))
   }
 }

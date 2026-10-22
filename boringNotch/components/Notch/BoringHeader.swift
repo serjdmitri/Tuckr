@@ -5,6 +5,7 @@
 //  Created by Harsh Vardhan  Goswami  on 04/08/24.
 //
 
+import CoucouCore
 import Defaults
 import SwiftUI
 
@@ -42,6 +43,9 @@ struct BoringHeader: View {
                         OpenNotchHUD(type: $coordinator.sneakPeek.type, value: $coordinator.sneakPeek.value, icon: $coordinator.sneakPeek.icon)
                             .transition(.scale(scale: 0.8).combined(with: .opacity))
                     } else {
+                        if coordinator.currentView == .agents {
+                            CoucouHost.makeAgentsHeaderAccessory()
+                        }
                         if Defaults[.showMirror] {
                             Button(action: {
                                 vm.toggleCameraPreview()

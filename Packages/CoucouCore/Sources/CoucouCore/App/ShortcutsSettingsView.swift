@@ -51,7 +51,9 @@ struct ShortcutsSettingsView: View {
         #if APPSTORE
         ShortcutAction.allCases.filter { !$0.isNonAppStore }
         #else
-        ShortcutAction.allCases
+        // Patched: only the actions this app handles (CoucouHost.handle); chat, voice,
+        // screen capture, window attach, the wardrobe and desktop Mochi are not part of it.
+        [.toggleIsland, .goToAlert, .jumpToTerminal, .nextPill, .prevPill, .muteToggle]
         #endif
     }
 
