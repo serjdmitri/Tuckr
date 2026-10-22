@@ -63,6 +63,14 @@ struct ContentView: View {
         )
     }
 
+    /// Bubbles show on the closed notch, out of the way of the volume and brightness HUDs and
+    /// the battery popup, which widen the notch over where they sit.
+    private var dockVisible: Bool {
+        vm.notchState == .closed && !vm.hideOnClosed
+            && !(coordinator.sneakPeek.show && coordinator.sneakPeek.type != .music)
+            && !(coordinator.expandingView.show && coordinator.expandingView.type == .battery)
+    }
+
     private var computedChinWidth: CGFloat {
         var chinWidth: CGFloat = vm.closedNotchSize.width
 
@@ -230,17 +238,15 @@ struct ContentView: View {
         }
         .padding(.bottom, 8)
         .frame(maxWidth: windowSize.width, maxHeight: windowSize.height, alignment: .top)
+        .background(alignment: .top) {
+            // The bubbles' liquid, behind the notch so it cannot cover what the notch shows.
+            BubbleDockBackground(
+                chinWidth: computedChinWidth, height: max(24, vm.effectiveClosedNotchHeight))
+        }
         .overlay(alignment: .top) {
-            // Live items as bubbles on either side of the closed notch. At the window's
-            // level, not the notch's, so taps on them reach it.
+            // Their symbols, at the window's level, not the notch's, so taps reach them.
             BubbleDockView(
-                // Out of the way of the volume and brightness HUDs and the battery popup,
-                // which widen the notch over where the bubbles sit.
-                visible: vm.notchState == .closed && !vm.hideOnClosed
-                    && !(coordinator.sneakPeek.show && coordinator.sneakPeek.type != .music)
-                    && !(coordinator.expandingView.show && coordinator.expandingView.type == .battery),
-                chinWidth: computedChinWidth,
-                height: max(24, vm.effectiveClosedNotchHeight)
+                chinWidth: computedChinWidth, height: max(24, vm.effectiveClosedNotchHeight)
             ) { id in
                 if id == "timer" {
                     NotchTimer.shared.silence()
@@ -248,6 +254,9 @@ struct ContentView: View {
                 }
                 doOpen()
             }
+        }
+        .onChange(of: dockVisible, initial: true) { _, visible in
+            BubbleDock.shared.visible = visible
         }
         .opacity(coordinator.hudOccupied && !isHovering ? 0 : 1)
         .animation(.smooth(duration: 0.2), value: coordinator.hudOccupied)

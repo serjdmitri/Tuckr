@@ -9,13 +9,27 @@
 
 import SwiftUI
 
-/// Which items have a bubble. The first takes the right side, the second the left; a
-/// third waits for a free side.
+/// Which items have a bubble, and how far out each bubble is. The first item takes the
+/// right side, the second the left; a third waits for a free side.
 @MainActor
 final class BubbleDock: ObservableObject {
     static let shared = BubbleDock()
 
-    @Published private(set) var items: [String] = []
+    @Published private(set) var items: [String] = [] {
+        didSet { sync() }
+    }
+
+    /// False while the notch is open or covered by a popup: the bubbles sink back in.
+    var visible = false {
+        didSet { if visible != oldValue { sync() } }
+    }
+
+    // 0: sunk into the notch's edge; 1: at rest beside it. Spring overshoot gives the stretch.
+    @Published var tRight: CGFloat = 0
+    @Published var tLeft: CGFloat = 0
+    // The item a side last showed, kept while its bubble sinks back.
+    @Published var rightID: String?
+    @Published var leftID: String?
 
     func show(_ id: String) {
         guard !items.contains(id), items.count < 2 else { return }
@@ -25,52 +39,65 @@ final class BubbleDock: ObservableObject {
     func hide(_ id: String) {
         items.removeAll { $0 == id }
     }
+
+    private func sync() {
+        move(side: \.rightID, t: \.tRight, to: visible ? items.first : nil)
+        move(side: \.leftID, t: \.tLeft, to: visible && items.count > 1 ? items[1] : nil)
+    }
+
+    private func move(
+        side: ReferenceWritableKeyPath<BubbleDock, String?>,
+        t: ReferenceWritableKeyPath<BubbleDock, CGFloat>, to id: String?
+    ) {
+        if let id, self[keyPath: side] != id { self[keyPath: side] = id }
+        let target: CGFloat = id == nil ? 0 : 1
+        guard self[keyPath: t] != target else { return }
+        // Out only once the notch has finished closing; back in at once as it opens.
+        let spring = Animation.spring(response: 0.55, dampingFraction: 0.58)
+        withAnimation(target == 1 ? spring.delay(0.6) : spring) {
+            self[keyPath: t] = target
+        }
+    }
+
+    static func diameter(forHeight height: CGFloat) -> CGFloat { max(22, height - 4) }
+    static let gap: CGFloat = 7
 }
 
+/// The bubbles' liquid, drawn BEHIND the notch: its anchor then hides under the notch's
+/// own black and cannot cover what the notch shows (the music bars at its edge).
+struct BubbleDockBackground: View {
+    @ObservedObject private var dock = BubbleDock.shared
+    let chinWidth: CGFloat
+    let height: CGFloat
+
+    var body: some View {
+        let d = BubbleDock.diameter(forHeight: height)
+        GooLayer(
+            tLeft: dock.tLeft, tRight: dock.tRight, chin: chinWidth, height: height,
+            diameter: d, gap: BubbleDock.gap
+        )
+        .frame(width: chinWidth + 2 * (BubbleDock.gap + d + 14), height: height)
+        .allowsHitTesting(false)
+    }
+}
+
+/// The bubbles' symbols, above the notch, tappable.
 struct BubbleDockView: View {
     @ObservedObject private var dock = BubbleDock.shared
-    /// False while the notch is open or hidden: the bubbles sink back in.
-    let visible: Bool
-    /// The closed notch's width, ears included.
     let chinWidth: CGFloat
     let height: CGFloat
     let onSelect: (String) -> Void
 
-    // 0: sunk into the notch's edge; 1: at rest beside it. Spring overshoot gives the stretch.
-    @State private var tRight: CGFloat = 0
-    @State private var tLeft: CGFloat = 0
-    // The item a side last showed, kept while its bubble sinks back.
-    @State private var rightID: String?
-    @State private var leftID: String?
-
-    private var diameter: CGFloat { max(22, height - 4) }
-    private let gap: CGFloat = 7
+    private var diameter: CGFloat { BubbleDock.diameter(forHeight: height) }
+    private var gap: CGFloat { BubbleDock.gap }
     private var span: CGFloat { gap + diameter + 14 }
-
-    private var rightWanted: String? { visible ? dock.items.first : nil }
-    private var leftWanted: String? { visible && dock.items.count > 1 ? dock.items[1] : nil }
 
     var body: some View {
         ZStack {
-            GooLayer(
-                tLeft: tLeft, tRight: tRight, chin: chinWidth, height: height,
-                diameter: diameter, gap: gap)
-            bubble(id: rightID, t: tRight, direction: 1)
-            bubble(id: leftID, t: tLeft, direction: -1)
+            bubble(id: dock.rightID, t: dock.tRight, direction: 1)
+            bubble(id: dock.leftID, t: dock.tLeft, direction: -1)
         }
         .frame(width: chinWidth + 2 * span, height: height)
-        .onChange(of: rightWanted, initial: true) { _, id in move(&rightID, t: &tRight, to: id) }
-        .onChange(of: leftWanted, initial: true) { _, id in move(&leftID, t: &tLeft, to: id) }
-    }
-
-    private func move(_ shownID: inout String?, t: inout CGFloat, to id: String?) {
-        if let id { shownID = id }
-        let target: CGFloat = id == nil ? 0 : 1
-        // Out only once the notch has finished closing; back in at once as it opens.
-        let spring = Animation.spring(response: 0.55, dampingFraction: 0.58)
-        withAnimation(target == 1 ? spring.delay(0.6) : spring) {
-            t = target
-        }
     }
 
     @ViewBuilder
