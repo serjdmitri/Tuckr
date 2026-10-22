@@ -445,7 +445,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         previousScreens = NSScreen.screens
 
-        NSLog("CoucouCore linked: \(CoucouHost.isLinked)")
+        CoucouHost.onExpandRequested = { [weak self] in
+            guard let self else { return }
+            BoringViewCoordinator.shared.currentView = .agents
+            withAnimation(.spring(response: 0.38, dampingFraction: 0.8)) {
+                self.vm.open()
+            }
+        }
+        CoucouHost.start()
 
         // One menu-bar icon: Talkify's status item carries Boring's entries too.
         let talkify = TalkifyRuntime(

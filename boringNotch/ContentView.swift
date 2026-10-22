@@ -9,6 +9,7 @@
 import AVFoundation
 import Combine
 import Defaults
+import CoucouCore
 import KeyboardShortcuts
 import SwiftUI
 import SwiftUIIntrospect
@@ -352,11 +353,7 @@ struct ContentView: View {
                     case .shelf:
                         ShelfView()
                     case .agents:
-                        TabPlaceholderView(
-                            icon: "terminal.fill",
-                            title: "Agents",
-                            detail: "Claude Code and other agent sessions will live here."
-                        )
+                        CoucouHost.makeAgentsView()
                     case .meetings:
                         TabPlaceholderView(
                             icon: "mic.fill",
