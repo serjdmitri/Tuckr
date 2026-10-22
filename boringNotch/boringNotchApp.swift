@@ -8,6 +8,7 @@
 import AVFoundation
 import Combine
 import Defaults
+import CoucouCore
 import KeyboardShortcuts
 import Sparkle
 import SwiftUI
@@ -443,6 +444,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         previousScreens = NSScreen.screens
+
+        NSLog("CoucouCore linked: \(CoucouHost.isLinked)")
 
         // One menu-bar icon: Talkify's status item carries Boring's entries too.
         let talkify = TalkifyRuntime(

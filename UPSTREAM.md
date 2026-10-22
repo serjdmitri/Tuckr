@@ -5,3 +5,7 @@ Agents + call recorder: Coucou (MIT) — https://github.com/Louis-CFM/coucou @ 1
 Dictation: Talkify (MIT) — https://github.com/tornikegomareli/Talkify @ 6c2f7c6dc2e231525c6902773f499682891c41cb
 
 Step 0 imports Boring Notch unmodified at the SHA above.
+
+## Coucou module (Packages/CoucouCore)
+
+Sources: Coucou's NotchBuddy/Sources/App and NotchBuddy/Sources/CoucouKit, copied unchanged from the commit above, minus NotchBuddyApp.swift (the @main entry). The only added file is Sources/CoucouCore/CoucouHost.swift. The Phone, Widgets and NotificationContent targets are not included. Coucou's licenses are in licenses/Coucou (the name, Mochi and sounds are not MIT: see LICENSE-ASSETS.md).
