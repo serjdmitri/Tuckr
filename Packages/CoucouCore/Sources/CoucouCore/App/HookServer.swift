@@ -59,6 +59,7 @@ final class HookServer: @unchecked Sendable {
     private var focusBeforeAlert: String? = nil       // saved focus while another pill's card shows
     private var alertPill: String? = nil              // the pill that took the focus for its alert
     private var sessions = PillSessionRegistry()      // live sessions behind each pill
+    private var lastSeen: [String: Date] = [:]        // patched: when each pill last had an event
 
     private init() {}
 
@@ -472,6 +473,7 @@ final class HookServer: @unchecked Sendable {
         }
 
         let focused = state.focusId == agentId
+        lastSeen[agentId] = .now
         // The user is looking at the session's terminal: a finish or an error is already in
         // front of them, so the pill only takes a badge (no sound, no reveal). Warp exposes
         // no active tab, so a sibling session in another tab of the same terminal is quiet too.
@@ -627,7 +629,17 @@ final class HookServer: @unchecked Sendable {
                 // A session (this one or a sibling) may have started a new turn meanwhile.
                 guard self.sessions.workingCount(pill: agentId) == 0 else { return }
                 if isExternalAgent {
-                    AppState.shared.removeTask(id: agentId)
+                    // Patched: the pill settles to idle now and goes once the agent has not
+                    // been used for the "Hide after" delay (3 minutes unless changed).
+                    AppState.shared.updateTask(id: agentId, state: .idle)
+                    self.clearPillBadge(id: agentId)
+                    let lastUse = self.lastSeen[agentId] ?? .now
+                    let hideAfter = max(0, AppState.shared.absenceInterval - 5.2)
+                    DispatchQueue.main.asyncAfter(deadline: .now() + hideAfter) {
+                        guard self.sessions.workingCount(pill: agentId) == 0,
+                              (self.lastSeen[agentId] ?? .distantPast) <= lastUse else { return }
+                        AppState.shared.removeTask(id: agentId)
+                    }
                 } else {
                     AppState.shared.updateTask(id: agentId, state: .idle)
                     self.clearPillBadge(id: agentId)

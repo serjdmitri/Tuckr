@@ -146,8 +146,9 @@ public final class AgentPresence: ObservableObject {
   /// A permission request or a question is waiting for an answer.
   @Published public private(set) var isHoldingForAnswer = false
 
-  /// How long the closed notch keeps showing agents after the last sign of life.
-  private static let lingerSeconds: TimeInterval = 60
+  /// How long the closed notch keeps showing agents after the last sign of life:
+  /// Coucou's "Hide after ... min without movement" setting, 3 minutes by default.
+  private var lingerSeconds: TimeInterval { AppState.shared.absenceInterval }
 
   private var lastActivityAt = Date.distantPast
   private var cancellables = Set<AnyCancellable>()
@@ -177,7 +178,7 @@ public final class AgentPresence: ObservableObject {
     let holding = state.pendingApproval != nil || state.pendingQuestion != nil
     let busy = state.tasks.contains { $0.state != .idle && $0.state != .sleeping }
     if holding || busy { lastActivityAt = .now }
-    let active = holding || busy || Date.now.timeIntervalSince(lastActivityAt) < Self.lingerSeconds
+    let active = holding || busy || Date.now.timeIntervalSince(lastActivityAt) < lingerSeconds
     if holding != isHoldingForAnswer { isHoldingForAnswer = holding }
     if active != isActive { isActive = active }
   }
