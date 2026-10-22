@@ -99,6 +99,9 @@ final class NotesStore: ObservableObject {
     @Published private(set) var status = Status.idle
     @Published private(set) var loading = false
     @Published private(set) var pinnedIDs: [String] = []
+    /// Notes pinned in Apple Notes itself (read from its database, never changed here).
+    @Published private(set) var applePinnedIDs: [String] = []
+    @Published private(set) var applePinsNeedAccess = false
     /// Bumped to ask the editor to take the cursor (after + is pressed).
     @Published private(set) var focusToken = 0
 
@@ -106,6 +109,7 @@ final class NotesStore: ObservableObject {
     private var saveTasks: [String: Task<Void, Never>] = [:]
     private static let cacheKey = "notchNotesCache3"
     private static let pinKey = "notchPinnedNotes"
+    private static let applePinKey = "notchApplePinnedNotes"
     /// How long after the last keystroke the note is written to Notes.
     private static let saveDelay: Duration = .milliseconds(350)
 
@@ -116,6 +120,7 @@ final class NotesStore: ObservableObject {
             notes = cached
         }
         pinnedIDs = UserDefaults.standard.stringArray(forKey: Self.pinKey) ?? []
+        applePinnedIDs = UserDefaults.standard.stringArray(forKey: Self.applePinKey) ?? []
         selectedID = pinned.first?.id ?? notes.first?.id
     }
 
@@ -123,17 +128,48 @@ final class NotesStore: ObservableObject {
 
     // MARK: - What the list shows
 
-    /// Pinned notes, in the order they were pinned.
-    var pinned: [NoteItem] { pinnedIDs.compactMap { id in notes.first { $0.id == id } } }
+    /// Pinned notes: those pinned in Apple Notes (newest first), then those pinned here in
+    /// the order they were pinned.
+    var pinned: [NoteItem] {
+        let apple = notes.filter { applePinnedIDs.contains($0.id) }.sorted { $0.modified > $1.modified }
+        let local = pinnedIDs.filter { !applePinnedIDs.contains($0) }.compactMap { id in notes.first { $0.id == id } }
+        return apple + local
+    }
 
     /// Everything else, newest first.
     var unpinned: [NoteItem] {
-        notes.filter { !pinnedIDs.contains($0.id) }.sorted { $0.modified > $1.modified }
+        notes.filter { !pinnedIDs.contains($0.id) && !applePinnedIDs.contains($0.id) }
+            .sorted { $0.modified > $1.modified }
     }
 
-    func isPinned(_ id: String) -> Bool { pinnedIDs.contains(id) }
+    func isPinned(_ id: String) -> Bool { pinnedIDs.contains(id) || applePinnedIDs.contains(id) }
+
+    /// Pinned in Apple Notes: it can only be unpinned there.
+    func isApplePinned(_ id: String) -> Bool { applePinnedIDs.contains(id) }
+
+    /// Reads which notes Apple Notes has pinned, once the list is known.
+    private func refreshApplePins() {
+        Task {
+            switch await ApplePins.read() {
+            case .pins(let numbers):
+                applePinsNeedAccess = false
+                let ids = notes.map(\.id).filter { id in
+                    numbers.contains { id.hasSuffix("/ICNote/p\($0)") }
+                }
+                if ids != applePinnedIDs {
+                    applePinnedIDs = ids
+                    UserDefaults.standard.set(ids, forKey: Self.applePinKey)
+                }
+            case .noAccess:
+                applePinsNeedAccess = true
+            case .failed:
+                break
+            }
+        }
+    }
 
     func togglePin(_ id: String) {
+        guard !applePinnedIDs.contains(id) else { return }
         if let index = pinnedIDs.firstIndex(of: id) { pinnedIDs.remove(at: index) } else { pinnedIDs.append(id) }
         UserDefaults.standard.set(pinnedIDs, forKey: Self.pinKey)
     }
@@ -174,6 +210,7 @@ final class NotesStore: ObservableObject {
                 }
                 if selected == nil { selectedID = pinned.first?.id ?? unpinned.first?.id }
                 persist()
+                refreshApplePins()
                 if let selected, !selected.isLoaded { loadText(selected.id) }
             } catch {
                 status = .failed(Self.describe(error))

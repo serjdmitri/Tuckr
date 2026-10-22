@@ -16,6 +16,7 @@ struct NotesView: View {
     @State private var hoveredID: String?
     /// The Pinned section's drop-down: kept between launches.
     @AppStorage("notesPinnedOpen") private var pinnedOpen = true
+    @AppStorage("notesAppleHintDismissed") private var hintDismissed = false
     @FocusState private var searchFocused: Bool
 
     var body: some View {
@@ -74,6 +75,27 @@ struct NotesView: View {
                     }
                 }
                 roundButton("plus", help: "New note") { store.newNote() }
+            }
+            if store.applePinsNeedAccess && !hintDismissed {
+                HStack(spacing: 6) {
+                    Text("Allow Full Disk Access to show your Apple Notes pins")
+                        .font(.system(size: 9))
+                        .foregroundStyle(.gray)
+                        .lineLimit(2)
+                    Button("Open") {
+                        if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles") {
+                            NSWorkspace.shared.open(url)
+                        }
+                    }
+                    .buttonStyle(.plain)
+                    .font(.system(size: 9, weight: .bold))
+                    .foregroundStyle(Color(red: 0.45, green: 0.7, blue: 1))
+                    Button { hintDismissed = true } label: {
+                        Image(systemName: "xmark").font(.system(size: 8, weight: .bold)).foregroundStyle(.gray)
+                    }
+                    .buttonStyle(.plain)
+                }
+                .padding(.horizontal, 4)
             }
             if searching {
                 TextField("Search notes", text: $query)
@@ -174,12 +196,12 @@ struct NotesView: View {
                 Button { store.togglePin(note.id) } label: {
                     Image(systemName: pinned ? "pin.fill" : "pin")
                         .font(.system(size: 10))
-                        .foregroundStyle(pinned ? Color(red: 1, green: 0.8, blue: 0.2) : .gray)
+                        .foregroundStyle(store.isApplePinned(note.id) ? Color(red: 1, green: 0.62, blue: 0.16) : (pinned ? Color(red: 1, green: 0.8, blue: 0.2) : .gray))
                         .frame(width: 18, height: 18)
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
-                .help(pinned ? "Unpin" : "Pin to the top")
+                .help(store.isApplePinned(note.id) ? "Pinned in Apple Notes: unpin it there" : (pinned ? "Unpin" : "Pin to the top"))
             }
         }
         .padding(.horizontal, 9)
@@ -189,7 +211,9 @@ struct NotesView: View {
         .onTapGesture { store.select(note.id) }
         .onHover { inside in hoveredID = inside ? note.id : (hoveredID == note.id ? nil : hoveredID) }
         .contextMenu {
-            Button(pinned ? "Unpin" : "Pin to the top") { store.togglePin(note.id) }
+            if !store.isApplePinned(note.id) {
+                Button(pinned ? "Unpin" : "Pin to the top") { store.togglePin(note.id) }
+            }
             Button("Delete", role: .destructive) { store.delete(note.id) }
         }
     }
@@ -239,10 +263,10 @@ struct NotesView: View {
                     Button { store.togglePin(id) } label: {
                         Image(systemName: store.isPinned(id) ? "pin.fill" : "pin")
                             .font(.system(size: 11))
-                            .foregroundStyle(store.isPinned(id) ? Color(red: 1, green: 0.8, blue: 0.2) : .gray)
+                            .foregroundStyle(store.isApplePinned(id) ? Color(red: 1, green: 0.62, blue: 0.16) : (store.isPinned(id) ? Color(red: 1, green: 0.8, blue: 0.2) : .gray))
                     }
                     .buttonStyle(.plain)
-                    .help(store.isPinned(id) ? "Unpin" : "Pin to the top")
+                    .help(store.isApplePinned(id) ? "Pinned in Apple Notes: unpin it there" : (store.isPinned(id) ? "Unpin" : "Pin to the top"))
                     Button { store.delete(id) } label: {
                         Image(systemName: "trash")
                             .font(.system(size: 11))
