@@ -25,7 +25,7 @@ struct ShelfView: View {
                 .onDrop(of: [.fileURL, .url, .utf8PlainText, .plainText, .data], isTargeted: $vm.dragDetectorTargeting) { providers in
                     handleDrop(providers: providers)
                 }
-            TranscribePanelPlaceholder()
+            TranscribePanelView()
                 .frame(maxWidth: .infinity)
         }
         // Bind Quick Look to shelf selection

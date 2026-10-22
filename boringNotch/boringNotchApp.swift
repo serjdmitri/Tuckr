@@ -453,6 +453,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 ApplicationRelauncher.restart()
             }
         )
+        talkify.onTranscriptionProgress = { fraction in
+            TranscribeProgress.shared.fraction = fraction
+        }
         talkify.onHUDOccupiedChange = { occupied in
             BoringViewCoordinator.shared.hudOccupied = occupied
         }

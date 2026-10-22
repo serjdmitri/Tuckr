@@ -23,9 +23,24 @@ final class TalkifyRuntime {
   /// Called with true while the HUD holds the notch and false once it is gone.
   var onHUDOccupiedChange: ((Bool) -> Void)?
 
+  /// Called with a transcription's progress, 0...1, and nil when it ends.
+  var onTranscriptionProgress: ((Double?) -> Void)?
+
+  /// The running instance, for the Shelf's transcribe panel to reach.
+  private(set) static weak var current: TalkifyRuntime?
+
   init(hostSettings: HostMenuItem, hostRestart: HostMenuItem) {
     self.hostSettings = hostSettings
     self.hostRestart = hostRestart
+    Self.current = self
+  }
+
+  func transcribeDropped(_ url: URL) {
+    dropTranscriptionController?.transcribe(url)
+  }
+
+  func pickTranscriptionFile() {
+    dropTranscriptionController?.pickFile()
   }
 
   /// True while this process hosts the test suite rather than a user.
@@ -89,8 +104,11 @@ final class TalkifyRuntime {
       hud: DropHUDController(stage: stage)
     )
     self.dropTranscriptionController = dropTranscriptionController
-    dropTranscriptionController.start()
+    // Not started: its drag watcher would answer every media file dragged at
+    // the notch and fight Boring's shelf for the drop. The Shelf's transcribe
+    // panel hands files to `transcribeDropped` instead.
     dropTranscriptionController.onProgressChange = { [weak self, weak settings] fraction in
+      self?.onTranscriptionProgress?(fraction)
       self?.statusItemController?.setTranscriptionProgress(
         fraction,
         accent: settings?.sessionSettings.dropAccent ?? SettingsTheme.accentColor
