@@ -52,6 +52,9 @@ class BoringViewCoordinator: ObservableObject {
 
     @Published var currentView: NotchViews = .home
     @Published var helloAnimationRunning: Bool = false
+    /// True while the dictation HUD holds the notch; the rest of the notch
+    /// stays hidden until the pointer is over it.
+    @Published var hudOccupied: Bool = false
     private var sneakPeekDispatch: DispatchWorkItem?
     private var expandingViewDispatch: DispatchWorkItem?
     private var hudEnableTask: Task<Void, Never>?

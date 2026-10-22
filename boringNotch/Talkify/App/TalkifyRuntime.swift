@@ -20,6 +20,9 @@ final class TalkifyRuntime {
   private let hostSettings: HostMenuItem
   private let hostRestart: HostMenuItem
 
+  /// Called with true while the HUD holds the notch and false once it is gone.
+  var onHUDOccupiedChange: ((Bool) -> Void)?
+
   init(hostSettings: HostMenuItem, hostRestart: HostMenuItem) {
     self.hostSettings = hostSettings
     self.hostRestart = hostRestart
@@ -53,6 +56,9 @@ final class TalkifyRuntime {
     // One shape, two features. The stage owns the window and hands it out;
     // each feature's HUD controller only decides what its surface says.
     let stage = HUDStage(settings: settings)
+    stage.onOccupiedChange = { [weak self] occupied in
+      self?.onHUDOccupiedChange?(occupied)
+    }
     self.hudStage = stage
     let hudController = DictationHUDController(stage: stage, settings: settings)
     let usageTracker = UsageTracker()

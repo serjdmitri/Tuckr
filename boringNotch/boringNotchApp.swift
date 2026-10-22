@@ -453,6 +453,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 ApplicationRelauncher.restart()
             }
         )
+        talkify.onHUDOccupiedChange = { occupied in
+            BoringViewCoordinator.shared.hudOccupied = occupied
+        }
         self.talkify = talkify
         talkify.start()
     }

@@ -204,6 +204,8 @@ struct ContentView: View {
         }
         .padding(.bottom, 8)
         .frame(maxWidth: windowSize.width, maxHeight: windowSize.height, alignment: .top)
+        .opacity(coordinator.hudOccupied && !isHovering ? 0 : 1)
+        .animation(.smooth(duration: 0.2), value: coordinator.hudOccupied)
         .compositingGroup()
         .scaleEffect(
             x: gestureScale,

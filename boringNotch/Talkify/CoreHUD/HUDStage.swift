@@ -33,6 +33,11 @@ final class HUDStage {
 
   private(set) var occupant = Occupant.none
 
+  /// Fired when the shape goes from free to held and back, the second time
+  /// only once the panel is off screen. The host app uses it to hide whatever
+  /// else lives at the notch while the HUD owns it.
+  var onOccupiedChange: ((Bool) -> Void)?
+
   let dictationContent = DictationHUDContent()
   let dropContent = DropHUDContent()
   let sounds = HUDSounds()
@@ -126,6 +131,7 @@ final class HUDStage {
     if occupant != .message { cancelMessageDismiss() }
     if occupant != .drop { evictDrop() }
     self.occupant = occupant
+    onOccupiedChange?(true)
     renderedSettings = settings ?? self.settings.sessionSettings
     mount(on: screen)
   }
@@ -144,6 +150,7 @@ final class HUDStage {
       try? await Task.sleep(for: Self.dismissDuration)
       guard !Task.isCancelled, let self, occupant == .none else { return }
       panel.orderOut(nil)
+      onOccupiedChange?(false)
       // Only once it is off screen: clearing any of these earlier would show
       // through the retract.
       dictationContent.isDismissing = false
