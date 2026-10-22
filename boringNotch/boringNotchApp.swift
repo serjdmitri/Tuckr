@@ -470,6 +470,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             }
             self.scheduleAgentsAutoClose()
         }
+        BluetoothMonitor.shared.start()
         // Time's up: the notch opens on the timer, and tucks away after a while if nobody
         // is at it.
         NotchTimer.shared.onFinished = { [weak self] in
