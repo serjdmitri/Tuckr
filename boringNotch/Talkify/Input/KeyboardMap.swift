@@ -13,11 +13,21 @@ enum KeyboardMap {
     /// (⇧, ⌘, esc). Keys with no glyph take their legend from the layout.
     let glyph: String?
     var width: CGFloat = 1
+    /// In key units, where 1 is as tall as a letter key. The function row's keys are
+    /// shorter, and an arrow key above or below another is half a key.
+    var height: CGFloat = 1
+    /// Drawn as the round Touch ID button and never bound.
+    var isTouchID = false
 
-    init(_ keyCode: Int64, _ glyph: String? = nil, width: CGFloat = 1) {
+    init(
+      _ keyCode: Int64, _ glyph: String? = nil, width: CGFloat = 1, height: CGFloat = 1,
+      isTouchID: Bool = false
+    ) {
       self.keyCode = keyCode
       self.glyph = glyph
       self.width = width
+      self.height = height
+      self.isTouchID = isTouchID
     }
   }
 
@@ -39,11 +49,17 @@ enum KeyboardMap {
     [functionRow, numberRow(shape), upperRow(shape), homeRow(shape), lowerRow(shape), bottomRow]
   }
 
+  // Every row adds up to 14.5 key units, as on a MacBook, so the drawing is a clean
+  // rectangle: esc 1.5 + F1–F12 + Touch ID; number row 13 + delete 1.5; tab 1.5 + 12 +
+  // backslash 1; caps 1.75 + 11 + return 1.75; shift 2.25 + 10 + shift 2.25; and the
+  // bottom row below.
   private static let functionRow: [Key] = [
-    Key(53, "esc", width: 1.4),
-    Key(122, "F1"), Key(120, "F2"), Key(99, "F3"), Key(118, "F4"),
-    Key(96, "F5"), Key(97, "F6"), Key(98, "F7"), Key(100, "F8"),
-    Key(101, "F9"), Key(109, "F10"), Key(103, "F11"), Key(111, "F12"),
+    Key(53, "esc", width: 1.5, height: 0.66),
+    Key(122, "F1", height: 0.66), Key(120, "F2", height: 0.66), Key(99, "F3", height: 0.66),
+    Key(118, "F4", height: 0.66), Key(96, "F5", height: 0.66), Key(97, "F6", height: 0.66),
+    Key(98, "F7", height: 0.66), Key(100, "F8", height: 0.66), Key(101, "F9", height: 0.66),
+    Key(109, "F10", height: 0.66), Key(103, "F11", height: 0.66), Key(111, "F12", height: 0.66),
+    Key(-1, "", height: 0.66, isTouchID: true),
   ]
 
   /// ISO puts § where ANSI puts the backtick, and moves the backtick down
@@ -59,7 +75,7 @@ enum KeyboardMap {
   /// row and Return takes its place, running down through both rows.
   private static func upperRow(_ shape: KeyboardLayout.Shape) -> [Key] {
     let letters = [12, 13, 14, 15, 17, 16, 32, 34, 31, 35, 33, 30].map { Key($0) }
-    let tail = shape == .ansi ? [Key(42, width: 1.5)] : [Key(36, "↩", width: 1.25)]
+    let tail = shape == .ansi ? [Key(42, width: 1)] : [Key(36, "↩", width: 1.25)]
     return [Key(48, "⇥", width: 1.5)] + letters + tail
   }
 
@@ -79,11 +95,13 @@ enum KeyboardMap {
     return head + letters + [Key(60, "⇧", width: 2.25)]
   }
 
+  /// Up and down share one key's height, stacked, between left and right.
   private static let bottomRow: [Key] = [
     Key(63, "fn"), Key(59, "⌃"), Key(58, "⌥"), Key(55, "⌘", width: 1.25),
     Key(49, "", width: 5),
     Key(54, "⌘", width: 1.25), Key(61, "⌥"),
-    Key(123, "←"), Key(126, "↑"), Key(125, "↓"), Key(124, "→"),
+    Key(123, "←", height: 0.5), Key(126, "↑", height: 0.5), Key(125, "↓", height: 0.5),
+    Key(124, "→", height: 0.5),
   ]
 
   /// Fixed glyphs by keycode, for the caps an input source cannot relabel.

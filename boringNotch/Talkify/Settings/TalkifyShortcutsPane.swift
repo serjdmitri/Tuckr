@@ -6,11 +6,7 @@ struct TalkifyShortcutsPane: View {
     if let settings = TalkifyRuntime.current?.sharedSettings {
       ScrollView {
         ShortcutsSettingsView(settings: settings)
-          // The keyboard has a fixed width; with 20 points here the page asks for more
-          // than the window's content column and pushes the sidebar narrower than on
-          // the other pages.
-          .padding(.horizontal, 12)
-          .padding(.vertical, 20)
+          .padding(20)
       }
       .background(SettingsTheme.background)
       .environment(\.colorScheme, .dark)

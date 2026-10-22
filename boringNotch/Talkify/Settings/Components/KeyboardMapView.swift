@@ -18,7 +18,7 @@ struct KeyboardMapView: View {
 
   let layout: KeyboardLayout
   let highlights: [Highlight]
-  private let unit: CGFloat = 26
+  private let unit: CGFloat = 26.5
   private let spacing: CGFloat = 3
   /// Set while a binding is being assigned: the keys picked so far, and what
   /// happens when one is clicked. Nil leaves the drawing display-only.
@@ -28,9 +28,17 @@ struct KeyboardMapView: View {
   var body: some View {
     VStack(alignment: .leading, spacing: spacing) {
       ForEach(Array(KeyboardMap.rows(for: layout.shape).enumerated()), id: \.offset) { _, row in
-        HStack(spacing: spacing) {
-          ForEach(Array(row.enumerated()), id: \.offset) { _, key in
-            cap(for: key)
+        HStack(alignment: .bottom, spacing: spacing) {
+          ForEach(Array(groups(of: row).enumerated()), id: \.offset) { _, group in
+            if group.count == 2 {
+              // Up over down, sharing the height of one key.
+              VStack(spacing: spacing) {
+                cap(for: group[0])
+                cap(for: group[1])
+              }
+            } else {
+              cap(for: group[0])
+            }
           }
         }
       }
@@ -38,14 +46,39 @@ struct KeyboardMapView: View {
     .accessibilityHidden(true)
   }
 
+  /// The keys of a row, with up and down paired so they can be stacked.
+  private func groups(of row: [KeyboardMap.Key]) -> [[KeyboardMap.Key]] {
+    var groups: [[KeyboardMap.Key]] = []
+    var index = 0
+    while index < row.count {
+      if row[index].keyCode == 126, index + 1 < row.count, row[index + 1].keyCode == 125 {
+        groups.append([row[index], row[index + 1]])
+        index += 2
+      } else {
+        groups.append([row[index]])
+        index += 1
+      }
+    }
+    return groups
+  }
+
   private func cap(for key: KeyboardMap.Key) -> some View {
+    if key.isTouchID {
+      return AnyView(
+        Circle()
+          .strokeBorder(Color.white.opacity(0.1), lineWidth: 1)
+          .background(Circle().fill(Color(white: 0.07)))
+          .frame(width: unit * 0.62, height: unit * 0.62)
+          .frame(width: unit * key.width, height: unit * key.height * 0.92)
+      )
+    }
     let lit = highlights.filter { $0.keyCodes.contains(key.keyCode) }
     let strongest = picked.contains(key.keyCode)
       ? Highlight(keyCodes: [], color: pickColor, isEmphasized: true)
       : (lit.first { $0.isEmphasized } ?? lit.first)
     let shape = RoundedRectangle(cornerRadius: 5, style: .continuous)
 
-    return shape
+    return AnyView(shape
       .fill(fill(for: strongest))
       .overlay {
         shape.strokeBorder(border(for: strongest), lineWidth: strongest == nil ? 1 : 1.5)
@@ -58,10 +91,16 @@ struct KeyboardMapView: View {
           .minimumScaleFactor(0.5)
           .padding(.horizontal, 2)
       }
-      .frame(width: unit * key.width + spacing * (key.width - 1), height: unit * 0.92)
+      .frame(width: unit * key.width + spacing * (key.width - 1), height: height(of: key))
       .contentShape(Rectangle())
       .onTapGesture { onPick?(key.keyCode) }
-      .allowsHitTesting(onPick != nil)
+      .allowsHitTesting(onPick != nil))
+  }
+
+  /// A key is as tall as it is wide per unit; a half-height key is half of that less the
+  /// gap, so an up key and a down key stacked add up to one full key.
+  private func height(of key: KeyboardMap.Key) -> CGFloat {
+    key.height == 0.5 ? (unit - spacing) / 2 : unit * key.height
   }
 
   /// While picking, the selection outranks whatever the key is already bound
