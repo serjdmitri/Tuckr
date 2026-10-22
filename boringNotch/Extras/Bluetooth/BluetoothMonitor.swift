@@ -17,6 +17,8 @@ struct BluetoothInfo: Equatable {
     var symbol: String
     /// Battery percent, nil while unknown or when the device does not report one.
     var battery: Int?
+    /// False for the "Disconnected" version of the popup.
+    var connected = true
 }
 
 /// The connection popup's state: what to show and for how long.
@@ -59,6 +61,9 @@ final class BluetoothMonitor: NSObject {
     static let shared = BluetoothMonitor()
 
     private var notification: IOBluetoothUserNotification?
+    private var disconnectNotifications: [String: IOBluetoothUserNotification] = [:]
+    /// The last battery level seen for each device (by address), for the disconnect popup.
+    private var lastBattery: [String: Int] = [:]
     private var startedAt = Date()
 
     /// Call once at launch.
@@ -67,6 +72,37 @@ final class BluetoothMonitor: NSObject {
         startedAt = Date()
         notification = IOBluetoothDevice.register(
             forConnectNotifications: self, selector: #selector(deviceConnected(_:device:)))
+        // Devices already connected: watch for them going away too.
+        for case let device as IOBluetoothDevice in IOBluetoothDevice.pairedDevices() ?? [] where device.isConnected() {
+            watchDisconnect(of: device)
+        }
+    }
+
+    private func watchDisconnect(of device: IOBluetoothDevice) {
+        guard let address = device.addressString, disconnectNotifications[address] == nil else { return }
+        disconnectNotifications[address] = device.register(
+            forDisconnectNotification: self, selector: #selector(deviceDisconnected(_:device:)))
+    }
+
+    @objc private func deviceDisconnected(_ note: IOBluetoothUserNotification, device: IOBluetoothDevice) {
+        // Delivered on a background thread. The notification is spent: a new connection
+        // registers a fresh one.
+        let name = device.name ?? "Bluetooth device"
+        let address = device.addressString ?? ""
+        DispatchQueue.main.async {
+            MainActor.assumeIsolated {
+                self.disconnectNotifications[address]?.unregister()
+                self.disconnectNotifications[address] = nil
+                self.announceDisconnect(name: name, address: address)
+            }
+        }
+    }
+
+    @MainActor private func announceDisconnect(name: String, address: String) {
+        BluetoothPopup.shared.present(
+            BluetoothInfo(
+                name: name, symbol: Self.symbol(forName: name, kind: nil),
+                battery: lastBattery[address], connected: false))
     }
 
     @objc private func deviceConnected(_ note: IOBluetoothUserNotification, device: IOBluetoothDevice) {
@@ -75,6 +111,7 @@ final class BluetoothMonitor: NSObject {
         let address = device.addressString ?? ""
         DispatchQueue.main.async {
             MainActor.assumeIsolated {
+                self.watchDisconnect(of: device)
                 // Devices already connected can be reported as the monitor starts: those are
                 // not news.
                 guard Date().timeIntervalSince(self.startedAt) > 5 else { return }
@@ -93,6 +130,7 @@ final class BluetoothMonitor: NSObject {
                 try? await Task.sleep(for: .seconds(delay))
                 let report = await Self.report(name: name, address: address)
                 if let report {
+                    if let level = report.battery { self.lastBattery[address] = level }
                     BluetoothPopup.shared.update(battery: report.battery, forDeviceNamed: name)
                 }
             }
