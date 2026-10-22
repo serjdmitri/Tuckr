@@ -195,6 +195,7 @@ struct SettingsView: View {
                         #endif
                         SettingsSidebarRow(title: "Shortcuts",    icon: "keyboard.fill",                     color: "#6366F1").tag("shortcuts")
                         SettingsSidebarRow(title: "Notetaker",    icon: "waveform",                          color: "#34D399").tag("notetaker")
+                        SettingsSidebarRow(title: "Usage alerts", icon: "gauge.with.dots.needle.67percent",  color: "#F59E0B").tag("usage")
                     }
                     .listStyle(.sidebar)
                     .scrollContentBackground(.hidden)
@@ -270,6 +271,7 @@ struct SettingsView: View {
         case "voice":        return String(localized: "Voice")
         case "shortcuts":    return String(localized: "Shortcuts")
         case "notetaker":    return "Notetaker"
+        case "usage":        return "Usage alerts"
         default:             return String(localized: "General")
         }
     }
@@ -285,6 +287,7 @@ struct SettingsView: View {
         #endif
         case "shortcuts":    ShortcutsSettingsView()
         case "notetaker":    NotetakerSettingsSection()
+        case "usage":        UsageAlertsSettingsSection()
         default:             generalSection
         }
     }

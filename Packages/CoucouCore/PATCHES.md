@@ -56,3 +56,8 @@ app adds sits in `CoucouHost.swift` and `AgentsTabView.swift`.
     The edge sweep is now a still ring seen through a conic gradient that is drawn once
     and only turned (a repeating rotation), so it is a smooth gradient and costs the CPU
     nothing per frame.
+13. Usage (`UsageAlerts.swift`, `AgentUsageView.swift` and `UsageAlertsSettingsSection.swift` are
+    added files): `AppState.usageAgentID`; `AgentsTabView` shows a usage page in place of the
+    cards and a dots button by the big Mochi; `AgentPill` shows dots on hover (and
+    `PillWorkingActivity` hides its dots then) plus a "Usage" menu entry; `SettingsView` gets a
+    "Usage alerts" page.

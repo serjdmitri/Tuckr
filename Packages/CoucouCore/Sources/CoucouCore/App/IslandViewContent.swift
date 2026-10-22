@@ -4146,6 +4146,7 @@ struct AgentPillsView: View {
                     }
                     .contextMenu {
                         Button("Pin to the big Mochi") { state.pin(task.id) }
+                        Button("Usage") { state.usageAgentID = task.id }
                     }
                 }
             }
@@ -4184,7 +4185,7 @@ struct AgentPill: View {
                     Capsule()
                         .stroke(Color(hex: effectiveColor).opacity(isHovered ? 0.55 : 0.14), lineWidth: 1)
                     if isWorking {
-                        PillWorkingActivity(color: effectiveColor)
+                        PillWorkingActivity(color: effectiveColor, showsDots: !isHovered)
                             .allowsHitTesting(false)
                             .transition(.opacity)
                     }
@@ -4206,6 +4207,21 @@ struct AgentPill: View {
                         .padding(.leading, 34)
                         .padding(.trailing, isWorking ? 28 : 10)
                         .frame(maxWidth: .infinity, alignment: .center)
+                    // The dots: this agent's usage.
+                    if isHovered {
+                        Button { state.usageAgentID = task.id } label: {
+                            Image(systemName: "ellipsis")
+                                .font(.system(size: 11, weight: .bold))
+                                .foregroundColor(Color(hex: effectiveColor).lighter(by: 0.3))
+                                .frame(width: 22, height: 20)
+                                .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        .frame(maxWidth: .infinity, alignment: .trailing)
+                        .padding(.trailing, 6)
+                        .help("Usage")
+                        .transition(.opacity)
+                    }
                 }
                 .frame(maxWidth: .infinity)
                 .frame(height: 28)
@@ -5212,6 +5228,8 @@ extension Color {
 /// the island view is shown.
 struct PillWorkingActivity: View {
     let color: String
+    /// False while the pill's usage dots take that corner.
+    var showsDots = true
     @Environment(\.islandViewActive) private var viewActive
     @Environment(\.mochiFrameInterval) private var frameInterval
     @State private var turning = false
@@ -5250,6 +5268,7 @@ struct PillWorkingActivity: View {
                             .opacity(0.55 + 0.45 * (phase + 1) / 2)
                     }
                 }
+                .opacity(showsDots ? 1 : 0)
                 .padding(.trailing, 10)
             }
         }

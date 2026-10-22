@@ -12,6 +12,7 @@ struct AgentsTabView: View {
   @State private var hovering = false
   @State private var loveTimer: DispatchWorkItem?
   @State private var lastLove: TimeInterval = 0
+  @State private var overUsageDots = false
 
   /// The views an agent can put on screen. Chat, mail, upload and the rest
   /// belong to features this app does not surface.
@@ -32,7 +33,22 @@ struct AgentsTabView: View {
 
   var body: some View {
     cards
+      .opacity(state.usageAgentID == nil ? 1 : 0)
+      .allowsHitTesting(state.usageAgentID == nil)
       .frame(width: Self.contentSize.width, height: Self.contentSize.height)
+      // One agent's usage in place of the cards.
+      .overlay(alignment: .topLeading) {
+        if let id = state.usageAgentID {
+          AgentUsageView(
+            state: state, pillID: id,
+            pillName: state.tasks.first { $0.id == id }?.name ?? "This agent"
+          ) { withAnimation(.smooth(duration: 0.25)) { state.usageAgentID = nil } }
+          .frame(width: Self.contentSize.width, height: Self.contentSize.height)
+          .background(RoundedRectangle(cornerRadius: 22, style: .continuous).fill(Color(hex: "#151719")))
+          .transition(.opacity)
+        }
+      }
+      .animation(.smooth(duration: 0.25), value: state.usageAgentID)
       // Mochi's layer is an overlay, so its 640-point frame never widens the notch.
       .overlay(alignment: .topLeading) {
         BotPlacement(state: state, islandW: Self.islandSize.width, islandH: Self.islandSize.height)
@@ -40,8 +56,35 @@ struct AgentsTabView: View {
           .offset(x: -Self.contentOrigin.x, y: -Self.contentOrigin.y)
       }
       .overlay(alignment: .topLeading) { mochiHitArea }
+      .overlay(alignment: .topLeading) { usageDots }
       .foregroundColor(Color(hex: "#F5F6F8"))
       .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+      .onDisappear { state.usageAgentID = nil }
+  }
+
+  /// The three dots by the big Mochi: his agent's usage.
+  private var usageDots: some View {
+    let (cx, cy, diameter, _) = botPosition(
+      mode: .expanded, view: effectiveView,
+      islandW: Self.islandSize.width, islandH: Self.islandSize.height,
+      uploadProgress: 0, hasNotch: true)
+    return Button {
+      guard let id = state.focusId else { return }
+      withAnimation(.smooth(duration: 0.25)) {
+        state.usageAgentID = state.usageAgentID == id ? nil : id
+      }
+    } label: {
+      Image(systemName: "ellipsis")
+        .font(.system(size: 12, weight: .bold))
+        .foregroundColor(.white.opacity(overUsageDots || hovering ? 0.95 : 0.45))
+        .frame(width: 28, height: 22)
+        .background(Capsule().fill(Color.white.opacity(overUsageDots ? 0.16 : 0.07)))
+        .contentShape(Capsule())
+    }
+    .buttonStyle(.plain)
+    .onHover { overUsageDots = $0 }
+    .help("Usage")
+    .position(x: cx - Self.contentOrigin.x + diameter * 0.62, y: cy - Self.contentOrigin.y - diameter * 0.42)
   }
 
   private var cards: some View {

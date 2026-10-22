@@ -28,6 +28,7 @@ struct ContentView: View {
     @ObservedObject var meetingPresence = MeetingPresence.shared
     @ObservedObject var notchTimer = NotchTimer.shared
     @ObservedObject var bluetoothPopup = BluetoothPopup.shared
+    @ObservedObject var usagePopup = UsagePopup.shared
     @State private var hoverPointX: CGFloat = 0
     @State private var hoverTask: Task<Void, Never>?
     @State private var isHovering: Bool = false
@@ -70,7 +71,7 @@ struct ContentView: View {
         vm.notchState == .closed && !vm.hideOnClosed
             && !(coordinator.sneakPeek.show && coordinator.sneakPeek.type != .music)
             && !(coordinator.expandingView.show && coordinator.expandingView.type == .battery)
-            && bluetoothPopup.info == nil
+            && bluetoothPopup.info == nil && usagePopup.info == nil
     }
 
     private var computedChinWidth: CGFloat {
@@ -261,6 +262,13 @@ struct ContentView: View {
             // A Bluetooth device connected: the closed notch drops down with its battery.
             if vm.notchState == .closed && !vm.hideOnClosed {
                 BluetoothPopupView(
+                    chinWidth: computedChinWidth, notchHeight: max(24, vm.effectiveClosedNotchHeight))
+            }
+        }
+        .overlay(alignment: .top) {
+            // An agent's usage passed a level set in Agents Settings.
+            if vm.notchState == .closed && !vm.hideOnClosed {
+                UsagePopupView(
                     chinWidth: computedChinWidth, notchHeight: max(24, vm.effectiveClosedNotchHeight))
             }
         }

@@ -43,6 +43,10 @@ public enum CoucouHost {
   /// Agents tab, or closes it when it is already there.
   public static var onToggleRequested: (() -> Void)?
 
+  /// Called when an agent's plan usage passes a level set in Agents Settings: the host shows
+  /// a popup.
+  public static var onUsageAlert: ((UsageAlert) -> Void)?
+
   /// Called when a card asks the island to close (its OK button, or Open terminal after it
   /// has jumped): the host closes its notch.
   public static var onCollapseRequested: (() -> Void)?
@@ -108,6 +112,8 @@ public enum CoucouHost {
         else { return }
         state.setFocus(id)
       }
+
+    UsageAlertEngine.shared.start()
 
     // Coucou's global shortcuts (Settings > Shortcuts), the ones this app handles.
     HotKeyCenter.shared.start { action in handle(action) }
