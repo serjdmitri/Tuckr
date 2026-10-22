@@ -208,6 +208,10 @@ class BoringViewModel: NSObject, ObservableObject {
         if coordinator.agentsHoldOpen {
             return
         }
+        // Nor while a note is being typed
+        if NotchKeyboard.isTyping {
+            return
+        }
         self.notchSize = getClosedNotchSize(screenUUID: self.screenUUID)
         self.closedNotchSize = self.notchSize
         self.notchState = .closed

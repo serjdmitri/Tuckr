@@ -109,6 +109,8 @@ class BoringNotchSkyLightWindow: NSPanel {
     
     private var observers: Set<AnyCancellable> = []
     
-    override var canBecomeKey: Bool { false }
+    // Never, except while the notes page is up: then a click may give the notch the keyboard
+    // so it can be typed in.
+    override var canBecomeKey: Bool { MainActor.assumeIsolated { NotchKeyboard.allowKey } }
     override var canBecomeMain: Bool { false }
 }

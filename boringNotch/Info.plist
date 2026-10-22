@@ -7,6 +7,8 @@
 		<key>NSAllowsArbitraryLoads</key>
 		<true/>
 	</dict>
+	<key>NSAppleEventsUsageDescription</key>
+	<string>Saves the notes you write in the notch into a folder called Notch in Apple Notes.</string>
 	<key>NSBluetoothAlwaysUsageDescription</key>
 	<string>Shows a popup with the battery level when AirPods and other Bluetooth devices connect.</string>
 	<key>NSAudioCaptureUsageDescription</key>

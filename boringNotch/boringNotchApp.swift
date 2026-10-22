@@ -471,6 +471,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             self.scheduleAgentsAutoClose()
         }
         BluetoothMonitor.shared.start()
+        // Typing in a note ended: tuck the notch away if the pointer is not on it.
+        NotchKeyboard.onEndTyping = { [weak self] in
+            guard let self, !self.vm.pointerInside else { return }
+            self.vm.close()
+        }
         CoucouHost.onUsageAlert = { alert in UsagePopup.shared.present(alert) }
         // Time's up: the notch opens on the timer, and tucks away after a while if nobody
         // is at it.

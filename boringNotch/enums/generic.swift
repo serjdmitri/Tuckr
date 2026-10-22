@@ -30,6 +30,7 @@ public enum NotchViews {
     case agents
     case meetings
     case timer
+    case notes
 }
 
 enum SettingsEnum {

@@ -438,6 +438,8 @@ struct ContentView: View {
                         CoucouHost.makeMeetingsView()
                     case .timer:
                         TimerView()
+                    case .notes:
+                        NotesView()
                     }
                 }
                 .transition(

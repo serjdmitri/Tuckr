@@ -49,6 +49,23 @@ struct BoringHeader: View {
                         }
                         Button(action: {
                             withAnimation(.smooth) {
+                                coordinator.currentView = coordinator.currentView == .notes ? .home : .notes
+                            }
+                        }) {
+                            Capsule()
+                                .fill(coordinator.currentView == .notes ? Color(nsColor: .secondarySystemFill) : .black)
+                                .frame(width: 30, height: 30)
+                                .overlay {
+                                    Image(systemName: "note.text")
+                                        .foregroundColor(.white)
+                                        .padding()
+                                        .imageScale(.medium)
+                                }
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                        .help("Notes")
+                        Button(action: {
+                            withAnimation(.smooth) {
                                 coordinator.currentView = coordinator.currentView == .timer ? .home : .timer
                             }
                         }) {
