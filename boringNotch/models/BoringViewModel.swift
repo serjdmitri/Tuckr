@@ -23,6 +23,8 @@ class BoringViewModel: NSObject, ObservableObject {
     @Published var generalDropTargeting: Bool = false
     @Published var dropZoneTargeting: Bool = false
     @Published var dropEvent: Bool = false
+    /// True while the pointer is over the notch.
+    @Published var pointerInside: Bool = false
     @Published var anyDropZoneTargeting: Bool = false
     var cancellables: Set<AnyCancellable> = []
     
@@ -208,6 +210,10 @@ class BoringViewModel: NSObject, ObservableObject {
     func close() {
         // Do not close while a share picker or sharing service is active
         if SharingStateManager.shared.preventNotchClose {
+            return
+        }
+        // Nor while an agent waits for a permission or an answer
+        if coordinator.agentsHoldOpen {
             return
         }
         self.notchSize = getClosedNotchSize(screenUUID: self.screenUUID)

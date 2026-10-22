@@ -70,6 +70,23 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private var windowScreenDidChangeObserver: Any?
     private var dragDetectors: [String: DragDetector] = [:] // UUID -> DragDetector
     private var talkify: TalkifyRuntime?
+    private var agentCancellables: Set<AnyCancellable> = []
+    private var agentsCloseTask: Task<Void, Never>?
+
+    /// Closes the notch after Coucou's "close after" delay once an alert has been
+    /// seen to, unless the pointer is on it or an answer is still waited for.
+    private func scheduleAgentsAutoClose() {
+        agentsCloseTask?.cancel()
+        let delay = CoucouHost.autoCloseInterval
+        agentsCloseTask = Task { @MainActor [weak self] in
+            try? await Task.sleep(for: .seconds(delay))
+            guard !Task.isCancelled, let self else { return }
+            guard BoringViewCoordinator.shared.currentView == .agents,
+                !self.vm.pointerInside
+            else { return }
+            self.vm.close()
+        }
+    }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
         return false
@@ -451,7 +468,17 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             withAnimation(.spring(response: 0.38, dampingFraction: 0.8)) {
                 self.vm.open()
             }
+            self.scheduleAgentsAutoClose()
         }
+        // A waiting permission or question holds the notch open; once it is
+        // answered the usual auto-close countdown starts.
+        AgentPresence.shared.$isHoldingForAnswer
+            .removeDuplicates()
+            .sink { [weak self] holding in
+                BoringViewCoordinator.shared.agentsHoldOpen = holding
+                if !holding { self?.scheduleAgentsAutoClose() }
+            }
+            .store(in: &agentCancellables)
         CoucouHost.start()
 
         // One menu-bar icon: Talkify's status item carries Boring's entries too.

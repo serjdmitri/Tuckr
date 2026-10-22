@@ -23,8 +23,9 @@ struct AgentsTabView: View {
     Self.shown.contains(state.view) ? state.view : .overview
   }
 
-  /// Two cards side by side, as in Coucou's overview, plus the notch's own padding.
-  private static let contentSize = CGSize(width: 560, height: 98)
+  /// Coucou's overview is two cards side by side in a 620-point band: a fixed
+  /// 322-point card and the pills card taking the rest.
+  private static let contentSize = CGSize(width: 620, height: 98)
 
   var body: some View {
     cards
@@ -37,8 +38,6 @@ struct AgentsTabView: View {
       }
       .foregroundColor(Color(hex: "#F5F6F8"))
       .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-      .onAppear { state.mode = .expanded }
-      .onDisappear { state.mode = .hidden }
   }
 
   private var cards: some View {

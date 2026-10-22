@@ -55,6 +55,8 @@ class BoringViewCoordinator: ObservableObject {
     /// True while the dictation HUD holds the notch; the rest of the notch
     /// stays hidden until the pointer is over it.
     @Published var hudOccupied: Bool = false
+    /// True while an agent waits for a permission or an answer: the notch stays open.
+    @Published var agentsHoldOpen: Bool = false
     private var sneakPeekDispatch: DispatchWorkItem?
     private var expandingViewDispatch: DispatchWorkItem?
     private var hudEnableTask: Task<Void, Never>?

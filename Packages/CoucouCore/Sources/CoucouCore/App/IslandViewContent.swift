@@ -4189,6 +4189,9 @@ struct AgentPill: View {
                                          : Color(hex: "#6B7079"))
                         .lineLimit(1)
                         .truncationMode(.tail)
+                        // Patched: keep a long name clear of the mini Mochi, as MusicPill does.
+                        .padding(.leading, 34)
+                        .padding(.trailing, 10)
                         .frame(maxWidth: .infinity, alignment: .center)
                 }
                 .frame(maxWidth: .infinity)

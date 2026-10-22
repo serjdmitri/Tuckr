@@ -24,6 +24,8 @@ struct ContentView: View {
     @ObservedObject var batteryModel = BatteryStatusViewModel.shared
     @ObservedObject var brightnessManager = BrightnessManager.shared
     @ObservedObject var volumeManager = VolumeManager.shared
+    @ObservedObject var agentPresence = AgentPresence.shared
+    @State private var hoverPointX: CGFloat = 0
     @State private var hoverTask: Task<Void, Never>?
     @State private var isHovering: Bool = false
     @State private var anyDropDebounceTask: Task<Void, Never>?
@@ -66,6 +68,10 @@ struct ContentView: View {
             && vm.notchState == .closed && Defaults[.showPowerStatusNotifications]
         {
             chinWidth = 640
+        } else if (!coordinator.expandingView.show || coordinator.expandingView.type == .music)
+            && vm.notchState == .closed && agentPresence.isActive && !vm.hideOnClosed
+        {
+            chinWidth += (2 * max(0, vm.effectiveClosedNotchHeight - 12) + 20)
         } else if (!coordinator.expandingView.show || coordinator.expandingView.type == .music)
             && vm.notchState == .closed && (musicManager.isPlaying || !musicManager.isPlayerIdle)
             && coordinator.musicLiveActivityEnabled && !vm.hideOnClosed
@@ -119,7 +125,10 @@ struct ContentView: View {
                     )
                 
                 mainLayout
-                    .frame(height: vm.notchState == .open ? vm.notchSize.height : nil)
+                    .frame(
+                        width: vm.notchState == .open ? vm.notchSize.width : nil,
+                        height: vm.notchState == .open ? vm.notchSize.height : nil
+                    )
                     .conditionalModifier(true) { view in
                         let openAnimation = Animation.spring(response: 0.42, dampingFraction: 0.8, blendDuration: 0)
                         let closeAnimation = Animation.spring(response: 0.45, dampingFraction: 1.0, blendDuration: 0)
@@ -132,7 +141,11 @@ struct ContentView: View {
                     .onHover { hovering in
                         handleHover(hovering)
                     }
+                    .onContinuousHover { phase in
+                        if case .active(let point) = phase { hoverPointX = point.x }
+                    }
                     .onTapGesture {
+                        pickTabForPointer()
                         doOpen()
                     }
                     .conditionalModifier(Defaults[.enableGestures]) { view in
@@ -217,6 +230,8 @@ struct ContentView: View {
         .background(dragDetector)
         .preferredColorScheme(.dark)
         .environmentObject(vm)
+        .onAppear { CoucouHost.setSurface(agentSurface) }
+        .onChange(of: agentSurface) { _, surface in CoucouHost.setSurface(surface) }
         .onChange(of: vm.anyDropZoneTargeting) { _, isTargeted in
             anyDropDebounceTask?.cancel()
 
@@ -290,6 +305,9 @@ struct ContentView: View {
                       } else if coordinator.sneakPeek.show && Defaults[.inlineHUD] && (coordinator.sneakPeek.type != .music) && (coordinator.sneakPeek.type != .battery) && vm.notchState == .closed {
                           InlineHUD(type: $coordinator.sneakPeek.type, value: $coordinator.sneakPeek.value, icon: $coordinator.sneakPeek.icon, hoverAnimation: $isHovering, gestureProgress: $gestureProgress)
                               .transition(.opacity)
+                      } else if (!coordinator.expandingView.show || coordinator.expandingView.type == .music) && vm.notchState == .closed && agentPresence.isActive && !vm.hideOnClosed {
+                          ClosedAgentsActivity()
+                              .frame(alignment: .center)
                       } else if (!coordinator.expandingView.show || coordinator.expandingView.type == .music) && vm.notchState == .closed && (musicManager.isPlaying || !musicManager.isPlayerIdle) && coordinator.musicLiveActivityEnabled && !vm.hideOnClosed {
                           MusicLiveActivity()
                               .frame(alignment: .center)
@@ -394,6 +412,59 @@ struct ContentView: View {
             height: vm.effectiveClosedNotchHeight,
             alignment: .center
         )
+    }
+
+    private var musicIsShowing: Bool {
+        (musicManager.isPlaying || !musicManager.isPlayerIdle) && coordinator.musicLiveActivityEnabled
+    }
+
+    /// The closed notch with an agent around. Music keeps the left ear and
+    /// Mochi takes the right; without music Mochi is on the left and the other
+    /// agents on the right, as in Coucou's compact island.
+    @ViewBuilder
+    func ClosedAgentsActivity() -> some View {
+        let ear = max(0, vm.effectiveClosedNotchHeight - 12)
+        HStack {
+            if musicIsShowing {
+                Image(nsImage: musicManager.albumArt)
+                    .resizable()
+                    .clipped()
+                    .clipShape(
+                        RoundedRectangle(
+                            cornerRadius: MusicPlayerImageSizes.cornerRadiusInset.closed)
+                    )
+                    .matchedGeometryEffect(id: "albumArt", in: albumArtNamespace)
+                    .frame(width: ear, height: ear)
+            } else {
+                CoucouHost.makeClosedEar(.focusedMochi, height: ear)
+            }
+
+            Rectangle()
+                .fill(.black)
+                .frame(width: vm.closedNotchSize.width - cornerRadiusInsets.closed.top)
+
+            CoucouHost.makeClosedEar(musicIsShowing ? .focusedMochi : .trailing, height: ear)
+        }
+        .frame(height: vm.effectiveClosedNotchHeight, alignment: .center)
+    }
+
+    /// With music and agents both showing, the side of the closed notch the
+    /// pointer is over picks the tab: left for music, right for agents.
+    private func pickTabForPointer() {
+        guard vm.notchState == .closed, agentPresence.isActive else { return }
+        if musicIsShowing {
+            coordinator.currentView = hoverPointX < computedChinWidth / 2 ? .home : .agents
+        } else {
+            coordinator.currentView = .agents
+        }
+    }
+
+    /// Keeps Coucou's idea of where its UI is on screen in step with the notch.
+    private var agentSurface: CoucouHost.Surface {
+        if vm.notchState == .open {
+            return coordinator.currentView == .agents ? .expanded : .hidden
+        }
+        return agentPresence.isActive ? .compact : .hidden
     }
 
     @ViewBuilder
@@ -523,6 +594,7 @@ struct ContentView: View {
 
     private func handleHover(_ hovering: Bool) {
         if coordinator.firstLaunch { return }
+        vm.pointerInside = hovering
         hoverTask?.cancel()
         
         if hovering {
@@ -547,6 +619,7 @@ struct ContentView: View {
                           self.isHovering,
                           !self.coordinator.sneakPeek.show else { return }
                     
+                    self.pickTabForPointer()
                     self.doOpen()
                 }
             }

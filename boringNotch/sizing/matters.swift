@@ -19,13 +19,15 @@ let openNotchSize: CGSize = .init(width: 640, height: 190)
 func openNotchSize(for view: NotchViews) -> CGSize {
     switch view {
     case .agents:
-        return .init(width: openNotchSize.width, height: 158)
+        // Coucou's 620-point band of cards plus the notch's 31-point padding each side.
+        return .init(width: 682, height: 158)
     default:
         return openNotchSize
     }
 }
 
-let windowSize: CGSize = .init(width: openNotchSize.width, height: openNotchSize.height + shadowPadding)
+/// The window is wide enough for the widest tab; each tab sets the notch's own width.
+let windowSize: CGSize = .init(width: 700, height: openNotchSize.height + shadowPadding)
 let cornerRadiusInsets: (opened: (top: CGFloat, bottom: CGFloat), closed: (top: CGFloat, bottom: CGFloat)) = (opened: (top: 19, bottom: 24), closed: (top: 6, bottom: 14))
 
 enum MusicPlayerImageSizes {

@@ -9,3 +9,5 @@ Step 0 imports Boring Notch unmodified at the SHA above.
 ## Coucou module (Packages/CoucouCore)
 
 Sources: Coucou's NotchBuddy/Sources/App and NotchBuddy/Sources/CoucouKit, copied unchanged from the commit above, minus NotchBuddyApp.swift (the @main entry). The only added file is Sources/CoucouCore/CoucouHost.swift. The Phone, Widgets and NotificationContent targets are not included. Coucou's licenses are in licenses/Coucou (the name, Mochi and sounds are not MIT: see LICENSE-ASSETS.md).
+
+Patches to Coucou's own files are listed in Packages/CoucouCore/PATCHES.md.
