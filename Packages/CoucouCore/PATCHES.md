@@ -43,3 +43,6 @@ app adds sits in `CoucouHost.swift` and `AgentsTabView.swift`.
    actions this app handles (open/close, go to alert, jump to terminal, next and
    previous pill, mute). The others belong to chat, voice, screen capture and
    the desktop Mochi, which are off here.
+10. `App/AppState.swift` and `App/BotCanvasView.swift`: `hostBotAnchor`, a view the host
+    places on Mochi; when set, his gaze is measured from it instead of from where
+    Coucou's own island would draw him.

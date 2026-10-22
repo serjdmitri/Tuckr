@@ -34,6 +34,9 @@ final class AppState: ObservableObject {
 
     // Mouse tracking
     var mousePosition: CGPoint = .zero
+    /// Set by a host that draws Mochi in its own window: the view centred on him, so his gaze
+    /// is measured from where he really is rather than from where Coucou's island would put him.
+    weak var hostBotAnchor: NSView?
     var lastMouseMove: Date = .now
     var lastActivity: Date = .now
     var isPresent: Bool = true

@@ -198,6 +198,13 @@ struct BotCanvasView: View {
     /// Where Mochi looks (the pointer), both axes at once: the island geometry and the
     /// screen are looked up once per frame instead of twice each.
     private func lookXY(state: AppState) -> (x: CGFloat, y: CGFloat) {
+        if let anchor = state.hostBotAnchor, let window = anchor.window {
+            let rect = window.convertToScreen(anchor.convert(anchor.bounds, to: nil))
+            let top = IslandWindowController.desktopTop
+            let bot = DesktopSpace.topDown(CGPoint(x: rect.midX, y: rect.midY), desktopTop: top)
+            let mouse = DesktopSpace.topDown(NSEvent.mouseLocation, desktopTop: top)
+            return (tanh((mouse.x - bot.x) / 260), -tanh((mouse.y - bot.y) / 200))
+        }
         if let origin = lookOriginOverride {
             return (tanh((state.mousePosition.x - origin.x) / 260),
                     -tanh((state.mousePosition.y - origin.y) / 200))

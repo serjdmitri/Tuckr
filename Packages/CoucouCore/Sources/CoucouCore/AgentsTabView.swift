@@ -76,6 +76,7 @@ struct AgentsTabView: View {
     let size = max(diameter, 48) + 12
     return Color.clear
       .frame(width: size, height: size)
+      .background(BotAnchor())
       .contentShape(Circle())
       .position(x: cx - Self.contentOrigin.x, y: cy - Self.contentOrigin.y)
       .onHover { inside in inside ? hoverIn() : hoverOut() }
@@ -107,5 +108,21 @@ struct AgentsTabView: View {
     hovering = false
     loveTimer?.cancel()
     NotificationCenter.default.post(name: .botSetTgEs, object: CGFloat(1))
+  }
+}
+
+/// An invisible view centred on Mochi, so his eyes can find the pointer relative to him.
+private struct BotAnchor: NSViewRepresentable {
+  final class AnchorView: NSView {
+    override func hitTest(_ point: NSPoint) -> NSView? { nil }
+    override func viewDidMoveToWindow() {
+      super.viewDidMoveToWindow()
+      if window != nil { AppState.shared.hostBotAnchor = self }
+    }
+  }
+
+  func makeNSView(context: Context) -> AnchorView { AnchorView() }
+  func updateNSView(_ view: AnchorView, context: Context) {
+    if view.window != nil { AppState.shared.hostBotAnchor = view }
   }
 }

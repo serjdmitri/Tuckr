@@ -103,7 +103,12 @@ public enum CoucouHost {
       forName: .islandCollapse, object: nil, queue: .main
     ) { _ in
       MainActor.assumeIsolated {
-        AppState.shared.isPinned = false
+        let state = AppState.shared
+        state.isPinned = false
+        // A finished or error card is dealt with: the tab reopens on the pills, not on it.
+        if state.view == .finished || state.view == .error || state.view == .confused {
+          state.view = state.tasks.isEmpty ? .empty : .overview
+        }
         onCollapseRequested?()
       }
     }
