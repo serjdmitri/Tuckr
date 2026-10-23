@@ -60,6 +60,22 @@ enum SneakPeekStyle: String, CaseIterable, Identifiable, Defaults.Serializable {
 }
 
 // Action to perform when Option (⌥) is held while pressing media keys
+/// Where the Transform panel saves what it makes.
+enum TransformOutput: String, CaseIterable, Identifiable, Defaults.Serializable {
+    case besideOriginal = "Next to the original"
+    case pickedFolder = "A folder I pick"
+
+    var id: String { rawValue }
+}
+
+enum TransformFormat: String, CaseIterable, Identifiable, Defaults.Serializable {
+    case jpeg = "JPEG"
+    case png = "PNG"
+    case heic = "HEIC"
+
+    var id: String { rawValue }
+}
+
 enum OptionKeyAction: String, CaseIterable, Identifiable, Defaults.Serializable {
     case openSettings = "Open System Settings"
     case showHUD = "Show HUD"
@@ -177,6 +193,16 @@ extension Defaults.Keys {
     /// The notch stays open until unlocked.
     static let notchLocked = Key<Bool>("notchLocked", default: false)
 
+    // MARK: Transform (the Shelf's fourth panel)
+    static let transformOutput = Key<TransformOutput>("transformOutput", default: .besideOriginal)
+    static let transformFolder = Key<String>("transformFolder", default: "")
+    /// Longest side, in pixels, for Resize.
+    static let transformResizeEdge = Key<Int>("transformResizeEdge", default: 1920)
+    static let transformQuality = Key<Double>("transformQuality", default: 0.6)
+    static let transformFormat = Key<TransformFormat>("transformFormat", default: .jpeg)
+    /// Degrees clockwise for Rotate: 90, 180 or 270.
+    static let transformRotation = Key<Int>("transformRotation", default: 90)
+    
     // MARK: Calendar
     static let calendarSelectionState = Key<CalendarSelectionState>("calendarSelectionState", default: .all)
     static let hideAllDayEvents = Key<Bool>("hideAllDayEvents", default: false)
