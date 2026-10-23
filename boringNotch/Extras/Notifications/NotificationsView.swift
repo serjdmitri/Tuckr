@@ -76,6 +76,7 @@ struct NotificationsView: View {
                         .font(.system(size: 12)).foregroundStyle(.white.opacity(0.65))
                         .lineLimit(2).multilineTextAlignment(.leading)
                 }
+                VoiceButton(item: item, size: 30)
             }
             .padding(8)
             .frame(maxWidth: .infinity, alignment: .leading)

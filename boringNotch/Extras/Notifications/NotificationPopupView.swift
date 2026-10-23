@@ -45,40 +45,49 @@ struct NotificationPopupView: View {
 
     private func card(_ item: NotificationItem) -> some View {
         HStack(spacing: 14) {
-            Image(nsImage: NotificationFeed.icon(for: item.appID))
-                .resizable()
-                .interpolation(.high)
-                .frame(width: 44, height: 44)
-            VStack(alignment: .leading, spacing: 1) {
-                HStack(spacing: 6) {
-                    Text(item.appName)
-                        .font(.system(size: 13, weight: .regular))
-                        .foregroundStyle(.gray)
+            // A click on the message opens its app; the play button, beside it, only plays.
+            HStack(spacing: 14) {
+                Image(nsImage: NotificationFeed.icon(for: item.appID))
+                    .resizable()
+                    .interpolation(.high)
+                    .frame(width: 44, height: 44)
+                VStack(alignment: .leading, spacing: 1) {
+                    HStack(spacing: 6) {
+                        Text(item.appName)
+                            .font(.system(size: 13, weight: .regular))
+                            .foregroundStyle(.gray)
+                            .lineLimit(1)
+                        if feed.popups.count > 1 {
+                            Text("+\(feed.popups.count - 1)")
+                                .font(.system(size: 11, weight: .bold))
+                                .foregroundStyle(.white.opacity(0.85))
+                                .padding(.horizontal, 6).padding(.vertical, 1)
+                                .background(Capsule().fill(Color.white.opacity(0.18)))
+                        }
+                    }
+                    Text(hideText ? "New message" : (item.title.isEmpty ? item.appName : item.title))
+                        .font(.system(size: 17, weight: .bold))
+                        .foregroundStyle(.white)
                         .lineLimit(1)
-                    if feed.popups.count > 1 {
-                        Text("+\(feed.popups.count - 1)")
-                            .font(.system(size: 11, weight: .bold))
-                            .foregroundStyle(.white.opacity(0.85))
-                            .padding(.horizontal, 6).padding(.vertical, 1)
-                            .background(Capsule().fill(Color.white.opacity(0.18)))
+                        .truncationMode(.tail)
+                    let line = [item.subtitle, item.body].filter { !$0.isEmpty }.joined(separator: " · ")
+                    if !hideText, !line.isEmpty {
+                        Text(line)
+                            .font(.system(size: 13))
+                            .foregroundStyle(.white.opacity(0.7))
+                            .lineLimit(2)
+                            .multilineTextAlignment(.leading)
+                            .padding(.top, 1)
                     }
                 }
-                Text(hideText ? "New message" : (item.title.isEmpty ? item.appName : item.title))
-                    .font(.system(size: 17, weight: .bold))
-                    .foregroundStyle(.white)
-                    .lineLimit(1)
-                    .truncationMode(.tail)
-                let line = [item.subtitle, item.body].filter { !$0.isEmpty }.joined(separator: " · ")
-                if !hideText, !line.isEmpty {
-                    Text(line)
-                        .font(.system(size: 13))
-                        .foregroundStyle(.white.opacity(0.7))
-                        .lineLimit(2)
-                        .multilineTextAlignment(.leading)
-                        .padding(.top, 1)
-                }
+                Spacer(minLength: 8)
             }
-            Spacer(minLength: 8)
+            .contentShape(Rectangle())
+            .onTapGesture {
+                NotificationFeed.open(item.appID)
+                feed.dismiss(item.id)
+            }
+            VoiceButton(item: item)
         }
         .padding(.horizontal, 22)
         .padding(.top, notchHeight + 2)
@@ -86,10 +95,5 @@ struct NotificationPopupView: View {
         .frame(width: width)
         .background(shape.fill(.black))
         .shadow(color: .black.opacity(0.45), radius: 8, y: 3)
-        .contentShape(Rectangle())
-        .onTapGesture {
-            NotificationFeed.open(item.appID)
-            feed.dismiss(item.id)
-        }
     }
 }

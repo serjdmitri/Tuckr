@@ -20,6 +20,8 @@ struct NotificationItem: Identifiable, Equatable {
     let body: String
     let date: Date
     let thread: String
+    /// For a voice message: the saved sound, once it has been found.
+    var audioURL: URL? = nil
 }
 
 /// The apps whose notifications show by default: the ones people talk in.
@@ -136,7 +138,7 @@ final class NotificationFeed: ObservableObject {
             // What was already there at launch is history, not news.
             guard !firstRead else { return }
             unread += fresh.count
-            for item in fresh where Date().timeIntervalSince(item.date) < 90 { show(item) }
+            for item in fresh where Date().timeIntervalSince(item.date) < 90 { show(item); findAudio(for: item) }
         }
     }
 
@@ -167,7 +169,27 @@ final class NotificationFeed: ObservableObject {
         items = Array(([item] + items).prefix(40))
         unread += 1
         show(item)
+        findAudio(for: item)
         return true
+    }
+
+    /// A voice message: look for its sound a few times, as the chat app may save it a moment late.
+    private func findAudio(for item: NotificationItem) {
+        guard VoiceLocator.looksLikeVoice(title: item.title, body: item.body) else { return }
+        Task { @MainActor [weak self] in
+            for delay in [0.2, 0.8, 2.0, 4.0] {
+                try? await Task.sleep(for: .seconds(delay))
+                if let url = await VoiceLocator.locate(appID: item.appID) {
+                    self?.attach(audio: url, to: item.id)
+                    return
+                }
+            }
+        }
+    }
+
+    private func attach(audio: URL, to id: Int) {
+        if let i = items.firstIndex(where: { $0.id == id }) { items[i].audioURL = audio }
+        if let i = popups.firstIndex(where: { $0.id == id }) { popups[i].audioURL = audio }
     }
 
     // MARK: Popup and inbox
@@ -178,12 +200,18 @@ final class NotificationFeed: ObservableObject {
         if popups.count > 3, let gone = popups.popLast() { hideTasks[gone.id]?.cancel(); hideTasks[gone.id] = nil }
         hideTasks[item.id] = Task { @MainActor [weak self] in
             try? await Task.sleep(for: .seconds(6))
+            // Not while it is being listened to.
+            while VoicePlayer.shared.isPlaying(item.id) {
+                try? await Task.sleep(for: .seconds(1))
+                if Task.isCancelled { return }
+            }
             guard !Task.isCancelled else { return }
             self?.dismiss(item.id)
         }
     }
 
     func dismiss(_ id: Int) {
+        if VoicePlayer.shared.isPlaying(id) { VoicePlayer.shared.stop() }
         hideTasks[id]?.cancel()
         hideTasks[id] = nil
         popups.removeAll { $0.id == id }
