@@ -27,7 +27,7 @@ struct NotificationItem: Identifiable, Equatable {
 /// The apps whose notifications show by default: the ones people talk in.
 enum NotificationApps {
     static let defaults: Set<String> = [
-        "com.apple.mobilesms", "net.whatsapp.whatsapp", "ru.keepcoder.telegram", "org.telegram.desktop",
+        "com.apple.mobilesms", "net.whatsapp.whatsapp", "com.tdesktop.telegram", "ru.keepcoder.telegram", "org.telegram.desktop",
         "com.tinyspeck.slackmacgap", "com.apple.mail", "com.hnc.discord", "org.whispersystems.signal-desktop",
         "com.facebook.archon", "com.microsoft.teams2", "com.readdle.smartemail-mac",
     ]
@@ -66,6 +66,11 @@ final class NotificationFeed: ObservableObject {
     func start() {
         guard !started else { return }
         started = true
+        // Telegram's real id was missing from the first list of defaults.
+        if !UserDefaults.standard.bool(forKey: "notificationAppsTelegramAdded") {
+            UserDefaults.standard.set(true, forKey: "notificationAppsTelegramAdded")
+            Defaults[.notificationApps].insert("com.tdesktop.telegram")
+        }
         refresh()
         watch()
         // The write-ahead file can be swapped out from under a watcher: look again now and then.
@@ -156,10 +161,11 @@ final class NotificationFeed: ObservableObject {
     func captured(appName: String, title: String, subtitle: String, body: String) -> Bool {
         guard Defaults[.notificationsEnabled] else { return false }
         let enabled = Defaults[.notificationApps]
-        var candidates = Set(seenApps.keys).union(NotificationApps.defaults)
-        candidates.formUnion(enabled)
-        guard let appID = candidates.first(where: {
-            enabled.contains($0) && Self.name(for: $0).caseInsensitiveCompare(appName) == .orderedSame
+        // Only apps that are really installed: a default id for a Telegram that is not the one on
+        // this Mac would otherwise win by name and then open nothing.
+        guard let appID = enabled.first(where: {
+            NSWorkspace.shared.urlForApplication(withBundleIdentifier: $0) != nil
+                && Self.name(for: $0).caseInsensitiveCompare(appName) == .orderedSame
         }) else { return false }
         captured[signature(appID, title, body)] = Date()
         syntheticID -= 1
@@ -242,7 +248,9 @@ final class NotificationFeed: ObservableObject {
 
     static func open(_ bundleID: String) {
         guard let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID) else { return }
-        NSWorkspace.shared.openApplication(at: url, configuration: NSWorkspace.OpenConfiguration())
+        // Bring a running app's windows forward, and ask a window-less one to show one.
+        NSWorkspace.shared.runningApplications.first { $0.bundleURL == url }?.activate(options: [.activateAllWindows])
+        NSWorkspace.shared.open(url)
     }
 
     /// Open the message in its own chat if the app can be told which, otherwise the app; and
