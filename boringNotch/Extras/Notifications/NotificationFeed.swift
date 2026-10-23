@@ -39,18 +39,23 @@ final class NotificationFeed: ObservableObject {
     @Published private(set) var items: [NotificationItem] = []
     /// Arrived since the inbox was last looked at.
     @Published private(set) var unread = 0
-    /// The one the closed notch is dropping down with right now.
-    @Published private(set) var popup: NotificationItem?
+    /// What the closed notch is dropping down with right now, newest first. Several that arrive
+    /// close together stack, each leaving on its own timer.
+    @Published private(set) var popups: [NotificationItem] = []
+    var popup: NotificationItem? { popups.first }
     /// Every app seen in the database (identifier → name), for the settings list.
     @Published private(set) var seenApps: [String: String] = [:]
     /// macOS refused the database: no Full Disk Access.
     @Published private(set) var needsAccess = false
 
     private var lastID = 0
+    /// Messages the banner watcher already showed: the database delivers them again a little later.
+    private var captured: [String: Date] = [:]
+    private var syntheticID = 0
     private var started = false
     private var watchers: [DispatchSourceFileSystemObject] = []
     private var refreshTask: Task<Void, Never>?
-    private var hideTask: Task<Void, Never>?
+    private var hideTasks: [Int: Task<Void, Never>] = [:]
     private var poll: Timer?
 
     private static let directory = FileManager.default.homeDirectoryForCurrentUser
@@ -121,7 +126,7 @@ final class NotificationFeed: ObservableObject {
             lastID = max(lastID, maxID)
             for row in rows where seenApps[row.appID] == nil { seenApps[row.appID] = Self.name(for: row.appID) }
             let enabled = Defaults[.notificationApps]
-            let fresh = rows.filter { enabled.contains($0.appID) }.map { row in
+            let fresh = rows.filter { enabled.contains($0.appID) && !wasCaptured($0.appID, $0.title, $0.body) }.map { row in
                 NotificationItem(
                     id: row.id, appID: row.appID, appName: seenApps[row.appID] ?? row.appID, title: row.title,
                     subtitle: row.subtitle, body: row.body, date: row.date, thread: row.thread)
@@ -131,25 +136,57 @@ final class NotificationFeed: ObservableObject {
             // What was already there at launch is history, not news.
             guard !firstRead else { return }
             unread += fresh.count
-            if let newest = fresh.last, Date().timeIntervalSince(newest.date) < 90 { show(newest) }
+            for item in fresh where Date().timeIntervalSince(item.date) < 90 { show(item) }
         }
+    }
+
+    // MARK: From the banner
+
+    private func signature(_ appID: String, _ title: String, _ body: String) -> String { "\(appID)|\(title)|\(body)" }
+
+    private func wasCaptured(_ appID: String, _ title: String, _ body: String) -> Bool {
+        captured = captured.filter { Date().timeIntervalSince($0.value) < 120 }
+        return captured[signature(appID, title, body)] != nil
+    }
+
+    /// A banner macOS is showing, read as it appeared. True when it is one of the apps switched
+    /// on here, which is then shown by the notch (and the banner closed).
+    func captured(appName: String, title: String, subtitle: String, body: String) -> Bool {
+        guard Defaults[.notificationsEnabled] else { return false }
+        let enabled = Defaults[.notificationApps]
+        var candidates = Set(seenApps.keys).union(NotificationApps.defaults)
+        candidates.formUnion(enabled)
+        guard let appID = candidates.first(where: {
+            enabled.contains($0) && Self.name(for: $0).caseInsensitiveCompare(appName) == .orderedSame
+        }) else { return false }
+        captured[signature(appID, title, body)] = Date()
+        syntheticID -= 1
+        let item = NotificationItem(
+            id: syntheticID, appID: appID, appName: Self.name(for: appID), title: title, subtitle: subtitle,
+            body: body, date: Date(), thread: "")
+        items = Array(([item] + items).prefix(40))
+        unread += 1
+        show(item)
+        return true
     }
 
     // MARK: Popup and inbox
 
     private func show(_ item: NotificationItem) {
-        popup = item
-        hideTask?.cancel()
-        hideTask = Task { @MainActor [weak self] in
+        popups.insert(item, at: 0)
+        // Three cards at most; the oldest makes way.
+        if popups.count > 3, let gone = popups.popLast() { hideTasks[gone.id]?.cancel(); hideTasks[gone.id] = nil }
+        hideTasks[item.id] = Task { @MainActor [weak self] in
             try? await Task.sleep(for: .seconds(6))
             guard !Task.isCancelled else { return }
-            self?.popup = nil
+            self?.dismiss(item.id)
         }
     }
 
-    func dismissPopup() {
-        hideTask?.cancel()
-        popup = nil
+    func dismiss(_ id: Int) {
+        hideTasks[id]?.cancel()
+        hideTasks[id] = nil
+        popups.removeAll { $0.id == id }
     }
 
     func markRead() { unread = 0 }

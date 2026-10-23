@@ -14,6 +14,7 @@ struct NotificationsSettings: View {
     @Default(.notificationApps) private var apps
     @Default(.notificationHideText) private var hideText
     @Default(.notificationHideFromSharing) private var hideFromSharing
+    @Default(.notificationReplaceBanners) private var replaceBanners
 
     /// The known messaging apps plus whatever else has sent a notification lately.
     private var listed: [(id: String, name: String)] {
@@ -31,8 +32,9 @@ struct NotificationsSettings: View {
                     .onChange(of: enabled) { _, on in if on { NotificationFeed.shared.refresh() } }
                 Toggle("Hide the text (show only who it is from)", isOn: $hideText)
                 Toggle("Keep previews out of screen sharing", isOn: $hideFromSharing)
+                Toggle("Replace macOS's own banner for these apps", isOn: $replaceBanners)
             } footer: {
-                Text("Reads macOS's own notification list, so it needs Full Disk Access, and changes nothing. Nothing is saved: messages exist only while the app runs.")
+                Text("Reads macOS's own notification list, so it needs Full Disk Access, and changes nothing. Replacing the banner needs Accessibility: the message still stays in Notification Center. Nothing is saved: messages exist only while the app runs.")
                     .font(.caption).foregroundColor(.secondary)
             }
             if feed.needsAccess {

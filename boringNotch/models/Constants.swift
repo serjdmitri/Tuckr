@@ -193,6 +193,8 @@ extension Defaults.Keys {
     static let notificationApps = Key<Set<String>>("notificationApps", default: NotificationApps.defaults)
     static let notificationHideText = Key<Bool>("notificationHideText", default: false)
     static let notificationHideFromSharing = Key<Bool>("notificationHideFromSharing", default: true)
+    /// Close macOS's own banner for the apps shown here (needs Accessibility).
+    static let notificationReplaceBanners = Key<Bool>("notificationReplaceBanners", default: true)
 
     // MARK: Staying put
     /// How long, in seconds, a closed notch remembers the tab it was on before going back to Home.
