@@ -18,31 +18,42 @@ struct NotificationPopupView: View {
     var body: some View {
         ZStack(alignment: .top) {
             if let item = feed.popup {
-                HStack(alignment: .top, spacing: 12) {
+                // Laid out like the Bluetooth popup: the app's own icon, who it is from, what it says.
+                HStack(spacing: 14) {
                     Image(nsImage: NotificationFeed.icon(for: item.appID))
                         .resizable()
-                        .frame(width: 36, height: 36)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(hideText ? item.appName : (item.title.isEmpty ? item.appName : item.title))
-                            .font(.system(size: 15, weight: .bold))
+                        .interpolation(.high)
+                        .frame(width: 44, height: 44)
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text(item.appName)
+                            .font(.system(size: 13, weight: .regular))
+                            .foregroundStyle(.gray)
+                            .lineLimit(1)
+                        Text(hideText ? "New message" : (item.title.isEmpty ? item.appName : item.title))
+                            .font(.system(size: 17, weight: .bold))
                             .foregroundStyle(.white)
                             .lineLimit(1)
-                        let line = hideText ? "New message" : [item.subtitle, item.body].filter { !$0.isEmpty }.joined(separator: " · ")
-                        if !line.isEmpty {
+                            .truncationMode(.tail)
+                        let line = [item.subtitle, item.body].filter { !$0.isEmpty }.joined(separator: " · ")
+                        if !hideText, !line.isEmpty {
                             Text(line)
                                 .font(.system(size: 13))
                                 .foregroundStyle(.white.opacity(0.7))
                                 .lineLimit(2)
                                 .multilineTextAlignment(.leading)
+                                .padding(.top, 1)
                         }
                     }
-                    Spacer(minLength: 0)
+                    Spacer(minLength: 8)
                 }
-                .padding(.horizontal, 20)
-                .padding(.top, notchHeight + 4)
+                .padding(.horizontal, 22)
+                .padding(.top, notchHeight + 2)
                 .padding(.bottom, 14)
-                .frame(width: max(chinWidth, 400), alignment: .leading)
-                .background(UnevenRoundedRectangle(bottomLeadingRadius: 26, bottomTrailingRadius: 26).fill(.black))
+                .frame(width: max(chinWidth, 380))
+                .background(
+                    UnevenRoundedRectangle(bottomLeadingRadius: 26, bottomTrailingRadius: 26)
+                        .fill(.black)
+                )
                 .shadow(color: .black.opacity(0.45), radius: 8, y: 3)
                 .contentShape(Rectangle())
                 .onTapGesture {
