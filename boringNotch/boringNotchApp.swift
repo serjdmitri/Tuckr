@@ -55,6 +55,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     var statusItem: NSStatusItem?
     var windows: [String: NSWindow] = [:] // UUID -> NSWindow
     var viewModels: [String: BoringViewModel] = [:] // UUID -> BoringViewModel
+    private var activity: NSObjectProtocol?
     var window: NSWindow?
     let vm: BoringViewModel = .init()
     @ObservedObject var coordinator = BoringViewCoordinator.shared
@@ -497,6 +498,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             self.scheduleAgentsAutoClose()
         }
         BluetoothMonitor.shared.start()
+        // The notch's window is clear while it is closed, so macOS thinks nobody is looking at
+        // the app and naps it; a nap leaves a dragged file's targets dead. Stay awake.
+        activity = ProcessInfo.processInfo.beginActivity(
+            options: [.userInitiatedAllowingIdleSystemSleep], reason: "The notch must answer drags")
         // Locked open: it comes back open after a launch.
         if Defaults[.notchLocked] {
             Task { @MainActor [weak self] in
