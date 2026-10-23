@@ -20,7 +20,6 @@ final class TranscribeProgress: ObservableObject {
 struct TranscribePanelView: View {
     @EnvironmentObject var vm: BoringViewModel
     @ObservedObject private var progress = TranscribeProgress.shared
-    @Environment(\.shelfPanelCompact) private var compact
     @State private var isTargeted = false
 
     var body: some View {
@@ -37,7 +36,6 @@ struct TranscribePanelView: View {
             .onDrop(of: [.fileURL], isTargeted: $isTargeted) { providers in
                 handleDrop(providers: providers)
             }
-            .onChange(of: isTargeted) { _, on in ShelfPanelFocus.shared.setTargeted(.transcribe, on) }
             .onTapGesture {
                 TalkifyRuntime.current?.pickTranscriptionFile()
             }
@@ -61,16 +59,14 @@ struct TranscribePanelView: View {
                     .foregroundStyle(.white, .gray)
                     .imageScale(.large)
 
-                if !compact {
-                    Text("Transcribe")
-                        .foregroundStyle(.gray)
-                        .font(.system(.title3, design: .rounded))
-                        .fontWeight(.medium)
+                Text("Transcribe")
+                    .foregroundStyle(.gray)
+                    .font(.system(.title3, design: .rounded))
+                    .fontWeight(.medium)
 
-                    Text("Drop audio or video")
-                        .foregroundStyle(.gray.opacity(0.7))
-                        .font(.system(.caption, design: .rounded))
-                }
+                Text("Drop audio or video")
+                    .foregroundStyle(.gray.opacity(0.7))
+                    .font(.system(.caption, design: .rounded))
             }
         }
     }

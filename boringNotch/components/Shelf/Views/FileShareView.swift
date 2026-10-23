@@ -14,7 +14,6 @@ struct FileShareView: View {
     @EnvironmentObject private var vm: BoringViewModel
     @StateObject private var quickShare = QuickShareService.shared
     @Default(.quickShareProvider) var quickShareProvider: String
-    @Environment(\.shelfPanelCompact) private var compact
 
     @State private var hostView: NSView?
     @State private var interactionNonce: UUID = .init()
@@ -64,7 +63,7 @@ struct FileShareView: View {
                         .fill(Color.white.opacity(
                             vm.dropZoneTargeting ? 0.11 : 0.09
                         ))
-                        .frame(width: compact ? 40 : 55, height: compact ? 40 : 55)
+                        .frame(width: 55, height: 55)
                     Image(systemName: "square.and.arrow.up")
                     Group {
                         if let imgData = selectedProvider.imageData, let nsImg = NSImage(data: imgData) {
@@ -75,7 +74,7 @@ struct FileShareView: View {
                             Image(systemName: "square.and.arrow.up")
                         }
                     }
-                    .frame(width: compact ? 24 : 34, height: compact ? 24 : 34)
+                    .frame(width: 34, height: 34)
                         .foregroundStyle(
                             vm.dropZoneTargeting ? Color.accentColor : Color.gray
                         )
@@ -85,14 +84,12 @@ struct FileShareView: View {
                         .animation(.spring(response: 0.36, dampingFraction: 0.7), value: vm.dropZoneTargeting)
                 }
 
-                if !compact {
-                    Text(selectedProvider.id)
-                        .font(.system(.headline, design: .rounded))
-                        .foregroundColor(.white.opacity(0.8))
-                }
+                Text(selectedProvider.id)
+                    .font(.system(.headline, design: .rounded))
+                    .foregroundColor(.white.opacity(0.8))
 
             }
-            .padding(compact ? 6 : 18)
+            .padding(18)
             
             // Loading overlay
             if isProcessing || quickShare.isPickerOpen {

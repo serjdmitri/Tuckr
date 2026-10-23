@@ -933,22 +933,6 @@ struct Shelf: View {
     @Default(.quickShareProvider) var quickShareProvider
     @Default(.expandedDragDetection) var expandedDragDetection: Bool
     @StateObject private var quickShareService = QuickShareService.shared
-    @Default(.transformOutput) var transformOutput
-    @Default(.transformFolder) var transformFolder
-    @Default(.transformResizeEdge) var transformResizeEdge
-    @Default(.transformQuality) var transformQuality
-    @Default(.transformFormat) var transformFormat
-    @Default(.transformRotation) var transformRotation
-
-    private func chooseTransformFolder() {
-        let panel = NSOpenPanel()
-        panel.canChooseDirectories = true
-        panel.canChooseFiles = false
-        panel.canCreateDirectories = true
-        panel.prompt = "Choose"
-        if panel.runModal() == .OK, let url = panel.url { transformFolder = url.path }
-    }
-
     private var selectedProvider: QuickShareProvider? {
         quickShareService.availableProviders.first(where: { $0.id == quickShareProvider })
     }
@@ -1042,44 +1026,6 @@ struct Shelf: View {
                 }
             } footer: {
                 Text("Choose which service to use when sharing files from the shelf. Click the shelf button to select files, or drag files onto it to share immediately.")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-            }
-
-            Section {
-                Picker("Save results", selection: $transformOutput) {
-                    ForEach(TransformOutput.allCases) { Text($0.rawValue).tag($0) }
-                }
-                if transformOutput == .pickedFolder {
-                    HStack {
-                        Text(transformFolder.isEmpty ? "No folder chosen" : (transformFolder as NSString).abbreviatingWithTildeInPath)
-                            .foregroundColor(.secondary)
-                            .lineLimit(1)
-                            .truncationMode(.middle)
-                        Spacer()
-                        Button("Choose…") { chooseTransformFolder() }
-                    }
-                }
-                Picker("Resize to", selection: $transformResizeEdge) {
-                    ForEach([1024, 1600, 1920, 2560, 3840], id: \.self) { Text("\($0) px on the long side").tag($0) }
-                }
-                HStack {
-                    Text("Compress quality")
-                    Slider(value: $transformQuality, in: 0.2...0.95)
-                    Text("\(Int(transformQuality * 100))%").monospacedDigit().foregroundColor(.secondary)
-                }
-                Picker("Convert to", selection: $transformFormat) {
-                    ForEach(TransformFormat.allCases) { Text($0.rawValue).tag($0) }
-                }
-                Picker("Rotate", selection: $transformRotation) {
-                    Text("90° right").tag(90)
-                    Text("90° left").tag(270)
-                    Text("180°").tag(180)
-                }
-            } header: {
-                Text("Transform")
-            } footer: {
-                Text("Drag files over the Transform panel on the shelf and drop them on an action. Results are always new files; if the chosen folder goes missing they are saved next to the original.")
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
