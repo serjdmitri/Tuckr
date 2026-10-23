@@ -735,7 +735,8 @@ final class HookServer: @unchecked Sendable {
         } else {
             state.tasks.append(task)
         }
-        if state.focusId == nil { state.focusId = id }
+        // Patched: a pinned agent takes the big Mochi the moment its pill appears.
+        if state.focusId == nil || id == state.pinnedId { state.focusId = id }
         state.syncMode()
     }
 
@@ -1173,7 +1174,8 @@ final class HookServer: @unchecked Sendable {
         } else {
             state.tasks.insert(task, at: 0)
         }
-        if state.focusId == nil { state.focusId = id }
+        // Patched: a pinned agent takes the big Mochi the moment its pill appears.
+        if state.focusId == nil || id == state.pinnedId { state.focusId = id }
         state.syncMode()
     }
 

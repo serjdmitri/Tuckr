@@ -33,6 +33,15 @@ struct BluetoothPopupView: View {
                             .foregroundStyle(.white)
                             .lineLimit(1)
                             .truncationMode(.tail)
+                        if info.connected, info.left != nil || info.right != nil || info.caseLevel != nil {
+                            // Earbuds: each side and the case.
+                            HStack(spacing: 10) {
+                                part("L", info.left)
+                                part("R", info.right)
+                                part("Case", info.caseLevel)
+                            }
+                            .padding(.top, 3)
+                        }
                     }
                     Spacer(minLength: 8)
                     BatteryRing(percent: info.connected ? info.battery : nil, drained: !info.connected,
@@ -52,6 +61,20 @@ struct BluetoothPopupView: View {
             }
         }
         .animation(.spring(response: 0.5, dampingFraction: 0.74), value: popup.info?.id)
+    }
+}
+
+extension BluetoothPopupView {
+    @ViewBuilder
+    fileprivate func part(_ label: String, _ percent: Int?) -> some View {
+        if let percent {
+            HStack(spacing: 3) {
+                Text(label).foregroundStyle(.gray)
+                Text("\(percent)%")
+                    .foregroundStyle(percent < 20 ? Color(red: 1, green: 0.62, blue: 0.16) : .white)
+            }
+            .font(.system(size: 12, weight: .semibold, design: .rounded))
+        }
     }
 }
 

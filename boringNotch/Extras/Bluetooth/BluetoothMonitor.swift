@@ -15,8 +15,13 @@ struct BluetoothInfo: Equatable {
     var name: String
     /// An SF Symbol name for the kind of device.
     var symbol: String
-    /// Battery percent, nil while unknown or when the device does not report one.
+    /// Battery percent, nil while unknown or when the device does not report one. For earbuds,
+    /// the lower of the two.
     var battery: Int?
+    /// Earbuds report each side and the case on its own.
+    var left: Int?
+    var right: Int?
+    var caseLevel: Int?
     /// False for the "Disconnected" version of the popup.
     var connected = true
 }
@@ -36,9 +41,15 @@ final class BluetoothPopup: ObservableObject {
 
     /// A battery level that arrived after the popup opened: fill the ring in and keep the
     /// popup up a little longer.
-    func update(battery: Int?, forDeviceNamed name: String) {
-        guard info?.name == name, info?.battery != battery else { return }
-        info?.battery = battery
+    func update(report: BluetoothMonitor.Report, forDeviceNamed name: String) {
+        guard let current = info, current.name == name else { return }
+        guard current.battery != report.battery || current.left != report.left
+            || current.right != report.right || current.caseLevel != report.caseLevel
+        else { return }
+        info?.battery = report.battery
+        info?.left = report.left
+        info?.right = report.right
+        info?.caseLevel = report.caseLevel
         scheduleHide(after: 4)
     }
 
@@ -73,9 +84,15 @@ final class BluetoothMonitor: NSObject {
         notification = IOBluetoothDevice.register(
             forConnectNotifications: self, selector: #selector(deviceConnected(_:device:)))
         // Devices already connected: watch for them going away too.
-        for case let device as IOBluetoothDevice in IOBluetoothDevice.pairedDevices() ?? [] where device.isConnected() {
+        for case let device as IOBluetoothDevice in IOBluetoothDevice.pairedDevices() ?? [] where device.isConnected() && !Self.isPhone(device) {
             watchDisconnect(of: device)
         }
+    }
+
+    /// Phones come and go all day (Continuity, hotspots): they are not announced.
+    static func isPhone(_ device: IOBluetoothDevice) -> Bool {
+        let name = (device.name ?? "").lowercased()
+        return device.deviceClassMajor == 0x02 || name.contains("iphone")
     }
 
     private func watchDisconnect(of device: IOBluetoothDevice) {
@@ -107,6 +124,7 @@ final class BluetoothMonitor: NSObject {
 
     @objc private func deviceConnected(_ note: IOBluetoothUserNotification, device: IOBluetoothDevice) {
         // Delivered on a background thread.
+        guard !Self.isPhone(device) else { return }
         let name = device.name ?? "Bluetooth device"
         let address = device.addressString ?? ""
         DispatchQueue.main.async {
@@ -131,7 +149,7 @@ final class BluetoothMonitor: NSObject {
                 let report = await Self.report(name: name, address: address)
                 if let report {
                     if let level = report.battery { self.lastBattery[address] = level }
-                    BluetoothPopup.shared.update(battery: report.battery, forDeviceNamed: name)
+                    BluetoothPopup.shared.update(report: report, forDeviceNamed: name)
                 }
             }
         }
@@ -139,7 +157,7 @@ final class BluetoothMonitor: NSObject {
 
     // MARK: - System report
 
-    struct Report { var battery: Int?; var kind: String? }
+    struct Report { var battery: Int?; var left: Int?; var right: Int?; var caseLevel: Int?; var kind: String? }
 
     /// Runs `system_profiler SPBluetoothDataType` off the main thread and reads the
     /// connected device's battery.
@@ -166,11 +184,15 @@ final class BluetoothMonitor: NSObject {
                         func percent(_ key: String) -> Int? {
                             (fields[key] as? String).flatMap { Int($0.replacingOccurrences(of: "%", with: "")) }
                         }
-                        let sides = [percent("device_batteryLevelLeft"), percent("device_batteryLevelRight")].compactMap { $0 }
+                        let left = percent("device_batteryLevelLeft"), right = percent("device_batteryLevelRight")
+                        let sides = [left, right].compactMap { $0 }
+                        // Earbuds: the weaker side tells how long they will last.
                         let level = sides.isEmpty
                             ? (percent("device_batteryLevelMain") ?? percent("device_batteryLevelCase"))
-                            : sides.reduce(0, +) / sides.count
-                        return Report(battery: level, kind: fields["device_minorType"] as? String)
+                            : sides.min()
+                        return Report(
+                            battery: level, left: left, right: right, caseLevel: percent("device_batteryLevelCase"),
+                            kind: fields["device_minorType"] as? String)
                     }
                 }
             }

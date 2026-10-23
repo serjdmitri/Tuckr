@@ -61,3 +61,7 @@ app adds sits in `CoucouHost.swift` and `AgentsTabView.swift`.
     cards and a dots button by the big Mochi; `AgentPill` shows dots on hover (and
     `PillWorkingActivity` hides its dots then) plus a "Usage" menu entry; `SettingsView` gets a
     "Usage alerts" page.
+14. `App/HookServer.swift`: a pill that is created after launch (`upsertExternalAgent`,
+    `upsertWorkspaceTask`) takes the focus when it is the pinned one, not only when nothing is
+    focused. Before, a pinned Claude pill never got the big Mochi because VS Code, the main
+    pill, already held it.
