@@ -242,11 +242,20 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         
         // A held file keeps the notch open; it goes when the file is let go, or after a while
         // away from it.
-        let closeNotch: @MainActor () -> Void = { [weak self] in
-            guard let self else { return }
-            let target = Defaults[.showOnAllDisplays] ? self.viewModels[uuid] : self.vm
-            if let target, !target.isMouseHovering() { target.close() }
+        func closeNotchWhenIdle(attempt: Int) {
+            let target = Defaults[.showOnAllDisplays] ? viewModels[uuid] : vm
+            guard let target, !target.isMouseHovering() else { return }
+            // A Transform job still working, or its result still showing, keeps the notch up.
+            if attempt < 40, TransformModel.shared.isBusy || ShelfPanelFocus.shared.active != nil {
+                Task { @MainActor in
+                    try? await Task.sleep(for: .seconds(1))
+                    closeNotchWhenIdle(attempt: attempt + 1)
+                }
+                return
+            }
+            target.close()
         }
+        let closeNotch: @MainActor () -> Void = { closeNotchWhenIdle(attempt: 0) }
         detector.onDragBegan = {
             Task { @MainActor in
                 NotchHold.closingAfterRelease = closeNotch

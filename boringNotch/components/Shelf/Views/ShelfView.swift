@@ -17,6 +17,7 @@ struct ShelfView: View {
 
     @ObservedObject private var focus = ShelfPanelFocus.shared
     private let gap: CGFloat = 12
+    @State private var dropFrames = ShelfDropFrames()
 
     /// A panel a drag is over grows and the others shrink to their icon.
     private func weight(_ panel: ShelfPanel) -> CGFloat {
@@ -51,19 +52,27 @@ struct ShelfView: View {
                     .environmentObject(vm)
                     .environment(\.shelfPanelCompact, isCompact(.share))
                     .frame(width: width(.share, in: geo.size.width))
+                    .reportsShelfFrame(panel: .share)
                 panel
                     .environment(\.shelfPanelCompact, isCompact(.shelf))
                     .frame(width: width(.shelf, in: geo.size.width))
+                    .reportsShelfFrame(panel: .shelf)
                     .onDrop(of: [.fileURL, .url, .utf8PlainText, .plainText, .data], isTargeted: shelfTargeted) { providers in
                         handleDrop(providers: providers)
                     }
                 TranscribePanelView()
                     .environment(\.shelfPanelCompact, isCompact(.transcribe))
                     .frame(width: width(.transcribe, in: geo.size.width))
+                    .reportsShelfFrame(panel: .transcribe)
                 TransformPanelView()
                     .environment(\.shelfPanelCompact, isCompact(.transform))
                     .frame(width: width(.transform, in: geo.size.width))
+                    .reportsShelfFrame(panel: .transform)
             }
+            .coordinateSpace(name: "shelfRow")
+            .onPreferenceChange(ShelfDropFramesKey.self) { dropFrames = $0 }
+            // Files dragged over the panels are taken here, whatever SwiftUI's own targets say.
+            .overlay { ShelfDropLayer(frames: dropFrames, vm: vm) }
         }
         .onChange(of: vm.dropZoneTargeting) { _, on in focus.setTargeted(.share, on) }
         .onDisappear { focus.reset() }

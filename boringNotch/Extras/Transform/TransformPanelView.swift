@@ -88,7 +88,9 @@ struct TransformPanelView: View {
 private struct ActionTile: View {
     let action: TransformAction
     @EnvironmentObject var vm: BoringViewModel
-    @State private var targeted = false
+    @ObservedObject private var model = TransformModel.shared
+    @State private var dropTargeted = false
+    private var targeted: Bool { dropTargeted || model.hoverTile == action }
 
     var body: some View {
         VStack(spacing: 2) {
@@ -110,13 +112,14 @@ private struct ActionTile: View {
         .scaleEffect(targeted ? 1.05 : 1)
         .animation(.spring(response: 0.3, dampingFraction: 0.7), value: targeted)
         .contentShape(Rectangle())
-        .onDrop(of: [.fileURL], isTargeted: $targeted) { providers in
+        .reportsShelfFrame(tile: action)
+        .onDrop(of: [.fileURL], isTargeted: $dropTargeted) { providers in
             vm.dropEvent = true
             TransformModel.shared.run(action, providers: providers)
             return true
         }
         // Over a tile the panel's own hover ends: keep it grown.
-        .onChange(of: targeted) { _, on in ShelfPanelFocus.shared.setTargeted(.transform, on) }
+        .onChange(of: dropTargeted) { _, on in ShelfPanelFocus.shared.setTargeted(.transform, on) }
     }
 }
 

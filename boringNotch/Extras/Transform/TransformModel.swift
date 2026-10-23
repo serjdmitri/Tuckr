@@ -27,7 +27,7 @@ final class ShelfPanelFocus: ObservableObject {
     func setTargeted(_ panel: ShelfPanel, _ on: Bool) {
         targeted.removeAll { $0 == panel }
         if on { targeted.append(panel) }
-        schedule(after: on ? 0.1 : 0.2)
+        schedule(after: on ? 0.1 : 0.35)
     }
 
     func hold(_ panel: ShelfPanel, seconds: Double) {
@@ -84,6 +84,8 @@ final class TransformModel: ObservableObject {
     }
 
     @Published private(set) var phase: Phase = .idle
+    /// The tile a dragged file is over, set by the AppKit drop layer.
+    @Published var hoverTile: TransformAction?
     /// The files being dragged, read from the drag pasteboard when the drag reaches the panel,
     /// so the panel can offer only what applies to them.
     @Published private(set) var dragged: [URL] = []
@@ -118,6 +120,11 @@ final class TransformModel: ObservableObject {
         group.notify(queue: .main) { [weak self] in
             Task { @MainActor in self?.start(action, on: found.values) }
         }
+    }
+
+    func run(_ action: TransformAction, urls: [URL]) {
+        guard !isBusy else { return }
+        start(action, on: urls)
     }
 
     private func start(_ action: TransformAction, on urls: [URL]) {
