@@ -202,14 +202,20 @@ final class TeleprompterStore: ObservableObject {
     }
 }
 
-/// Keeps the notch out of screen sharing and recordings while the teleprompter is reading.
+/// Keeps the notch out of screen sharing and recordings while something private is on it (the
+/// teleprompter reading, message previews). Each reason holds it hidden until it lets go.
 @MainActor
 enum NotchPrivacy {
-    static func setHidden(_ hidden: Bool) {
+    private static var reasons = Set<String>()
+
+    static func set(_ reason: String, _ on: Bool) {
+        if on { reasons.insert(reason) } else { reasons.remove(reason) }
         for window in NSApp.windows where window is BoringNotchSkyLightWindow {
-            window.sharingType = hidden ? .none : .readOnly
+            window.sharingType = reasons.isEmpty ? .readOnly : .none
         }
     }
+
+    static func setHidden(_ hidden: Bool) { set("teleprompter", hidden) }
 }
 
 /// A plain text editor for the notch, with the keyboard handling it needs (see NotchKeyboard).

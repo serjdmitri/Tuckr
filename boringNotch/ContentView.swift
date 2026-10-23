@@ -29,6 +29,7 @@ struct ContentView: View {
     @ObservedObject var notchTimer = NotchTimer.shared
     @ObservedObject var bluetoothPopup = BluetoothPopup.shared
     @ObservedObject var usagePopup = UsagePopup.shared
+    @ObservedObject var notificationFeed = NotificationFeed.shared
     @State private var hoverPointX: CGFloat = 0
     @State private var hoverTask: Task<Void, Never>?
     @State private var isHovering: Bool = false
@@ -71,7 +72,7 @@ struct ContentView: View {
         vm.notchState == .closed && !vm.hideOnClosed
             && !(coordinator.sneakPeek.show && coordinator.sneakPeek.type != .music)
             && !(coordinator.expandingView.show && coordinator.expandingView.type == .battery)
-            && bluetoothPopup.info == nil && usagePopup.info == nil
+            && bluetoothPopup.info == nil && usagePopup.info == nil && notificationFeed.popup == nil
     }
 
     private var computedChinWidth: CGFloat {
@@ -273,6 +274,13 @@ struct ContentView: View {
                     chinWidth: computedChinWidth, notchHeight: max(24, vm.effectiveClosedNotchHeight))
             }
         }
+        .overlay(alignment: .top) {
+            // A new message from an app switched on in Settings → Notifications.
+            if vm.notchState == .closed && !vm.hideOnClosed {
+                NotificationPopupView(
+                    chinWidth: computedChinWidth, notchHeight: max(24, vm.effectiveClosedNotchHeight))
+            }
+        }
         .onChange(of: dockVisible, initial: true) { _, visible in
             BubbleDock.shared.visible = visible
         }
@@ -443,6 +451,8 @@ struct ContentView: View {
                         NotesView()
                     case .teleprompter:
                         TeleprompterView()
+                    case .inbox:
+                        NotificationsView()
                     }
                 }
                 .transition(

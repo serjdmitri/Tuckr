@@ -32,6 +32,7 @@ public enum NotchViews {
     case timer
     case notes
     case teleprompter
+    case inbox
 }
 
 enum SettingsEnum {

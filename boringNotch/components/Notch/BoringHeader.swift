@@ -15,6 +15,7 @@ struct BoringHeader: View {
     @ObservedObject var coordinator = BoringViewCoordinator.shared
     @StateObject var tvm = ShelfStateViewModel.shared
     @ObservedObject var notchTimer = NotchTimer.shared
+    @ObservedObject var notificationFeed = NotificationFeed.shared
     @Default(.notchLocked) private var notchLocked
     var body: some View {
         HStack(spacing: 0) {
@@ -54,9 +55,12 @@ struct BoringHeader: View {
                             Button { open(.notes) } label: { Label("Notes", systemImage: "note.text") }
                             Button { open(.timer) } label: { Label("Timer", systemImage: "timer") }
                             Button { open(.teleprompter) } label: { Label("Teleprompter", systemImage: "text.alignleft") }
+                            Button { open(.inbox) } label: {
+                                Label(notificationFeed.unread > 0 ? "Messages (\(notificationFeed.unread))" : "Messages", systemImage: "bubble.left.and.bubble.right")
+                            }
                         } label: {
                             Capsule()
-                                .fill([.notes, .timer, .teleprompter].contains(coordinator.currentView) ? Color(nsColor: .secondarySystemFill) : .black)
+                                .fill([.notes, .timer, .teleprompter, .inbox].contains(coordinator.currentView) ? Color(nsColor: .secondarySystemFill) : .black)
                                 .frame(width: 30, height: 30)
                                 .overlay {
                                     if notchTimer.phase != .idle {
@@ -71,7 +75,14 @@ struct BoringHeader: View {
                         .menuStyle(.borderlessButton)
                         .menuIndicator(.hidden)
                         .fixedSize()
-                        .help("Notes, Timer, Teleprompter")
+                        .help("Notes, Timer, Teleprompter, Messages")
+                        .overlay(alignment: .topTrailing) {
+                            // Messages waiting.
+                            if notificationFeed.unread > 0 {
+                                Circle().fill(Color(red: 1, green: 0.27, blue: 0.23)).frame(width: 9, height: 9)
+                                    .allowsHitTesting(false)
+                            }
+                        }
                         // Keeps the notch open until it is unlocked.
                         Button {
                             notchLocked.toggle()

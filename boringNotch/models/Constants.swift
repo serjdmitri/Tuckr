@@ -187,6 +187,13 @@ extension Defaults.Keys {
     static let autoRemoveShelfItems = Key<Bool>("autoRemoveShelfItems", default: false)
     static let expandedDragDetection = Key<Bool>("expandedDragDetection", default: true)
 
+    // MARK: Notifications (message previews)
+    static let notificationsEnabled = Key<Bool>("notificationsEnabled", default: true)
+    /// Lowercased bundle identifiers of the apps whose notifications show.
+    static let notificationApps = Key<Set<String>>("notificationApps", default: NotificationApps.defaults)
+    static let notificationHideText = Key<Bool>("notificationHideText", default: false)
+    static let notificationHideFromSharing = Key<Bool>("notificationHideFromSharing", default: true)
+
     // MARK: Staying put
     /// How long, in seconds, a closed notch remembers the tab it was on before going back to Home.
     static let tabMemorySeconds = Key<Int>("tabMemorySeconds", default: 45)

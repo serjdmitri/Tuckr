@@ -26,6 +26,7 @@ struct SettingsView: View {
         ("HUD", "HUDs", "dial.medium.fill"),
         ("Battery", "Battery", "battery.100.bolt"),
         ("Shelf", "Shelf", "books.vertical"),
+        ("Notifications", "Notifications", "bell.badge"),
         ("Shortcuts", "Shortcuts", "keyboard"),
         ("Dictation", "Dictation", "waveform.badge.mic"),
         ("Agents", "Agents", "terminal"),
@@ -71,6 +72,8 @@ struct SettingsView: View {
                     Charge()
                 case "Shelf":
                     Shelf()
+                case "Notifications":
+                    NotificationsSettings()
                 case "Shortcuts":
                     Shortcuts()
                 case "Dictation":
