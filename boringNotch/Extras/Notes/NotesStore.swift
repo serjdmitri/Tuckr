@@ -27,8 +27,9 @@ enum NotchKeyboard {
         if on { typingSources.insert(source) } else { typingSources.remove(source) }
     }
 
-    /// An open popover keeps the notch up even when the keyboard moves to it.
-    static func stopTyping() { typingSources = typingSources.filter { $0 == "popover" } }
+    /// An open popover, or the teleprompter page, keeps the notch up even when the keyboard
+    /// moves away; those end themselves.
+    static func stopTyping() { typingSources = typingSources.filter { $0 == "popover" || $0 == "teleprompter" } }
     /// Called when typing ends, so the host can close the notch if nobody is hovering.
     static var onEndTyping: (() -> Void)?
 

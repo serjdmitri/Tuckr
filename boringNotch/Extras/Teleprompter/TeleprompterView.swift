@@ -26,17 +26,17 @@ struct TeleprompterView: View {
         .onAppear {
             NotchKeyboard.allowKey = true
             NotchKeyboard.watchForKeyLoss()
+            // The notch stays open for as long as this page is showing, however the pointer
+            // moves, until another tab is picked.
+            NotchKeyboard.setTyping("teleprompter", true)
         }
-        // Reading keeps the notch open, even when the pointer leaves it.
-        .onChange(of: reading) { _, now in
-            NotchPrivacy.setHidden(now && store.hideFromSharing)
-            NotchKeyboard.setTyping("teleprompter", now)
-        }
+        .onChange(of: reading) { _, now in NotchPrivacy.setHidden(now && store.hideFromSharing) }
         .onChange(of: store.hideFromSharing) { _, hide in if reading { NotchPrivacy.setHidden(hide) } }
         .onDisappear {
             store.save()
             NotchPrivacy.setHidden(false)
             NotchKeyboard.allowKey = false
+            NotchKeyboard.setTyping("teleprompter", false)
             NotchKeyboard.stopTyping()
         }
     }
