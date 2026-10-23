@@ -58,7 +58,7 @@ struct NotificationsView: View {
 
     private func row(_ item: NotificationItem) -> some View {
         Button {
-            NotificationFeed.open(item.appID)
+            feed.open(item)
         } label: {
             HStack(alignment: .top, spacing: 10) {
                 Image(nsImage: NotificationFeed.icon(for: item.appID))

@@ -179,7 +179,7 @@ struct ContentView: View {
                             }
                     }
                     // Not on the notes page: scrolling its list must not close the notch.
-                    .conditionalModifier(Defaults[.closeGestureEnabled] && Defaults[.enableGestures] && coordinator.currentView != .notes) { view in
+                    .conditionalModifier(Defaults[.closeGestureEnabled] && Defaults[.enableGestures] && ![.notes, .inbox].contains(coordinator.currentView)) { view in
                         view
                             .panGesture(direction: .up) { translation, phase in
                                 handleUpGesture(translation: translation, phase: phase)

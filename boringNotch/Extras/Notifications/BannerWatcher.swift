@@ -54,9 +54,11 @@ final class BannerWatcher {
         guard Defaults[.notificationsEnabled], Defaults[.notificationReplaceBanners], !scanning else { return }
         scanning = true
         Task { @MainActor in
-            for delay in [0.04, 0.08, 0.15, 0.3, 0.6] {
-                try? await Task.sleep(for: .seconds(delay))
+            // Tight at first: the banner slides in for a fraction of a second, and the sooner
+            // it is closed the less of it is seen.
+            for _ in 0..<80 {
                 if scan() { break }
+                try? await Task.sleep(for: .milliseconds(8))
             }
             scanning = false
         }

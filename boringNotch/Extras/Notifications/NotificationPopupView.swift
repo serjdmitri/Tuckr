@@ -84,8 +84,7 @@ struct NotificationPopupView: View {
             }
             .contentShape(Rectangle())
             .onTapGesture {
-                NotificationFeed.open(item.appID)
-                feed.dismiss(item.id)
+                feed.open(item)
             }
             VoiceButton(item: item)
         }

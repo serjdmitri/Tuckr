@@ -244,6 +244,27 @@ final class NotificationFeed: ObservableObject {
         guard let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID) else { return }
         NSWorkspace.shared.openApplication(at: url, configuration: NSWorkspace.OpenConfiguration())
     }
+
+    /// Open the message in its own chat if the app can be told which, otherwise the app; and
+    /// take it off the list, as it has been read.
+    func open(_ item: NotificationItem) {
+        remove(item.id)
+        Task { @MainActor in
+            if let link = await ChatLocator.url(for: item),
+               let app = NSWorkspace.shared.urlForApplication(withBundleIdentifier: item.appID) {
+                let configuration = NSWorkspace.OpenConfiguration()
+                NSWorkspace.shared.open([link], withApplicationAt: app, configuration: configuration) { _, _ in }
+            } else {
+                Self.open(item.appID)
+            }
+        }
+    }
+
+    /// A message that has been dealt with leaves the list and the popup.
+    func remove(_ id: Int) {
+        items.removeAll { $0.id == id }
+        dismiss(id)
+    }
 }
 
 /// Reads the system's notification database (a copy of it) for rows newer than one already seen.
