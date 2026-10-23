@@ -15,6 +15,7 @@ struct BoringHeader: View {
     @ObservedObject var coordinator = BoringViewCoordinator.shared
     @StateObject var tvm = ShelfStateViewModel.shared
     @ObservedObject var notchTimer = NotchTimer.shared
+    @Default(.notchLocked) private var notchLocked
     var body: some View {
         HStack(spacing: 0) {
             HStack {
@@ -71,6 +72,21 @@ struct BoringHeader: View {
                         .menuIndicator(.hidden)
                         .fixedSize()
                         .help("Notes, Timer, Teleprompter")
+                        // Keeps the notch open until it is unlocked.
+                        Button {
+                            notchLocked.toggle()
+                        } label: {
+                            Capsule()
+                                .fill(notchLocked ? Color(nsColor: .secondarySystemFill) : .black)
+                                .frame(width: 30, height: 30)
+                                .overlay {
+                                    Image(systemName: notchLocked ? "lock.fill" : "lock.open")
+                                        .foregroundColor(notchLocked ? Color.effectiveAccent : .white)
+                                        .imageScale(.medium)
+                                }
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                        .help(notchLocked ? "Unlock: let the notch close again" : "Lock the notch open")
                         // The mirror is for the music (Home) and call-recording (Meetings) tabs.
                         if Defaults[.showMirror] && (coordinator.currentView == .home || coordinator.currentView == .meetings) {
                             Button(action: {

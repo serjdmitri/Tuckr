@@ -27,7 +27,11 @@ struct TeleprompterView: View {
             NotchKeyboard.allowKey = true
             NotchKeyboard.watchForKeyLoss()
         }
-        .onChange(of: reading) { _, now in NotchPrivacy.setHidden(now && store.hideFromSharing) }
+        // Reading keeps the notch open, even when the pointer leaves it.
+        .onChange(of: reading) { _, now in
+            NotchPrivacy.setHidden(now && store.hideFromSharing)
+            NotchKeyboard.setTyping("teleprompter", now)
+        }
         .onChange(of: store.hideFromSharing) { _, hide in if reading { NotchPrivacy.setHidden(hide) } }
         .onDisappear {
             store.save()
@@ -165,8 +169,8 @@ private struct EditView: View {
                     .popover(isPresented: $showSettings, arrowEdge: .bottom) { SettingsPanel() }
                 Button(action: onStart) {
                     HStack(spacing: 4) {
-                        Image(systemName: "play.fill").font(.system(size: 10))
-                        Text("Start").font(.system(size: 12, weight: .bold))
+                        Text("Continue").font(.system(size: 12, weight: .bold))
+                        Image(systemName: "chevron.right").font(.system(size: 10, weight: .bold))
                     }
                     .foregroundStyle(.black)
                     .padding(.horizontal, 14)
@@ -220,6 +224,7 @@ private struct SettingsPanel: View {
             }
             Toggle("Mirror the text", isOn: $store.mirrored)
             Toggle("Count down 3, 2, 1 first", isOn: $store.countdown)
+            Toggle("Tick on each count", isOn: $store.countdownSound).disabled(!store.countdown)
             VStack(alignment: .leading, spacing: 2) {
                 Toggle("Hide from screen sharing while reading", isOn: $store.hideFromSharing)
                 Text("Apps that capture the screen the modern way may still show it. Test with your own call app.")
@@ -406,11 +411,17 @@ private struct ReadingView: View {
                 if let id = store.neighbour(-1) { store.partID = id }
             }
             Button(action: toggle) {
-                Image(systemName: playing || countdownValue != nil ? "pause.fill" : "play.fill")
-                    .font(.system(size: 13, weight: .bold))
-                    .foregroundStyle(.black)
-                    .frame(width: 34, height: 26)
-                    .background(Capsule().fill(.white))
+                HStack(spacing: 4) {
+                    Image(systemName: playing || countdownValue != nil ? "pause.fill" : "play.fill")
+                        .font(.system(size: 12, weight: .bold))
+                    if !playing && countdownValue == nil {
+                        Text(base > 0 && !ended ? "Resume" : "Start").font(.system(size: 12, weight: .bold))
+                    }
+                }
+                .foregroundStyle(.black)
+                .padding(.horizontal, 12)
+                .frame(height: 26)
+                .background(Capsule().fill(.white))
             }
             .buttonStyle(.plain)
             .help("Start or pause (space)")
@@ -464,10 +475,12 @@ private struct ReadingView: View {
                 for n in [3, 2, 1] {
                     guard countdownValue != nil || n == 3 else { return }
                     withAnimation(.spring(response: 0.3)) { countdownValue = n }
+                    if store.countdownSound { NSSound(named: "Tink")?.play() }
                     try? await Task.sleep(for: .seconds(1))
                     if countdownValue == nil { return }
                 }
                 withAnimation { countdownValue = nil }
+                if store.countdownSound { NSSound(named: "Pop")?.play() }
                 play()
             }
         } else {

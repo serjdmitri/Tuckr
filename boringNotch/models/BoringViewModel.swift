@@ -195,6 +195,8 @@ class BoringViewModel: NSObject, ObservableObject {
         self.notchSize = openNotchSize(for: coordinator.currentView)
         self.notchState = .open
         
+        NotchHold.notchOpened()
+
         // Force music information update when notch is opened
         MusicManager.shared.forceUpdate()
     }
@@ -212,6 +214,10 @@ class BoringViewModel: NSObject, ObservableObject {
         if NotchKeyboard.isTyping {
             return
         }
+        // Nor while locked open, or a file is being dragged around it
+        if NotchHold.locked || NotchHold.dragActive {
+            return
+        }
         self.notchSize = getClosedNotchSize(screenUUID: self.screenUUID)
         self.closedNotchSize = self.notchSize
         self.notchState = .closed
@@ -219,9 +225,15 @@ class BoringViewModel: NSObject, ObservableObject {
         self.coordinator.sneakPeek.show = false
         self.edgeAutoOpenActive = false
 
-        // Set the current view to shelf if it contains files and the user enables openShelfByDefault
-        // Otherwise, if the user has not enabled openLastShelfByDefault, set the view to home
-    if !ShelfStateViewModel.shared.isEmpty && Defaults[.openShelfByDefault] {
+        // The tab is remembered for a while (a setting); after that the next open starts at Home
+        NotchHold.notchClosed { [weak self] in self?.forgetTab() }
+    }
+
+    /// Set the current view to shelf if it contains files and the user enables openShelfByDefault
+    /// Otherwise, if the user has not enabled openLastShelfByDefault, set the view to home
+    private func forgetTab() {
+        guard notchState == .closed else { return }
+        if !ShelfStateViewModel.shared.isEmpty && Defaults[.openShelfByDefault] {
             coordinator.currentView = .shelf
         } else if !coordinator.openLastTabByDefault {
             coordinator.currentView = .home

@@ -146,6 +146,7 @@ struct GeneralSettings: View {
     @Default(.showEmojis) var showEmojis
     @Default(.gestureSensitivity) var gestureSensitivity
     @Default(.minimumHoverDuration) var minimumHoverDuration
+    @Default(.tabMemorySeconds) var tabMemorySeconds
     @Default(.nonNotchHeight) var nonNotchHeight
     @Default(.nonNotchHeightMode) var nonNotchHeightMode
     @Default(.notchHeight) var notchHeight
@@ -335,6 +336,16 @@ struct GeneralSettings: View {
                     Text("Enable haptic feedback")
             }
             Toggle("Remember last tab", isOn: $coordinator.openLastTabByDefault)
+            if !coordinator.openLastTabByDefault {
+                Slider(value: Binding(get: { Double(tabMemorySeconds) }, set: { tabMemorySeconds = Int($0) }), in: 0...300, step: 5) {
+                    HStack {
+                        Text("Go back to Home after")
+                        Spacer()
+                        Text(tabMemorySeconds == 0 ? "right away" : "\(tabMemorySeconds)s")
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
             if openNotchOnHover {
                 Slider(value: $minimumHoverDuration, in: 0...1, step: 0.1) {
                     HStack {

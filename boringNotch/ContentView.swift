@@ -517,6 +517,8 @@ struct ContentView: View {
     /// pointer is over picks the tab: left for music, right for agents.
     private func pickTabForPointer() {
         guard vm.notchState == .closed, agentPresence.isActive else { return }
+        // A tab the notch is still remembering (Notes, Timer…) wins over the agents.
+        guard coordinator.currentView == .home || coordinator.currentView == .agents else { return }
         if musicIsShowing {
             coordinator.currentView = hoverPointX < computedChinWidth / 2 ? .home : .agents
         } else {

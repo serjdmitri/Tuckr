@@ -187,6 +187,12 @@ extension Defaults.Keys {
     static let autoRemoveShelfItems = Key<Bool>("autoRemoveShelfItems", default: false)
     static let expandedDragDetection = Key<Bool>("expandedDragDetection", default: true)
 
+    // MARK: Staying put
+    /// How long, in seconds, a closed notch remembers the tab it was on before going back to Home.
+    static let tabMemorySeconds = Key<Int>("tabMemorySeconds", default: 45)
+    /// The notch stays open until unlocked.
+    static let notchLocked = Key<Bool>("notchLocked", default: false)
+
     // MARK: Transform (the Shelf's fourth panel)
     static let transformOutput = Key<TransformOutput>("transformOutput", default: .besideOriginal)
     static let transformFolder = Key<String>("transformFolder", default: "")

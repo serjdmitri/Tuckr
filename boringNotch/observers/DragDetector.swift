@@ -18,6 +18,8 @@ final class DragDetector {
     var onDragEntersNotchRegion: VoidCallback?
     var onDragExitsNotchRegion: VoidCallback?
     var onDragMove: PositionCallback?
+    var onDragBegan: VoidCallback?
+    var onDragEnded: VoidCallback?
 
 
     private var mouseDownMonitor: Any?
@@ -70,6 +72,7 @@ final class DragDetector {
             // Detect if actual content is being dragged AND it's valid content
             if newContent && !self.isContentDragging && self.hasValidDragContent() {
                 self.isContentDragging = true
+                self.onDragBegan?()
             }
 
             // Only process position when content is being dragged
@@ -93,6 +96,7 @@ final class DragDetector {
             guard let self = self else { return }
             guard self.isDragging else { return }
             
+            if self.isContentDragging { self.onDragEnded?() }
             self.isDragging = false
             self.isContentDragging = false
             self.hasEnteredNotchRegion = false

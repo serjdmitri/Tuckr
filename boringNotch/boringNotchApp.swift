@@ -240,12 +240,29 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             }
         }
         
+        // A held file keeps the notch open; it goes when the file is let go, or after a while
+        // away from it.
+        let closeNotch: @MainActor () -> Void = { [weak self] in
+            guard let self else { return }
+            let target = Defaults[.showOnAllDisplays] ? self.viewModels[uuid] : self.vm
+            if let target, !target.isMouseHovering() { target.close() }
+        }
+        detector.onDragBegan = {
+            Task { @MainActor in
+                NotchHold.closingAfterRelease = closeNotch
+                NotchHold.dragBegan()
+            }
+        }
+        detector.onDragExitsNotchRegion = { Task { @MainActor in NotchHold.dragLeft(closing: closeNotch) } }
+        detector.onDragEnded = { Task { @MainActor in NotchHold.dragEnded(closing: closeNotch) } }
+
         dragDetectors[uuid] = detector
         detector.startMonitoring()
     }
 
     private func handleDragEntersNotchRegion(onScreen screen: NSScreen) {
         guard let uuid = screen.displayUUID else { return }
+        NotchHold.dragEntered()
         
         if Defaults[.showOnAllDisplays], let viewModel = viewModels[uuid] {
             viewModel.open()
@@ -471,6 +488,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             self.scheduleAgentsAutoClose()
         }
         BluetoothMonitor.shared.start()
+        // Locked open: it comes back open after a launch.
+        if Defaults[.notchLocked] {
+            Task { @MainActor [weak self] in
+                try? await Task.sleep(for: .seconds(3))
+                self?.vm.open()
+            }
+        }
         // Typing in a note ended: tuck the notch away if the pointer is not on it.
         NotchKeyboard.onEndTyping = { [weak self] in
             guard let self else { return }

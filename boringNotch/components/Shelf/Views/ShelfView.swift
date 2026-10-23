@@ -21,7 +21,7 @@ struct ShelfView: View {
     /// A panel a drag is over grows and the others shrink to their icon.
     private func weight(_ panel: ShelfPanel) -> CGFloat {
         guard let active = focus.active else { return 1 }
-        return active == panel ? 2.6 : 0.55
+        return active == panel ? 2.1 : 0.6
     }
 
     private func width(_ panel: ShelfPanel, in total: CGFloat) -> CGFloat {

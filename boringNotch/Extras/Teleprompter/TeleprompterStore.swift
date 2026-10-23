@@ -34,6 +34,7 @@ final class TeleprompterStore: ObservableObject {
     @Published var textSize: Double { didSet { UserDefaults.standard.set(textSize, forKey: "tpTextSize") } }
     @Published var mirrored: Bool { didSet { UserDefaults.standard.set(mirrored, forKey: "tpMirror") } }
     @Published var countdown: Bool { didSet { UserDefaults.standard.set(countdown, forKey: "tpCountdown") } }
+    @Published var countdownSound: Bool { didSet { UserDefaults.standard.set(countdownSound, forKey: "tpCountdownSound") } }
     /// Keep the notch out of screen shares and recordings while reading.
     @Published var hideFromSharing: Bool { didSet { UserDefaults.standard.set(hideFromSharing, forKey: "tpHideShare") } }
 
@@ -48,6 +49,7 @@ final class TeleprompterStore: ObservableObject {
         textSize = d.object(forKey: "tpTextSize") as? Double ?? 28
         mirrored = d.bool(forKey: "tpMirror")
         countdown = d.object(forKey: "tpCountdown") as? Bool ?? true
+        countdownSound = d.object(forKey: "tpCountdownSound") as? Bool ?? true
         hideFromSharing = d.object(forKey: "tpHideShare") as? Bool ?? true
         load()
         if scripts.isEmpty { newScript(select: true) }
