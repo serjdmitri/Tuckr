@@ -504,7 +504,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         WeatherService.shared.start()
         UpcomingEvents.shared.start()
         DownloadsWatcher.shared.start()
-        if Defaults[.notchHiddenFromCaptures] { NotchPrivacy.set("settings", true) }
+        FocusWatcher.shared.start()
         // The notch's window is clear while it is closed, so macOS thinks nobody is looking at
         // the app and naps it; a nap leaves a dragged file's targets dead. Stay awake.
         activity = ProcessInfo.processInfo.beginActivity(

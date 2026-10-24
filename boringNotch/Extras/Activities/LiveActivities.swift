@@ -163,3 +163,95 @@ final class DownloadsWatcher {
         return parts.count > 2 ? String(parts[2]) : ""
     }
 }
+
+// MARK: - Focus
+
+/// "Do Not Disturb on / off": macOS keeps the Focus that is switched on in a small file
+/// (read-only here, with Full Disk Access).
+@MainActor
+final class FocusWatcher {
+    static let shared = FocusWatcher()
+
+    private let folder = FileManager.default.homeDirectoryForCurrentUser
+        .appendingPathComponent("Library/DoNotDisturb/DB", isDirectory: true)
+    private var source: DispatchSourceFileSystemObject?
+    private var active: String?
+    private var started = false
+    private var pending: Task<Void, Never>?
+
+    func start() {
+        guard !started else { return }
+        started = true
+        active = currentMode()
+        watch()
+        // The file is replaced rather than written to: look again now and then, and re-attach.
+        Timer.scheduledTimer(withTimeInterval: 10, repeats: true) { _ in
+            MainActor.assumeIsolated { FocusWatcher.shared.watch(); FocusWatcher.shared.changed() }
+        }
+    }
+
+    private func watch() {
+        source?.cancel()
+        let fd = Darwin.open(folder.appendingPathComponent("Assertions.json").path, O_EVTONLY)
+        guard fd >= 0 else { source = nil; return }
+        let watcher = DispatchSource.makeFileSystemObjectSource(fileDescriptor: fd, eventMask: [.write, .delete, .rename, .extend], queue: .main)
+        watcher.setEventHandler { MainActor.assumeIsolated { FocusWatcher.shared.changed(); FocusWatcher.shared.watch() } }
+        watcher.setCancelHandler { close(fd) }
+        watcher.resume()
+        source = watcher
+    }
+
+    private func changed() {
+        pending?.cancel()
+        pending = Task { @MainActor [weak self] in
+            try? await Task.sleep(for: .milliseconds(400))
+            guard let self, !Task.isCancelled else { return }
+            let now = self.currentMode()
+            guard now != self.active else { return }
+            let before = self.active
+            self.active = now
+            guard Defaults[.activityFocus] else { return }
+            if let now {
+                NotificationFeed.shared.activity(
+                    appID: "com.apple.systempreferences", name: "Focus", title: self.name(of: now), body: "On",
+                    symbol: self.symbol(of: now))
+            } else if let before {
+                NotificationFeed.shared.activity(
+                    appID: "com.apple.systempreferences", name: "Focus", title: self.name(of: before), body: "Off",
+                    symbol: "moon.zzz.fill")
+            }
+        }
+    }
+
+    /// The identifier of the Focus that is on, or nil.
+    private func currentMode() -> String? {
+        guard let data = try? Data(contentsOf: folder.appendingPathComponent("Assertions.json")),
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let records = (json["data"] as? [[String: Any]])?.first?["storeAssertionRecords"] as? [[String: Any]],
+              let first = records.first,
+              let details = first["assertionDetails"] as? [String: Any]
+        else { return nil }
+        return details["assertionDetailsModeIdentifier"] as? String
+    }
+
+    private func configuration(of mode: String) -> [String: Any]? {
+        guard let data = try? Data(contentsOf: folder.appendingPathComponent("ModeConfigurations.json")),
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let all = (json["data"] as? [[String: Any]])?.first?["modeConfigurations"] as? [String: Any],
+              let entry = all[mode] as? [String: Any]
+        else { return nil }
+        return entry["mode"] as? [String: Any]
+    }
+
+    private func name(of mode: String) -> String {
+        if let name = configuration(of: mode)?["name"] as? String, !name.isEmpty { return name }
+        return mode.contains("donotdisturb") ? "Do Not Disturb" : "Focus"
+    }
+
+    private func symbol(of mode: String) -> String {
+        if mode.contains("donotdisturb") { return "moon.fill" }
+        if let symbol = configuration(of: mode)?["symbolImageName"] as? String,
+           NSImage(systemSymbolName: symbol, accessibilityDescription: nil) != nil { return symbol }
+        return "moon.fill"
+    }
+}
