@@ -15,6 +15,7 @@ struct NotificationsSettings: View {
     @Default(.notificationHideText) private var hideText
     @Default(.notificationHideFromSharing) private var hideFromSharing
     @Default(.notificationReplaceBanners) private var replaceBanners
+    @Default(.notificationInstant) private var instant
 
     /// The known messaging apps plus whatever else has sent a notification lately.
     private var listed: [(id: String, name: String)] {
@@ -33,8 +34,19 @@ struct NotificationsSettings: View {
                 Toggle("Hide the text (show only who it is from)", isOn: $hideText)
                 Toggle("Keep previews out of screen sharing", isOn: $hideFromSharing)
                 Toggle("Replace macOS's own banner for these apps", isOn: $replaceBanners)
+                Toggle("Instant WhatsApp and Messages (read their chats directly)", isOn: $instant)
             } footer: {
                 Text("Reads macOS's own notification list, so it needs Full Disk Access, and changes nothing. Replacing the banner needs Accessibility: the message still stays in Notification Center. Nothing is saved: messages exist only while the app runs.")
+                    .font(.caption).foregroundColor(.secondary)
+            }
+            Section {
+                Button("Open Notification Settings…") {
+                    NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.Notifications-Settings.extension")!)
+                }
+            } header: {
+                Text("No banner flash")
+            } footer: {
+                Text("With Instant on, WhatsApp and Messages show in the notch the moment a message arrives. To stop macOS's banner appearing for a moment, open Notification Settings, pick WhatsApp and Messages, and set the banner style to None (leave Notification Center on). Other apps keep their banner.")
                     .font(.caption).foregroundColor(.secondary)
             }
             if feed.needsAccess {

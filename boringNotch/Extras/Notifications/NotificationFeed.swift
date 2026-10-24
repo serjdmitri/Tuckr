@@ -22,6 +22,8 @@ struct NotificationItem: Identifiable, Equatable {
     let thread: String
     /// For a voice message: the saved sound, once it has been found.
     var audioURL: URL? = nil
+    /// A link that opens the chat, when it is already known.
+    var openURL: URL? = nil
 }
 
 /// The apps whose notifications show by default: the ones people talk in.
@@ -53,6 +55,8 @@ final class NotificationFeed: ObservableObject {
     private var lastID = 0
     /// Messages the banner watcher already showed: the database delivers them again a little later.
     private var captured: [String: Date] = [:]
+    /// Messages the instant mode already showed: app, the text reduced to letters, when.
+    private var instantSeen: [(app: String, text: String, date: Date)] = []
     private var syntheticID = 0
     private var started = false
     private var watchers: [DispatchSourceFileSystemObject] = []
@@ -133,7 +137,7 @@ final class NotificationFeed: ObservableObject {
             lastID = max(lastID, maxID)
             for row in rows where seenApps[row.appID] == nil { seenApps[row.appID] = Self.name(for: row.appID) }
             let enabled = Defaults[.notificationApps]
-            let fresh = rows.filter { enabled.contains($0.appID) && !wasCaptured($0.appID, $0.title, $0.body) }.map { row in
+            let fresh = rows.filter { enabled.contains($0.appID) && !wasCaptured($0.appID, $0.title, $0.body) && !wasInstant($0.appID, $0.body) }.map { row in
                 NotificationItem(
                     id: row.id, appID: row.appID, appName: seenApps[row.appID] ?? row.appID, title: row.title,
                     subtitle: row.subtitle, body: row.body, date: row.date, thread: row.thread)
@@ -167,6 +171,8 @@ final class NotificationFeed: ObservableObject {
             NSWorkspace.shared.urlForApplication(withBundleIdentifier: $0) != nil
                 && Self.name(for: $0).caseInsensitiveCompare(appName) == .orderedSame
         }) else { return false }
+        // The instant mode may have shown it already: only the banner is left to close.
+        if wasInstant(appID, body) { return true }
         captured[signature(appID, title, body)] = Date()
         syntheticID -= 1
         let item = NotificationItem(
@@ -177,6 +183,35 @@ final class NotificationFeed: ObservableObject {
         show(item)
         findAudio(for: item)
         return true
+    }
+
+    // MARK: Instant (WhatsApp and Messages, from their own databases)
+
+    private static func reduced(_ text: String) -> String { String(text.lowercased().filter { $0.isLetter }) }
+
+    private func wasInstant(_ appID: String, _ body: String) -> Bool {
+        instantSeen.removeAll { Date().timeIntervalSince($0.date) > 90 }
+        let mine = Self.reduced(body)
+        return instantSeen.contains { seen in
+            seen.app == appID && (seen.text == mine
+                || (min(seen.text.count, mine.count) >= 5 && (seen.text.hasPrefix(mine) || mine.hasPrefix(seen.text))))
+        }
+    }
+
+    func instant(_ message: InstantMessage) {
+        guard Defaults[.notificationsEnabled], Defaults[.notificationInstant],
+              Defaults[.notificationApps].contains(message.appID) else { return }
+        // Not while that app is in front: macOS would not notify then either.
+        if NSWorkspace.shared.frontmostApplication?.bundleIdentifier?.lowercased() == message.appID { return }
+        instantSeen.append((message.appID, Self.reduced(message.body), Date()))
+        syntheticID -= 1
+        let item = NotificationItem(
+            id: syntheticID, appID: message.appID, appName: message.appName, title: message.title,
+            subtitle: message.subtitle, body: message.body, date: message.date, thread: "", openURL: message.openURL)
+        items = Array(([item] + items).prefix(40))
+        unread += 1
+        show(item)
+        findAudio(for: item)
     }
 
     /// A voice message: look for its sound a few times, as the chat app may save it a moment late.
@@ -258,7 +293,9 @@ final class NotificationFeed: ObservableObject {
     func open(_ item: NotificationItem) {
         remove(item.id)
         Task { @MainActor in
-            if let link = await ChatLocator.url(for: item),
+            var found = item.openURL
+            if found == nil { found = await ChatLocator.url(for: item) }
+            if let link = found,
                let app = NSWorkspace.shared.urlForApplication(withBundleIdentifier: item.appID) {
                 let configuration = NSWorkspace.OpenConfiguration()
                 NSWorkspace.shared.open([link], withApplicationAt: app, configuration: configuration) { _, _ in }

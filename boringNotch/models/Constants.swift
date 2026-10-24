@@ -193,6 +193,8 @@ extension Defaults.Keys {
     static let notificationApps = Key<Set<String>>("notificationApps", default: NotificationApps.defaults)
     static let notificationHideText = Key<Bool>("notificationHideText", default: false)
     static let notificationHideFromSharing = Key<Bool>("notificationHideFromSharing", default: true)
+    /// Show WhatsApp and Messages messages the moment they arrive, from the apps' own databases.
+    static let notificationInstant = Key<Bool>("notificationInstant", default: true)
     /// Close macOS's own banner for the apps shown here (needs Accessibility).
     static let notificationReplaceBanners = Key<Bool>("notificationReplaceBanners", default: true)
 
