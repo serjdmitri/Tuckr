@@ -204,12 +204,14 @@ extension Defaults.Keys {
     static let activityDownloads = Key<Bool>("activityDownloads", default: true)
     static let activityAirDrop = Key<Bool>("activityAirDrop", default: true)
     static let activityFocus = Key<Bool>("activityFocus", default: true)
+    /// Move macOS's own Focus pill out of sight (Accessibility).
+    static let focusHideSystemPill = Key<Bool>("focusHideSystemPill", default: true)
     /// The notch is left out of screenshots and screen recordings.
     static let notchHiddenFromCaptures = Key<Bool>("notchHiddenFromCaptures", default: false)
 
     // MARK: Weather
     static let weatherEnabled = Key<Bool>("weatherEnabled", default: true)
-    static let weatherInClosedNotch = Key<Bool>("weatherInClosedNotch", default: true)
+    static let weatherInClosedNotch = Key<Bool>("weatherInClosedNotch", default: false)
     /// °F for a Mac set to US units, °C otherwise.
     static let weatherFahrenheit = Key<Bool>("weatherFahrenheit", default: Locale.current.measurementSystem == .us)
     /// A city typed in Settings; empty means where this Mac seems to be.

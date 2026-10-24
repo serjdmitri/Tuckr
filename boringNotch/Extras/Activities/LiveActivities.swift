@@ -211,15 +211,15 @@ final class FocusWatcher {
             let before = self.active
             self.active = now
             guard Defaults[.activityFocus] else { return }
-            if let now {
-                NotificationFeed.shared.activity(
-                    appID: "com.apple.systempreferences", name: "Focus", title: self.name(of: now), body: "On",
-                    symbol: self.symbol(of: now))
-            } else if let before {
-                NotificationFeed.shared.activity(
-                    appID: "com.apple.systempreferences", name: "Focus", title: self.name(of: before), body: "Off",
-                    symbol: "moon.zzz.fill")
-            }
+            let mode = now ?? before
+            guard let mode else { return }
+            let on = now != nil
+            var name = self.name(of: mode)
+            if name == "Do Not Disturb" { name = "DND" }   // the HUD's side is narrow
+            let symbol = on ? self.symbol(of: mode) : "moon.zzz.fill"
+            // Inline with the notch, like the volume.
+            BoringViewCoordinator.shared.toggleSneakPeek(
+                status: true, type: .focus, duration: 2.2, value: on ? 1 : 0, icon: symbol, label: name)
         }
     }
 

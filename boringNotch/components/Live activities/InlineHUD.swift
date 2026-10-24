@@ -13,6 +13,7 @@ struct InlineHUD: View {
     @Binding var type: SneakContentType
     @Binding var value: CGFloat
     @Binding var icon: String
+    var label: String = ""
     @Binding var hoverAnimation: Bool
     @Binding var gestureProgress: CGFloat
     var body: some View {
@@ -47,14 +48,19 @@ struct InlineHUD: View {
                                 .symbolVariant(value > 0 ? .none : .slash)
                                 .contentTransition(.interpolate)
                                 .frame(width: 20, height: 15, alignment: .center)
+                        case .focus:
+                            Image(systemName: icon.isEmpty ? "moon.fill" : icon)
+                                .contentTransition(.interpolate)
+                                .opacity(value.isZero ? 0.6 : 1)
+                                .frame(width: 20, height: 15, alignment: .center)
                         default:
                             EmptyView()
                     }
                 }
-                .foregroundStyle(.white)
+                .foregroundStyle(type == .focus && value > 0 ? Color(red: 0.55, green: 0.5, blue: 1.0) : .white)
                 .symbolVariant(.fill)
                 
-                Text(Type2Name(type))
+                Text(type == .focus ? label : Type2Name(type))
                     .font(.subheadline)
                     .fontWeight(.medium)
                     .lineLimit(1)
@@ -68,7 +74,15 @@ struct InlineHUD: View {
                 .frame(width: vm.closedNotchSize.width - 20)
             
             HStack {
-                if (type == .mic) {
+                if (type == .focus) {
+                    Text(value.isZero ? "off" : "on")
+                        .foregroundStyle(.gray)
+                        .lineLimit(1)
+                        .allowsTightening(true)
+                        .multilineTextAlignment(.trailing)
+                        .frame(maxWidth: .infinity, alignment: .trailing)
+                        .contentTransition(.interpolate)
+                } else if (type == .mic) {
                     Text(value.isZero ? "muted" : "unmuted")
                         .foregroundStyle(.gray)
                         .lineLimit(1)
