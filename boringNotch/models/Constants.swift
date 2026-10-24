@@ -204,6 +204,8 @@ extension Defaults.Keys {
     static let activityDownloads = Key<Bool>("activityDownloads", default: true)
     static let activityAirDrop = Key<Bool>("activityAirDrop", default: true)
     static let activityFocus = Key<Bool>("activityFocus", default: true)
+    /// Incoming FaceTime, phone and WhatsApp calls in the notch, with Answer and Decline.
+    static let activityCalls = Key<Bool>("activityCalls", default: true)
     /// The notch is left out of screenshots and screen recordings.
     static let notchHiddenFromCaptures = Key<Bool>("notchHiddenFromCaptures", default: false)
 

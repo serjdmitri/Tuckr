@@ -84,6 +84,7 @@ final class BannerWatcher {
     }
 
     private func take(_ banner: AXUIElement) {
+        let isAlert = Self.string(banner, kAXSubroleAttribute) == "AXNotificationCenterAlert"
         // "App, title, subtitle, body": the parts also sit in the banner's text children.
         var fields: [String: String] = [:]
         for child in Self.children(banner) {
@@ -93,6 +94,15 @@ final class BannerWatcher {
         let description = Self.string(banner, kAXDescriptionAttribute)
         let appName = description.components(separatedBy: ", ").first ?? ""
         guard !appName.isEmpty else { return }
+        // A call is an alert with Answer and Decline buttons: the notch offers them, and the alert stays.
+        if isAlert || Self.hasCallButtons(banner) {
+            var names: CFArray?
+            AXUIElementCopyActionNames(banner, &names)
+            _ = CallPopup.shared.consider(
+                appName: appName, title: fields["title"] ?? "", subtitle: fields["subtitle"] ?? "",
+                body: fields["body"] ?? "", alert: banner, actions: (names as? [String]) ?? [])
+            return
+        }
         let took = NotificationFeed.shared.captured(
             appName: appName, title: fields["title"] ?? "", subtitle: fields["subtitle"] ?? "", body: fields["body"] ?? "")
         guard took else { return }
@@ -101,6 +111,13 @@ final class BannerWatcher {
         if let close = (names as? [String])?.first(where: { $0.hasPrefix("Name:Close") }) {
             AXUIElementPerformAction(banner, close as CFString)
         }
+    }
+
+    private static func hasCallButtons(_ element: AXUIElement) -> Bool {
+        var names: CFArray?
+        AXUIElementCopyActionNames(element, &names)
+        let all = ((names as? [String]) ?? []).map { $0.lowercased() }
+        return all.contains { $0.hasPrefix("name:decline") } && all.contains { $0.hasPrefix("name:accept") || $0.hasPrefix("name:answer") }
     }
 
     // MARK: Accessibility helpers
@@ -119,7 +136,8 @@ final class BannerWatcher {
 
     private static func banners(in element: AXUIElement, depth: Int) -> [AXUIElement] {
         guard depth < 6 else { return [] }
-        if string(element, kAXSubroleAttribute) == "AXNotificationCenterBanner" { return [element] }
+        let subrole = string(element, kAXSubroleAttribute)
+        if subrole == "AXNotificationCenterBanner" || subrole == "AXNotificationCenterAlert" { return [element] }
         return children(element).flatMap { banners(in: $0, depth: depth + 1) }
     }
 }

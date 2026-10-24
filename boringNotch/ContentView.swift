@@ -31,6 +31,7 @@ struct ContentView: View {
     @ObservedObject var usagePopup = UsagePopup.shared
     @ObservedObject var notificationFeed = NotificationFeed.shared
     @ObservedObject var weatherService = WeatherService.shared
+    @ObservedObject var callPopup = CallPopup.shared
     @State private var hoverPointX: CGFloat = 0
     @State private var hoverTask: Task<Void, Never>?
     @State private var isHovering: Bool = false
@@ -73,7 +74,7 @@ struct ContentView: View {
         vm.notchState == .closed && !vm.hideOnClosed
             && !(coordinator.sneakPeek.show && coordinator.sneakPeek.type != .music)
             && !(coordinator.expandingView.show && coordinator.expandingView.type == .battery)
-            && bluetoothPopup.info == nil && usagePopup.info == nil && notificationFeed.popup == nil
+            && bluetoothPopup.info == nil && usagePopup.info == nil && notificationFeed.popup == nil && callPopup.call == nil
     }
 
     /// Nothing else is on the closed notch: the weather takes it, if it is switched on.
@@ -282,6 +283,13 @@ struct ContentView: View {
             // An agent's usage passed a level set in Agents Settings.
             if vm.notchState == .closed && !vm.hideOnClosed {
                 UsagePopupView(
+                    chinWidth: computedChinWidth, notchHeight: max(24, vm.effectiveClosedNotchHeight))
+            }
+        }
+        .overlay(alignment: .top) {
+            // A call is ringing.
+            if vm.notchState == .closed && !vm.hideOnClosed {
+                CallPopupView(
                     chinWidth: computedChinWidth, notchHeight: max(24, vm.effectiveClosedNotchHeight))
             }
         }

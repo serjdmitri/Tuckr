@@ -14,6 +14,7 @@ struct ActivitiesSettings: View {
     @Default(.activityDownloads) private var downloads
     @Default(.activityAirDrop) private var airDrop
     @Default(.activityFocus) private var focus
+    @Default(.activityCalls) private var calls
     @Default(.notchHiddenFromCaptures) private var hidden
 
     var body: some View {
@@ -27,6 +28,7 @@ struct ActivitiesSettings: View {
                 Toggle("Downloads finishing", isOn: $downloads)
                 Toggle("AirDrop received", isOn: $airDrop)
                 Toggle("Do Not Disturb and Focus switching on or off", isOn: $focus)
+                Toggle("Incoming calls (FaceTime, iPhone, WhatsApp) with Answer and Decline", isOn: $calls)
             } header: {
                 Text("Popups")
             } footer: {
