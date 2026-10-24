@@ -58,6 +58,24 @@ enum ChatLocator {
         return URL(string: "sms://open?message-guid=\(encoded)")
     }
 
+    /// The id of the Messages chat a notification came from, for replying to it.
+    static func chatGUID(for item: NotificationItem) async -> String? {
+        guard item.appID == "com.apple.mobilesms" else { return nil }
+        return await Task.detached(priority: .userInitiated) { () -> String? in
+            let db = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Library/Messages/chat.db")
+            let at = item.date.timeIntervalSinceReferenceDate * 1_000_000_000
+            let window = 120.0 * 1_000_000_000
+            let rows = query(db, """
+                SELECT c.guid, m.text, c.display_name FROM message m
+                JOIN chat_message_join cj ON cj.message_id = m.ROWID
+                JOIN chat c ON c.ROWID = cj.chat_id
+                WHERE m.is_from_me = 0 AND m.date BETWEEN ? AND ?
+                ORDER BY ABS(m.date - ?) LIMIT 8
+                """, binds: [at - window, at + window, at])
+            return best(rows, jidColumn: 0, textColumn: 1, nameColumn: 2, item: item)
+        }.value
+    }
+
     // MARK: Matching
 
     /// Of the messages near the moment, the one whose chat name, then whose text, fits the

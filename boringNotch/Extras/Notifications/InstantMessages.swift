@@ -20,6 +20,8 @@ struct InstantMessage {
     let date: Date
     /// A link that opens the chat, when the app has one.
     let openURL: URL?
+    /// Messages: the chat's id, for replying.
+    var chatGUID: String? = nil
 }
 
 @MainActor
@@ -124,7 +126,7 @@ enum InstantReader {
                 return
             }
             let sql = """
-                SELECT m.ROWID, m.date, m.text, m.guid, m.is_audio_message, m.cache_has_attachments, h.id, c.display_name, m.attributedBody
+                SELECT m.ROWID, m.date, m.text, m.guid, m.is_audio_message, m.cache_has_attachments, h.id, c.display_name, m.attributedBody, c.guid
                 FROM message m
                 LEFT JOIN handle h ON h.ROWID = m.handle_id
                 LEFT JOIN chat_message_join cj ON cj.message_id = m.ROWID
@@ -146,7 +148,8 @@ enum InstantReader {
                     appID: "com.apple.mobilesms", appName: "Messages", title: group.isEmpty ? name : group,
                     subtitle: group.isEmpty ? "" : name, body: body,
                     date: Date(timeIntervalSinceReferenceDate: (Double(row[1]) ?? 0) / 1_000_000_000),
-                    openURL: URL(string: "sms://open?message-guid=\(guid)")))
+                    openURL: URL(string: "sms://open?message-guid=\(guid)"),
+                    chatGUID: row[9].isEmpty ? nil : row[9]))
             }
         }
         return found

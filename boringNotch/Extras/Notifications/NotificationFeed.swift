@@ -24,6 +24,8 @@ struct NotificationItem: Identifiable, Equatable {
     var audioURL: URL? = nil
     /// A link that opens the chat, when it is already known.
     var openURL: URL? = nil
+    /// Messages: the chat this belongs to, which a reply is sent to.
+    var chatGUID: String? = nil
 }
 
 /// The apps whose notifications show by default: the ones people talk in.
@@ -47,6 +49,9 @@ final class NotificationFeed: ObservableObject {
     /// close together stack, each leaving on its own timer.
     @Published private(set) var popups: [NotificationItem] = []
     var popup: NotificationItem? { popups.first }
+    /// The stack opened out into a list of every message in it.
+    @Published private(set) var expanded = false
+    private var collapseTask: Task<Void, Never>?
     /// Every app seen in the database (identifier → name), for the settings list.
     @Published private(set) var seenApps: [String: String] = [:]
     /// macOS refused the database: no Full Disk Access.
@@ -207,7 +212,8 @@ final class NotificationFeed: ObservableObject {
         syntheticID -= 1
         let item = NotificationItem(
             id: syntheticID, appID: message.appID, appName: message.appName, title: message.title,
-            subtitle: message.subtitle, body: message.body, date: message.date, thread: "", openURL: message.openURL)
+            subtitle: message.subtitle, body: message.body, date: message.date, thread: "", openURL: message.openURL,
+            chatGUID: message.chatGUID)
         items = Array(([item] + items).prefix(40))
         unread += 1
         show(item)
@@ -237,8 +243,12 @@ final class NotificationFeed: ObservableObject {
 
     private func show(_ item: NotificationItem) {
         popups.insert(item, at: 0)
-        // Three cards at most; the oldest makes way.
-        if popups.count > 3, let gone = popups.popLast() { hideTasks[gone.id]?.cancel(); hideTasks[gone.id] = nil }
+        // Five at most; the oldest makes way.
+        if popups.count > 5, let gone = popups.popLast() { hideTasks[gone.id]?.cancel(); hideTasks[gone.id] = nil }
+        if expanded { keepExpanded() } else { scheduleHide(item) }
+    }
+
+    private func scheduleHide(_ item: NotificationItem) {
         hideTasks[item.id] = Task { @MainActor [weak self] in
             try? await Task.sleep(for: .seconds(6))
             // Not while it is being listened to.
@@ -251,11 +261,38 @@ final class NotificationFeed: ObservableObject {
         }
     }
 
+    /// Open the stack out so each message can be read and clicked. It stays out while you use it
+    /// and folds away a few seconds after you stop.
+    func expand() {
+        guard popups.count > 1 else { return }
+        expanded = true
+        for task in hideTasks.values { task.cancel() }
+        hideTasks = [:]
+        keepExpanded()
+    }
+
+    private func keepExpanded() {
+        collapseTask?.cancel()
+        collapseTask = Task { @MainActor [weak self] in
+            try? await Task.sleep(for: .seconds(10))
+            guard !Task.isCancelled, let self else { return }
+            self.collapse()
+        }
+    }
+
+    func collapse() {
+        collapseTask?.cancel()
+        expanded = false
+        // The messages left in the stack go on their usual timers again.
+        for item in popups where hideTasks[item.id] == nil { scheduleHide(item) }
+    }
+
     func dismiss(_ id: Int) {
         if VoicePlayer.shared.isPlaying(id) { VoicePlayer.shared.stop() }
         hideTasks[id]?.cancel()
         hideTasks[id] = nil
         popups.removeAll { $0.id == id }
+        if expanded { if popups.count <= 1 { collapse() } else { keepExpanded() } }
     }
 
     func markRead() { unread = 0 }
@@ -302,6 +339,57 @@ final class NotificationFeed: ObservableObject {
             } else {
                 Self.open(item.appID)
             }
+        }
+    }
+
+    // MARK: Replying (Messages)
+
+    /// The message being replied to: its card turns into a text field.
+    @Published private(set) var replyingID: Int?
+    private var replyTask: Task<Void, Never>?
+
+    func beginReply(_ item: NotificationItem) {
+        replyingID = item.id
+        // Nothing leaves while a reply is being written.
+        for task in hideTasks.values { task.cancel() }
+        hideTasks = [:]
+        collapseTask?.cancel()
+        NotchKeyboard.allowKey = true
+        NotchKeyboard.setTyping("reply", true)
+        NotchKeyboard.takeKeyboard()
+        touchReply()
+    }
+
+    /// A reply that sits untouched folds away.
+    func touchReply() {
+        replyTask?.cancel()
+        replyTask = Task { @MainActor [weak self] in
+            try? await Task.sleep(for: .seconds(20))
+            guard !Task.isCancelled else { return }
+            self?.endReply()
+        }
+    }
+
+    func endReply() {
+        replyTask?.cancel()
+        guard replyingID != nil else { return }
+        replyingID = nil
+        NotchKeyboard.setTyping("reply", false)
+        NotchKeyboard.allowKey = false
+        for item in popups where hideTasks[item.id] == nil && !expanded { scheduleHide(item) }
+    }
+
+    /// Sends the reply, only ever because the person pressed Send or Return.
+    func sendReply(_ text: String, to item: NotificationItem) {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+        endReply()
+        remove(item.id)
+        Task { @MainActor in
+            var guid = item.chatGUID
+            if guid == nil { guid = await ChatLocator.chatGUID(for: item) }
+            guard let guid else { return }
+            MessageSender.send(trimmed, toChat: guid)
         }
     }
 
