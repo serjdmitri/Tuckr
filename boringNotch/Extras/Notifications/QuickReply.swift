@@ -6,6 +6,7 @@
 //
 
 import AppKit
+import SQLite3
 import SwiftUI
 
 enum MessageSender {
@@ -24,14 +25,89 @@ enum MessageSender {
     }
 }
 
-/// The small reply button on a Messages card.
+/// Sends a reply to the chat a message came from. Messages is driven by AppleScript. WhatsApp
+/// has no way to be told to send, but it can open a chat with the text already written: this
+/// opens that, presses Return in WhatsApp, and checks in WhatsApp's own database that the
+/// message went. If it did not, the draft is left in WhatsApp for the person to send.
+enum Replier {
+    @MainActor static func send(_ text: String, to item: NotificationItem) async {
+        switch item.appID {
+        case "com.apple.mobilesms":
+            var guid = item.chatGUID
+            if guid == nil { guid = await ChatLocator.chatGUID(for: item) }
+            guard let guid else { NotificationFeed.shared.toast("Couldn't find that chat", item: item); return }
+            MessageSender.send(text, toChat: guid)
+            NotificationFeed.shared.toast("Sent to \(item.title)", item: item)
+        case "net.whatsapp.whatsapp":
+            await sendWhatsApp(text, item)
+        default:
+            break
+        }
+    }
+
+    @MainActor private static func sendWhatsApp(_ text: String, _ item: NotificationItem) async {
+        var link = item.openURL
+        if link == nil { link = await ChatLocator.url(for: item) }
+        guard let link, link.host == "send",
+              let phone = URLComponents(url: link, resolvingAgainstBaseURL: false)?.queryItems?.first(where: { $0.name == "phone" })?.value,
+              var components = URLComponents(string: "whatsapp://send"),
+              let app = NSWorkspace.shared.urlForApplication(withBundleIdentifier: item.appID)
+        else {
+            NotificationFeed.shared.toast("WhatsApp groups can't be replied to from here", item: item)
+            return
+        }
+        components.queryItems = [URLQueryItem(name: "phone", value: phone), URLQueryItem(name: "text", value: text)]
+        guard let url = components.url else { return }
+        let before = NSWorkspace.shared.frontmostApplication
+        let started = Date().timeIntervalSinceReferenceDate
+        NSWorkspace.shared.open([url], withApplicationAt: app, configuration: NSWorkspace.OpenConfiguration()) { _, _ in }
+        // Let WhatsApp open the chat and write the draft, then send it.
+        try? await Task.sleep(for: .seconds(1.2))
+        if let pid = NSWorkspace.shared.runningApplications.first(where: { $0.bundleURL == app })?.processIdentifier {
+            for down in [true, false] {
+                CGEvent(keyboardEventSource: nil, virtualKey: 36, keyDown: down)?.postToPid(pid)
+                try? await Task.sleep(for: .milliseconds(20))
+            }
+        }
+        // Did it go? WhatsApp saves what you send the moment it does.
+        for _ in 0..<12 {
+            try? await Task.sleep(for: .milliseconds(500))
+            if await Task.detached(operation: { WhatsAppOutbox.contains(text, since: started - 2) }).value {
+                before?.activate()
+                NotificationFeed.shared.toast("Sent to \(item.title)", item: item)
+                return
+            }
+        }
+        NotificationFeed.shared.toast("Draft is in WhatsApp: press Return to send", item: item)
+    }
+}
+
+/// Whether WhatsApp has a sent message with this text since a moment (its own database, read-only).
+enum WhatsAppOutbox {
+    static func contains(_ text: String, since: Double) -> Bool {
+        let url = FileManager.default.homeDirectoryForCurrentUser
+            .appendingPathComponent("Library/Group Containers/group.net.whatsapp.WhatsApp.shared/ChatStorage.sqlite")
+        var db: OpaquePointer?
+        guard sqlite3_open_v2(url.path, &db, SQLITE_OPEN_READONLY, nil) == SQLITE_OK else { sqlite3_close(db); return false }
+        defer { sqlite3_close(db) }
+        sqlite3_busy_timeout(db, 250)
+        var statement: OpaquePointer?
+        guard sqlite3_prepare_v2(db, "SELECT 1 FROM ZWAMESSAGE WHERE ZISFROMME = 1 AND ZTEXT = ? AND ZMESSAGEDATE > ? LIMIT 1", -1, &statement, nil) == SQLITE_OK else { return false }
+        defer { sqlite3_finalize(statement) }
+        sqlite3_bind_text(statement, 1, text, -1, unsafeBitCast(-1, to: sqlite3_destructor_type.self))
+        sqlite3_bind_double(statement, 2, since)
+        return sqlite3_step(statement) == SQLITE_ROW
+    }
+}
+
+/// The small reply button on a message card (Messages and WhatsApp).
 struct ReplyButton: View {
     let item: NotificationItem
     var size: CGFloat = 34
     @ObservedObject private var feed = NotificationFeed.shared
 
     var body: some View {
-        if item.appID == "com.apple.mobilesms" {
+        if item.appID == "com.apple.mobilesms" || item.appID == "net.whatsapp.whatsapp" {
             Button { feed.beginReply(item) } label: {
                 Image(systemName: "arrowshape.turn.up.left.fill")
                     .font(.system(size: size * 0.38, weight: .bold))

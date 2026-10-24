@@ -385,11 +385,20 @@ final class NotificationFeed: ObservableObject {
         guard !trimmed.isEmpty else { return }
         endReply()
         remove(item.id)
-        Task { @MainActor in
-            var guid = item.chatGUID
-            if guid == nil { guid = await ChatLocator.chatGUID(for: item) }
-            guard let guid else { return }
-            MessageSender.send(trimmed, toChat: guid)
+        Task { @MainActor in await Replier.send(trimmed, to: item) }
+    }
+
+    /// A short line in the popup's style that is not a message: "Sent to …".
+    func toast(_ text: String, item: NotificationItem) {
+        syntheticID -= 1
+        let note = NotificationItem(
+            id: syntheticID, appID: item.appID, appName: item.appName, title: text, subtitle: "", body: "",
+            date: Date(), thread: "")
+        popups.insert(note, at: 0)
+        hideTasks[note.id] = Task { @MainActor [weak self] in
+            try? await Task.sleep(for: .seconds(3.5))
+            guard !Task.isCancelled else { return }
+            self?.dismiss(note.id)
         }
     }
 
