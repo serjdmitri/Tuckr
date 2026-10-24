@@ -14,7 +14,6 @@ struct ActivitiesSettings: View {
     @Default(.activityDownloads) private var downloads
     @Default(.activityAirDrop) private var airDrop
     @Default(.activityFocus) private var focus
-    @Default(.focusHideSystemPill) private var hidePill
     @Default(.notchHiddenFromCaptures) private var hidden
 
     var body: some View {
@@ -28,7 +27,6 @@ struct ActivitiesSettings: View {
                 Toggle("Downloads finishing", isOn: $downloads)
                 Toggle("AirDrop received", isOn: $airDrop)
                 Toggle("Do Not Disturb and Focus switching on or off", isOn: $focus)
-                Toggle("Hide macOS's own Focus pill", isOn: $hidePill).disabled(!focus)
             } header: {
                 Text("Popups")
             } footer: {
