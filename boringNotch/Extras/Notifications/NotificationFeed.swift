@@ -26,6 +26,10 @@ struct NotificationItem: Identifiable, Equatable {
     var openURL: URL? = nil
     /// Messages: the chat this belongs to, which a reply is sent to.
     var chatGUID: String? = nil
+    /// Not a message but an activity (a download, an AirDrop…): an SF Symbol for its icon.
+    var symbol: String? = nil
+    /// A file that a click shows in Finder.
+    var revealURL: URL? = nil
 }
 
 /// The apps whose notifications show by default: the ones people talk in.
@@ -329,6 +333,10 @@ final class NotificationFeed: ObservableObject {
     /// take it off the list, as it has been read.
     func open(_ item: NotificationItem) {
         remove(item.id)
+        if let reveal = item.revealURL {
+            NSWorkspace.shared.activateFileViewerSelecting([reveal])
+            return
+        }
         Task { @MainActor in
             var found = item.openURL
             if found == nil { found = await ChatLocator.url(for: item) }
@@ -386,6 +394,17 @@ final class NotificationFeed: ObservableObject {
         endReply()
         remove(item.id)
         Task { @MainActor in await Replier.send(trimmed, to: item) }
+    }
+
+    /// Puts an activity in the popup (it keeps its own timer and never joins the Messages list).
+    func announce(_ item: NotificationItem) {
+        syntheticID -= 1
+        var shown = item
+        shown = NotificationItem(
+            id: syntheticID, appID: item.appID, appName: item.appName, title: item.title, subtitle: item.subtitle,
+            body: item.body, date: item.date, thread: item.thread, audioURL: nil, openURL: item.openURL,
+            chatGUID: nil, symbol: item.symbol, revealURL: item.revealURL)
+        show(shown)
     }
 
     /// A short line in the popup's style that is not a message: "Sent to …".

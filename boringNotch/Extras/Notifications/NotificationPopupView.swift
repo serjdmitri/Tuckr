@@ -55,8 +55,7 @@ struct NotificationPopupView: View {
                 } else {
                 HStack(spacing: 12) {
                     HStack(spacing: 12) {
-                        Image(nsImage: NotificationFeed.icon(for: item.appID))
-                            .resizable().interpolation(.high).frame(width: 36, height: 36)
+                        ItemIcon(item: item, size: 36)
                         VStack(alignment: .leading, spacing: 1) {
                             Text(hideText ? "New message" : (item.title.isEmpty ? item.appName : item.title))
                                 .font(.system(size: 14, weight: .bold)).foregroundStyle(.white).lineLimit(1)
@@ -109,10 +108,7 @@ struct NotificationPopupView: View {
         HStack(spacing: 14) {
             // A click on the message opens its app; the play button, beside it, only plays.
             HStack(spacing: 14) {
-                Image(nsImage: NotificationFeed.icon(for: item.appID))
-                    .resizable()
-                    .interpolation(.high)
-                    .frame(width: 44, height: 44)
+                ItemIcon(item: item, size: 44)
                 VStack(alignment: .leading, spacing: 1) {
                     HStack(spacing: 6) {
                         Text(item.appName)

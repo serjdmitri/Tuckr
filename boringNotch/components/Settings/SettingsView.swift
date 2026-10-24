@@ -28,6 +28,7 @@ struct SettingsView: View {
         ("Shelf", "Shelf", "books.vertical"),
         ("Notifications", "Notifications", "bell.badge"),
         ("Weather", "Weather", "cloud.sun"),
+        ("Activities", "Activities", "bolt.badge.clock"),
         ("Shortcuts", "Shortcuts", "keyboard"),
         ("Dictation", "Dictation", "waveform.badge.mic"),
         ("Agents", "Agents", "terminal"),
@@ -77,6 +78,8 @@ struct SettingsView: View {
                     NotificationsSettings()
                 case "Weather":
                     WeatherSettings()
+                case "Activities":
+                    ActivitiesSettings()
                 case "Shortcuts":
                     Shortcuts()
                 case "Dictation":

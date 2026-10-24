@@ -154,3 +154,25 @@ struct VoiceButton: View {
         }
     }
 }
+
+
+/// The app's own icon, or an SF Symbol for an activity.
+struct ItemIcon: View {
+    let item: NotificationItem
+    let size: CGFloat
+
+    var body: some View {
+        if let symbol = item.symbol {
+            Image(systemName: symbol)
+                .font(.system(size: size * 0.5, weight: .semibold))
+                .foregroundStyle(.white)
+                .frame(width: size, height: size)
+                .background(RoundedRectangle(cornerRadius: size * 0.23).fill(
+                    item.appName == "AirDrop" ? Color(red: 0.0, green: 0.48, blue: 1.0)
+                        : item.appName == "Downloads" ? Color(red: 0.2, green: 0.55, blue: 0.95) : Color(white: 0.2)))
+        } else {
+            Image(nsImage: NotificationFeed.icon(for: item.appID))
+                .resizable().interpolation(.high).frame(width: size, height: size)
+        }
+    }
+}

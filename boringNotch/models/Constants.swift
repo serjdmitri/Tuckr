@@ -198,6 +198,14 @@ extension Defaults.Keys {
     /// Close macOS's own banner for the apps shown here (needs Accessibility).
     static let notificationReplaceBanners = Key<Bool>("notificationReplaceBanners", default: true)
 
+    // MARK: Activities
+    static let activityEvents = Key<Bool>("activityEvents", default: true)
+    static let activityEventLead = Key<Int>("activityEventLead", default: 5)
+    static let activityDownloads = Key<Bool>("activityDownloads", default: true)
+    static let activityAirDrop = Key<Bool>("activityAirDrop", default: true)
+    /// The notch is left out of screenshots and screen recordings.
+    static let notchHiddenFromCaptures = Key<Bool>("notchHiddenFromCaptures", default: false)
+
     // MARK: Weather
     static let weatherEnabled = Key<Bool>("weatherEnabled", default: true)
     static let weatherInClosedNotch = Key<Bool>("weatherInClosedNotch", default: true)
