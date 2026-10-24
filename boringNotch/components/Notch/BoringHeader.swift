@@ -98,6 +98,7 @@ struct BoringHeader: View {
                         }
                         .buttonStyle(PlainButtonStyle())
                         .help(notchLocked ? "Unlock: let the notch close again" : "Lock the notch open")
+                        if Defaults[.weatherEnabled] && coordinator.currentView == .home { WeatherChip() }
                         // The mirror is for the music (Home) and call-recording (Meetings) tabs.
                         if Defaults[.showMirror] && (coordinator.currentView == .home || coordinator.currentView == .meetings) {
                             Button(action: {

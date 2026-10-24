@@ -198,6 +198,14 @@ extension Defaults.Keys {
     /// Close macOS's own banner for the apps shown here (needs Accessibility).
     static let notificationReplaceBanners = Key<Bool>("notificationReplaceBanners", default: true)
 
+    // MARK: Weather
+    static let weatherEnabled = Key<Bool>("weatherEnabled", default: true)
+    static let weatherInClosedNotch = Key<Bool>("weatherInClosedNotch", default: true)
+    /// °F for a Mac set to US units, °C otherwise.
+    static let weatherFahrenheit = Key<Bool>("weatherFahrenheit", default: Locale.current.measurementSystem == .us)
+    /// A city typed in Settings; empty means where this Mac seems to be.
+    static let weatherCity = Key<String>("weatherCity", default: "")
+
     // MARK: Staying put
     /// How long, in seconds, a closed notch remembers the tab it was on before going back to Home.
     static let tabMemorySeconds = Key<Int>("tabMemorySeconds", default: 45)

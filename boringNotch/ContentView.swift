@@ -30,6 +30,7 @@ struct ContentView: View {
     @ObservedObject var bluetoothPopup = BluetoothPopup.shared
     @ObservedObject var usagePopup = UsagePopup.shared
     @ObservedObject var notificationFeed = NotificationFeed.shared
+    @ObservedObject var weatherService = WeatherService.shared
     @State private var hoverPointX: CGFloat = 0
     @State private var hoverTask: Task<Void, Never>?
     @State private var isHovering: Bool = false
@@ -75,6 +76,14 @@ struct ContentView: View {
             && bluetoothPopup.info == nil && usagePopup.info == nil && notificationFeed.popup == nil
     }
 
+    /// Nothing else is on the closed notch: the weather takes it, if it is switched on.
+    private var showsClosedWeather: Bool {
+        Defaults[.weatherEnabled] && Defaults[.weatherInClosedNotch] && weatherService.now != nil
+            && vm.notchState == .closed && !vm.hideOnClosed && !coordinator.expandingView.show
+            && !coordinator.sneakPeek.show && !agentPresence.isActive
+            && !(musicManager.isPlaying || !musicManager.isPlayerIdle)
+    }
+
     private var computedChinWidth: CGFloat {
         var chinWidth: CGFloat = vm.closedNotchSize.width
 
@@ -95,6 +104,8 @@ struct ContentView: View {
             && (!musicManager.isPlaying && musicManager.isPlayerIdle) && Defaults[.showNotHumanFace]
             && !vm.hideOnClosed
         {
+            chinWidth += (2 * max(0, vm.effectiveClosedNotchHeight - 12) + 20)
+        } else if showsClosedWeather {
             chinWidth += (2 * max(0, vm.effectiveClosedNotchHeight - 12) + 20)
         }
 
@@ -388,6 +399,8 @@ struct ContentView: View {
                            BoringHeader()
                                .frame(height: max(24, vm.effectiveClosedNotchHeight))
                                .opacity(gestureProgress != 0 ? 1.0 - min(abs(gestureProgress) * 0.1, 0.3) : 1.0)
+                       } else if showsClosedWeather {
+                           ClosedWeather(notchWidth: vm.closedNotchSize.width, height: vm.effectiveClosedNotchHeight)
                        } else {
                            Rectangle().fill(.clear).frame(width: vm.closedNotchSize.width - 20, height: vm.effectiveClosedNotchHeight)
                        }
