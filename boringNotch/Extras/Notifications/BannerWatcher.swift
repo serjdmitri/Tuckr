@@ -51,7 +51,8 @@ final class BannerWatcher {
 
     /// The banner's window exists a moment before its contents do: look a few times.
     private func bannerWindowAppeared() {
-        guard Defaults[.notificationsEnabled], Defaults[.notificationReplaceBanners], !scanning else { return }
+        // Messages need both switches; calls only their own (Settings → Activities).
+        guard (Defaults[.notificationsEnabled] && Defaults[.notificationReplaceBanners]) || Defaults[.activityCalls], !scanning else { return }
         scanning = true
         Task { @MainActor in
             // Tight at first: the banner slides in for a fraction of a second, and the sooner
@@ -98,11 +99,13 @@ final class BannerWatcher {
         if isAlert || Self.hasCallButtons(banner) {
             var names: CFArray?
             AXUIElementCopyActionNames(banner, &names)
-            _ = CallPopup.shared.consider(
+            let isCall = CallPopup.shared.consider(
                 appName: appName, title: fields["title"] ?? "", subtitle: fields["subtitle"] ?? "",
                 body: fields["body"] ?? "", alert: banner, actions: (names as? [String]) ?? [])
-            return
+            if isCall { return }
+            // An alert that is not a call (say a persistent banner from a chat app) is a message like any other.
         }
+        guard Defaults[.notificationsEnabled], Defaults[.notificationReplaceBanners] else { return }
         let took = NotificationFeed.shared.captured(
             appName: appName, title: fields["title"] ?? "", subtitle: fields["subtitle"] ?? "", body: fields["body"] ?? "")
         guard took else { return }

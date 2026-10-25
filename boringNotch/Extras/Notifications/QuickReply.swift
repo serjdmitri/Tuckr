@@ -13,14 +13,17 @@ enum MessageSender {
     private static let queue = DispatchQueue(label: "notch.message-sender")
 
     /// Sends `text` to a Messages chat by its id (e.g. "iMessage;-;+15551234567").
-    static func send(_ text: String, toChat chat: String) {
+    static func send(_ text: String, toChat chat: String) async -> Bool {
         func quoted(_ s: String) -> String {
             "\"" + s.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "\\\"") + "\""
         }
         let source = "tell application \"Messages\" to send \(quoted(text)) to chat id \(quoted(chat))"
-        queue.async {
-            var error: NSDictionary?
-            NSAppleScript(source: source)?.executeAndReturnError(&error)
+        return await withCheckedContinuation { continuation in
+            queue.async {
+                var error: NSDictionary?
+                NSAppleScript(source: source)?.executeAndReturnError(&error)
+                continuation.resume(returning: error == nil)
+            }
         }
     }
 }
@@ -36,8 +39,8 @@ enum Replier {
             var guid = item.chatGUID
             if guid == nil { guid = await ChatLocator.chatGUID(for: item) }
             guard let guid else { NotificationFeed.shared.toast("Couldn't find that chat", item: item); return }
-            MessageSender.send(text, toChat: guid)
-            NotificationFeed.shared.toast("Sent to \(item.title)", item: item)
+            let sent = await MessageSender.send(text, toChat: guid)
+            NotificationFeed.shared.toast(sent ? "Sent to \(item.title)" : "Couldn't send: allow The BoringCoucouify to control Messages", item: item)
         case "net.whatsapp.whatsapp":
             await sendWhatsApp(text, item)
         default:

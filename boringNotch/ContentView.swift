@@ -544,24 +544,24 @@ struct ContentView: View {
         .frame(height: vm.effectiveClosedNotchHeight, alignment: .center)
     }
 
-    /// With music and agents both showing, the side of the closed notch the
-    /// pointer is over picks the tab: left for music, right for agents.
+    /// Which page a hover or click on the closed notch opens. The middle (over the notch itself)
+    /// is the main page, Home. The sides, where the live activity shows, open that activity: the
+    /// agents. With music showing too, the left side is the music's and goes to Home.
     private func pickTabForPointer() {
         guard vm.notchState == .closed, !coordinator.openLastTabByDefault else { return }
         // A tool you picked (Notes, Timer…) is remembered for a while and wins.
         let tools: [NotchViews] = [.timer, .notes, .teleprompter, .inbox]
         guard !tools.contains(coordinator.currentView) else { return }
-        if agentPresence.isActive {
-            if musicIsShowing {
-                coordinator.currentView = hoverPointX < computedChinWidth / 2 ? .home : .agents
-            } else {
-                coordinator.currentView = .agents
-            }
-        } else {
-            // Nothing to pick between: Home, never a page left over from before (the Shelf is
-            // only for dragging a file or opening it yourself).
-            coordinator.currentView = .home
+        // Nothing else to pick between: Home, never a page left over from before (the Shelf is
+        // only for dragging a file or opening it yourself).
+        var page: NotchViews = .home
+        let ear = (computedChinWidth - vm.closedNotchSize.width) / 2
+        let onSide = ear > 0 && (hoverPointX < ear || hoverPointX > computedChinWidth - ear)
+        if agentPresence.isActive, onSide {
+            let onLeft = hoverPointX < computedChinWidth / 2
+            page = (musicIsShowing && onLeft) ? .home : .agents
         }
+        coordinator.currentView = page
     }
 
     /// Keeps Coucou's idea of where its UI is on screen in step with the notch.
