@@ -294,6 +294,10 @@ enum TuckrWelcome {
                 onOpenSettings: { finish(); SettingsWindowController.shared.showWindow() }))
             controller = NSWindowController(window: window)
         }
+        // Seen once is enough: quit it half way and it does not come back at the next launch
+        // (Settings → About shows it again on request).
+        UserDefaults.standard.set(true, forKey: shownKey)
+        BoringViewCoordinator.shared.firstLaunch = false
         NSApp.activate(ignoringOtherApps: true)
         controller?.window?.makeKeyAndOrderFront(nil)
     }
