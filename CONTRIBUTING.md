@@ -4,7 +4,7 @@ Thank you for taking the time to contribute! ❤️
 
 These guidelines help streamline the contribution process for everyone involved. By following them, you'll make it easier for maintainers to review your work and collaborate with you effectively.
 
-You can contribute in many ways: writing code, improving documentation, reporting bugs, requesting features, or creating tutorials and blog posts. Every contribution, large or small, helps make Boring Notch better.
+You can contribute in many ways: writing code, improving documentation, reporting bugs, requesting features, or creating tutorials and blog posts. Every contribution, large or small, helps make Tuckr better.
 
 ## Table of Contents
 
@@ -21,7 +21,7 @@ You can contribute in many ways: writing code, improving documentation, reportin
 
 ## Localizations
 
-Please submit all translations to [Crowdin](https://crowdin.com/project/boring-notch). New strings added to the `dev` branch from code changes will sync automatically to Crowdin, and Crowdin will automatically open a new PR with translations to allow us to integrate them.
+Tuckr has no translation project of its own yet. To help translate, open an issue or a pull request that edits `boringNotch/Localizable.xcstrings`.
 
 ## Contributing Code
 

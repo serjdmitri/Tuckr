@@ -9,10 +9,22 @@
 <p align="center"><b>Everything you reach for, tucked into your Mac's notch: music, agents, messages, dictation and more.</b></p>
 
 <p align="center">
+  <a href="https://github.com/serjdmitri/Tuckr/releases/latest"><img src="https://img.shields.io/github/v/release/serjdmitri/Tuckr?label=release&color=7b5cff" alt="Latest release"></a>
+  <a href="https://github.com/serjdmitri/Tuckr/releases"><img src="https://img.shields.io/github/downloads/serjdmitri/Tuckr/total?label=downloads&color=2ea44f" alt="Downloads"></a>
+  <a href="https://github.com/serjdmitri/Tuckr/stargazers"><img src="https://img.shields.io/github/stars/serjdmitri/Tuckr?style=flat&color=e3b341" alt="Stars"></a>
+  <a href="https://github.com/serjdmitri/Tuckr/commits/main"><img src="https://img.shields.io/github/last-commit/serjdmitri/Tuckr?color=8957e5" alt="Last commit"></a>
+  <a href="https://github.com/serjdmitri/Tuckr/issues"><img src="https://img.shields.io/github/issues/serjdmitri/Tuckr?color=f0883e" alt="Open issues"></a>
+</p>
+
+<p align="center">
   <img src="https://img.shields.io/badge/macOS-26%2B-000000?logo=apple&logoColor=white" alt="macOS 26+">
+  <img src="https://img.shields.io/badge/Apple%20silicon-arm64-555555?logo=apple&logoColor=white" alt="Apple silicon">
   <img src="https://img.shields.io/badge/Swift-6-F05138?logo=swift&logoColor=white" alt="Swift">
   <img src="https://img.shields.io/badge/license-GPL--3.0-blue" alt="GPL-3.0">
-  <img src="https://img.shields.io/badge/status-personal%20build-orange" alt="Personal build">
+  <img src="https://img.shields.io/badge/own%20code-MIT-green" alt="MIT for Tuckr's own files">
+  <img src="https://img.shields.io/badge/updates-automatic%20(Sparkle)-7b5cff" alt="Automatic updates">
+  <img src="https://img.shields.io/badge/privacy-no%20telemetry-2ea44f" alt="No telemetry">
+  <img src="https://img.shields.io/badge/status-beta-orange" alt="Beta">
 </p>
 
 <p align="center">
@@ -21,15 +33,17 @@
 
 One menu-bar-free app that lives in the notch and brings three open-source projects together: [Boring Notch](https://github.com/TheBoredTeam/boring.notch) for music, calendar and a file shelf, [Coucou](https://github.com/Louis-CFM/coucou) for coding agents and a call recorder, and [Talkify](https://github.com/tornikegomareli/Talkify) for hold-Fn dictation. Four tabs at the top switch between them. When the notch is closed, music shows on the left and the agent's Mochi on the right; point at the middle for Home, at a side to open what is going on there.
 
-> **Status: personal build.** It runs daily on one Mac. Releases are unsigned DMGs (no Apple notarization): open the first time with right-click → Open. Updates arrive through Sparkle once the repository is public. See [Licensing](#licensing) before sharing it.
+> **Status: beta.** It runs daily on one Mac and has not been tested on many others yet. Releases are not notarized by Apple, so macOS asks you to confirm the first launch (see below). After that, updates arrive by themselves. See [Licensing](#licensing) for what is and is not free to reuse.
 
 ## What's in it
 
 | | |
 | --- | --- |
-| **Home** | Now playing with controls (Spotify, Apple Music), a calendar with your events, a camera mirror, and the usual volume, brightness and battery HUDs |
-| **Shelf** | Three panels: AirDrop and share on the left, a file shelf in the middle, and drop-to-transcribe on the right |
-| **Agents** | Live cards for Claude Code, Codex, Gemini CLI, Cursor and more. Approve or deny permission requests and answer questions from the notch, jump to the terminal, mute with one key. Mochi reacts to your pointer |
+| **Home** | Now playing with controls (Spotify, Apple Music), a calendar (tap the month to see the whole month, with a mark under each busy day), the weather, a camera mirror, and the usual volume, brightness and battery HUDs |
+| **Shelf** | Drag a file at the notch: AirDrop and share, a file shelf, drop-to-transcribe (Russian and 24 other languages), and **Transform** (resize, compress, convert, rotate, cut out the background, clean metadata, make a PDF, zip) |
+| **Agents** | Live cards for Claude Code, Codex, Gemini CLI, Cursor and more. Approve or deny permission requests and answer questions from the notch, jump to the terminal, mute with one key. Mochi reacts to your pointer and to what happens on your Mac. Double-click the tab for a chat with Mochi, right-click it for his quick settings |
+| **Messages and calls** | Popups for new Messages, WhatsApp, Telegram, Slack and Mail notifications with a quick reply and voice playback, and Answer / Decline for incoming FaceTime, phone and WhatsApp calls. A switch replaces macOS's own banners |
+| **Tools** | Timer, Notes (your Apple Notes), a Teleprompter you can scroll while it runs, and popups for AirPods, downloads, AirDrop, Focus and your next event |
 | **Meetings** | One press records your microphone and what your Mac plays, transcribes it on device, and writes a summary into your notes folder |
 | **Dictation** | Hold Fn and talk; the words are typed where your cursor is. Read-aloud, a HUD that takes over the notch while it works, and a keyboard board for changing every shortcut |
 
@@ -48,6 +62,15 @@ One menu-bar-free app that lives in the notch and brings three open-source proje
 </p>
 
 Coucou's hook relay (`nb-hook`) sends each agent event to a local unix socket the app listens on, which is what drives the Agents tab. Speech to text runs on device (Parakeet for meetings and Talkify's own engine for dictation), so audio does not leave the Mac.
+
+## Download
+
+1. Get **`Tuckr-x.y.z.dmg`** from the [latest release](https://github.com/serjdmitri/Tuckr/releases/latest) (Apple silicon Mac, macOS 26 or later).
+2. Open it and drag **Tuckr** into **Applications**.
+3. The first time, **right-click Tuckr → Open → Open** (the app is not notarized by Apple). If macOS still refuses: `xattr -dr com.apple.quarantine /Applications/Tuckr.app`.
+4. Follow the welcome screen; it explains each permission and asks for them one by one.
+
+Updates are checked about once a day and installed only when you say yes (**Settings → About → Check for Updates…** looks right now). Every update is signed with the author's key, and the app refuses anything that is not ([how it works](docs/UPDATES.md)).
 
 ## Build and install
 
@@ -116,6 +139,8 @@ Tuckr is provided as it is, without any warranty, as the GPL-3.0 says (sections 
 
 ## Licensing
 
-Tuckr is **GPL-3.0** (see [LICENSE](LICENSE)), because Boring Notch is. In plain words: you may use, change and share it, as long as what you share is also GPL-3.0 and comes with its source.
+Tuckr as a whole is **GPL-3.0** (see [LICENSE](LICENSE)), because Boring Notch is. In plain words: you may use, change and share it, as long as what you share is also GPL-3.0 and comes with its source.
+
+The files written for Tuckr itself (the features in `boringNotch/Extras`, the scripts, the docs and the icon) are **also available under the MIT licence** ([LICENSE-MIT](LICENSE-MIT) lists exactly which), so you can lift them out and use them in your own project. Everything else keeps its own licence: nobody can relicense Boring Notch, Talkify, Coucou or the libraries, and the whole app cannot be MIT.
 
 Not everything in the repository is free to redistribute: the names "Coucou" and "Mochi", the Mochi character, its sounds and icon belong to their author ([details](licenses/Coucou/LICENSE-ASSETS.md)), and one of Talkify's sound effects ("Plunger pop", CC-BY-NC) may only be used non-commercially. The Siri-style dictation orb uses images with no licence. All of that is fine for personal use and has to be sorted out before any wider release.

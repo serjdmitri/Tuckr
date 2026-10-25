@@ -47,7 +47,7 @@ func render(size: CGSize, _ body: (CGContext) -> Void, to name: String) {
 render(size: CGSize(width: 1600, height: 340), { ctx in
     let full = CGRect(x: 0, y: 0, width: 1600, height: 340)
     backdrop(ctx, full, hue: 0)
-    place(ctx, load("agents"), inTile: full, width: 1120)
+    place(ctx, load("home"), inTile: full, width: 1120)
 }, to: "hero")
 
 let names = ["home", "shelf", "agents", "meetings"]

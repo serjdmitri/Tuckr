@@ -1,11 +1,17 @@
 # Security Policy
 
-## Reporting a Vulnerability
+## Reporting a vulnerability
 
-The Bored Team and community take security bugs in Boring Notch seriously. We appreciate your efforts to responsibly disclose your findings, and will make every effort to acknowledge your contributions.
+Please report security problems **privately** through GitHub: open the repository's **Security** tab and choose **Report a vulnerability** ([direct link](https://github.com/serjdmitri/Tuckr/security/advisories/new)). Please do not open a public issue for something that could be abused.
 
-To report a security issue, please use the GitHub Security Advisory ["Report a Vulnerability"](https://github.com/TheBoredTeam/boring.notch/security/advisories/new) tab.
+I will answer as soon as I can, tell you what happens next, and credit you in the fix if you like.
 
-The Bored Team will send a response indicating the next steps in handling your report. After the initial reply to your report, we will keep you informed of the progress towards a fix and full announcement, and may ask for additional information or guidance.
+## What is worth reporting
 
-Report security bugs in third-party dependencies to the person or team maintaining the package or dependency.
+- Anything that lets another app or person read what Tuckr shows (messages, notes, keys).
+- Anything that lets someone push a bad update: updates are signed, and the app refuses an unsigned update or update list (see [docs/UPDATES.md](docs/UPDATES.md)).
+- Anything that makes Tuckr run something it should not.
+
+## Third-party code
+
+Report problems in Boring Notch, Talkify, Coucou or a library to its own project (see [CREDITS.md](CREDITS.md)). If it also affects Tuckr, tell me too.
