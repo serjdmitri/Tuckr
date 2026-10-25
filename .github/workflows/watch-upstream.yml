@@ -1,0 +1,55 @@
+name: Watch the projects Tuckr is built on
+
+# Every day, looks for new releases of Boring Notch, Coucou (macOS) and Talkify. For each new one it
+# opens an issue in this repository with the release notes, so GitHub emails the owner and the
+# features can be looked at (and picked, or skipped). Nothing is changed in the code.
+
+on:
+  schedule:
+    - cron: "17 7 * * *"
+  workflow_dispatch:
+    inputs:
+      since:
+        description: "Only releases published after this time (UTC, e.g. 2026-10-01T00:00:00Z)"
+        required: false
+      dry_run:
+        description: "Only print what would be opened"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Open an issue for each new upstream release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SINCE: ${{ inputs.since || '2026-10-26T00:00:00Z' }}
+          DRY: ${{ inputs.dry_run }}
+        run: |
+          set -euo pipefail
+          gh label create upstream --color 7b5cff --description "A new release of a project Tuckr is built on" 2>/dev/null || true
+          # repository | pattern the tag must match (Coucou also ships Windows and Linux builds)
+          for entry in "TheBoredTeam/boring.notch|^v[0-9]" "Louis-CFM/coucou|^v[0-9]" "tornikegomareli/Talkify|^v[0-9]"; do
+            repo="${entry%%|*}"; pattern="${entry##*|}"
+            gh api "repos/$repo/releases?per_page=20" > releases.json
+            jq -c --arg since "$SINCE" --arg pattern "$pattern" \
+              '.[] | select(.draft == false) | select(.tag_name | test($pattern)) | select(.published_at > $since)' releases.json |
+            while read -r release; do
+              tag=$(jq -r .tag_name <<<"$release")
+              title="New upstream release: $repo $tag"
+              existing=$(gh issue list --state all --label upstream --search "\"$title\" in:title" --json number --jq 'length')
+              if [ "$existing" != "0" ]; then continue; fi
+              body="**$(jq -r '.name // .tag_name' <<<"$release")** ($(jq -r '.published_at[:10]' <<<"$release")): $(jq -r .html_url <<<"$release")"$'\n\n'"$(jq -r '.body // ""' <<<"$release" | head -c 6000)"$'\n\n'"---"$'\n'"Look through it and say which features Tuckr should take. Tuckr's copy of this project is described in UPSTREAM.md."
+              if [ "$DRY" = "true" ]; then
+                echo "WOULD OPEN: $title"
+              else
+                gh issue create --title "$title" --label upstream --body "$body"
+                echo "Opened: $title"
+              fi
+            done
+          done

@@ -116,6 +116,26 @@ On first launch it asks for Accessibility and Input Monitoring (Fn dictation and
 
 Hooks for Claude Code usually work straight away. Codex, Gemini CLI, Cursor and others are installed from Settings → Agents, which shows the exact file change for you to confirm first.
 
+## Known limitations
+
+- **Beta and not notarized by Apple:** macOS asks you to confirm the first launch (see [Download](#download)).
+- **Apple silicon and macOS 26 or later** only.
+- **Messages and calls:** reading Messages, WhatsApp, Telegram, Slack and Mail needs Full Disk Access, and replacing macOS's own banner needs Accessibility. Instant mode is for Messages and WhatsApp only. Replying works for Messages and one-to-one WhatsApp chats.
+- **macOS's own Focus pill** can't be hidden by any app, so it shows next to Tuckr's Focus popup.
+- **Chat with Mochi** needs an API key you add yourself (Settings → Agents).
+- **The drag fallback:** macOS does not always tell a notch window that a file is over it; Tuckr works around it, so a drop onto a panel occasionally lands a moment late.
+
+## Roadmap
+
+Ideas, in no particular order. Open an issue to vote or suggest:
+
+- Apple notarization (no more right-click → Open)
+- A switch to turn the lyrics lookup and other online features off in one place
+- Mochi reactions for more things (battery, Focus, the calendar)
+- The new agent features from Coucou 0.5.2 and 0.5.3 (plan approval, pill names, more agents)
+- A screen-recording indicator in the notch
+- Translations
+
 ## Repository layout
 
 | Path | What |

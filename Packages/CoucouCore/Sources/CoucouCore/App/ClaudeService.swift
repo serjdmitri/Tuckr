@@ -32,7 +32,17 @@ enum Keychain {
         SecItemAdd(item as CFDictionary, nil)
     }
 
-    static func load(key: String) -> String? {
+    /// Version 1.0.1 kept its keys under another service name: they move to the current one, once.
+    static func migrateLegacyKeys(_ keys: [String]) {
+        let legacy = "com.serjdmitri.TheBoringCoucouify.keys"
+        for key in keys {
+            guard load(key: key) == nil, let value = load(key: key, service: legacy) else { continue }
+            save(key: key, value: value)
+            delete(key: key, service: legacy)
+        }
+    }
+
+    static func load(key: String, service: String = Keychain.service) -> String? {
         let query: [String: Any] = [
             kSecClass as String:       kSecClassGenericPassword,
             kSecAttrService as String: service,
@@ -46,7 +56,7 @@ enum Keychain {
         return String(data: data, encoding: .utf8)
     }
 
-    static func delete(key: String) {
+    static func delete(key: String, service: String = Keychain.service) {
         let query: [String: Any] = [
             kSecClass as String:       kSecClassGenericPassword,
             kSecAttrService as String: service,
@@ -90,6 +100,7 @@ final class KeychainStore: @unchecked Sendable {
 
     private init() {
         // Called once, on main thread (AppDelegate triggers shared at launch).
+        Keychain.migrateLegacyKeys(Self.allKeys)
         for key in Self.allKeys {
             if let v = Keychain.load(key: key) { cache[key] = v }
         }

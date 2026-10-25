@@ -74,3 +74,5 @@ app adds sits in `CoucouHost.swift` and `AgentsTabView.swift`.
 17. `App/SettingsView.swift`: the "Updates" box of Agents Settings → General (`UpdateSettingsSection`)
     is left out. It is Coucou's own updater, which looks at Coucou's GitHub releases; Tuckr is
     updated by Sparkle, from its own signed feed (docs/UPDATES.md).
+18. `App/ClaudeService.swift`, `Keychain`: keys saved by Tuckr 1.0.1 under the old service name are
+    moved to the current one once (`migrateLegacyKeys`); `load` and `delete` can take a service.
