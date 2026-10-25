@@ -61,7 +61,7 @@ public enum CoucouHost {
     public static let chatExtraHeight: CGFloat = AgentsTabView.chatHeight - 98
     /// What the notch's window has to grow by to hold the chat: the tab is 158 points tall and
     /// the window holds 190 plus the shadow.
-    public static let windowExtraHeight: CGFloat = chatExtraHeight - 32 + 8
+    public static let windowExtraHeight: CGFloat = chatExtraHeight - 32 + 22
 
     public func openChat() { AppState.shared.view = .prompt }
     public func openSettings() { AppState.shared.view = .settings }
@@ -196,6 +196,10 @@ public enum CoucouHost {
       forName: .botDizzy, object: nil, queue: .main
     ) { _ in
       MainActor.assumeIsolated { handleDizzy() }
+    }
+    // "Settings…" in Mochi's quick settings opens Coucou's settings window.
+    NotificationCenter.default.addObserver(forName: .openFullSettings, object: nil, queue: .main) { _ in
+      MainActor.assumeIsolated { showSettings() }
     }
     HookServer.shared.start()
   }

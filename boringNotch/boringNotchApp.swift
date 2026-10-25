@@ -301,10 +301,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             window.disableSkyLight()
         }
 
-        window.contentView = NSHostingView(
+        let hosting = NSHostingView(
             rootView: ContentView()
                 .environmentObject(viewModel)
         )
+        // The window's size is set here (it grows for the chat), not by the SwiftUI content.
+        hosting.sizingOptions = []
+        window.contentView = hosting
 
         window.orderFrontRegardless()
         NotchSpaceManager.shared.notchSpace.windows.insert(window)
