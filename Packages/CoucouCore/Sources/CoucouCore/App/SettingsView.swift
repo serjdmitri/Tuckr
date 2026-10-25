@@ -444,9 +444,8 @@ struct SettingsView: View {
                 .padding(6)
         }
 
-        #if !APPSTORE
-        UpdateSettingsSection()
-        #endif
+        // Patched out: Coucou's own updater looks at Coucou's GitHub releases. Tuckr is updated by
+        // Sparkle (Settings → About), from its own signed feed.
 
         GroupBox(String(localized: "Weekly recap")) {
             VStack(alignment: .leading, spacing: 10) {

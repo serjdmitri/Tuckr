@@ -58,10 +58,10 @@ public enum CoucouHost {
     }
 
     /// How much taller the chat makes the tab than its cards.
-    public static let chatExtraHeight: CGFloat = AgentsTabView.chatHeight - 98
+    nonisolated public static let chatExtraHeight: CGFloat = AgentsTabView.chatHeight - 98
     /// What the notch's window has to grow by to hold the chat: the tab is 158 points tall and
     /// the window holds 190 plus the shadow.
-    public static let windowExtraHeight: CGFloat = chatExtraHeight - 32 + 22
+    nonisolated public static let windowExtraHeight: CGFloat = chatExtraHeight - 32 + 22
 
     public func openChat() { AppState.shared.view = .prompt }
     public func openSettings() { AppState.shared.view = .settings }

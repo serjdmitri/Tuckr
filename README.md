@@ -110,6 +110,10 @@ Tuckr is made from three open-source projects, **Boring Notch** (The Boring Team
 - **Network:** weather (Open-Meteo, and ipwho.is to find your city), lyrics (LRCLIB gets the song and artist), Sparkle's update check, and, only if you switch them on, the AI and service accounts you add in Agents Settings. Plain-HTTP is allowed to your own network only.
 - **Permissions** are asked for one by one in the welcome screen with what each is for. Full Disk Access is only used to read the notification list.
 
+## No warranty
+
+Tuckr is provided as it is, without any warranty, as the GPL-3.0 says (sections 15 and 16). It reads the notifications and messages on your own Mac (and the other things listed under Privacy) to show them in the notch; nothing leaves your Mac except what is listed there. You use it at your own risk.
+
 ## Licensing
 
 Tuckr is **GPL-3.0** (see [LICENSE](LICENSE)), because Boring Notch is. In plain words: you may use, change and share it, as long as what you share is also GPL-3.0 and comes with its source.

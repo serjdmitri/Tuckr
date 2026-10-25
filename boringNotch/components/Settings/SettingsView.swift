@@ -903,6 +903,7 @@ struct About: View {
                             showBuildNumber.toggle()
                         }
                     }
+                    Button("Check for Updates…") { updaterController.checkForUpdates(nil) }
                     Button("Show the welcome tour and permissions again") { TuckrWelcome.show() }
                 } header: {
                     Text("Tuckr")
@@ -951,10 +952,31 @@ struct About: View {
                 } header: {
                     Text("With thanks to")
                 }
+
+                Section {
+                    Text("Tuckr is free software under the GNU General Public License, version 3. You may use, study, change and share it; what you share must stay under the same licence and come with its source.")
+                        .font(.callout)
+                    Text("It comes with no warranty. It reads the notifications and messages on your own Mac to show them in the notch, and nothing is sent to its author.")
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                    Button {
+                        if let url = URL(string: "https://github.com/serjdmitri/Tuckr/blob/main/LICENSE") { NSWorkspace.shared.open(url) }
+                    } label: {
+                        HStack {
+                            Text("Read the licence (GPL-3.0)")
+                            Spacer()
+                            Image(systemName: "arrow.up.right").foregroundStyle(.secondary)
+                        }
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                } header: {
+                    Text("Licence")
+                }
             }
             VStack(spacing: 0) {
                 Divider()
-                Text("Three open-source notch apps in one. Updates arrive on their own; Tuckr → Check for Updates… looks right now.")
+                Text("Three open-source notch apps in one. Updates arrive on their own; “Check for Updates…” looks right now.")
                     .foregroundStyle(.secondary)
                     .padding(.top, 5)
                     .padding(.bottom, 7)

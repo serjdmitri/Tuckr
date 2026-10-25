@@ -15,6 +15,10 @@
 	<string>Calls are recorded only when you start a recording, to write down what the other people say.</string>
 	<key>SUEnableAutomaticChecks</key>
 	<true/>
+	<key>SURequireSignedFeed</key>
+	<true/>
+	<key>SUVerifyUpdateBeforeExtraction</key>
+	<true/>
 	<key>SUFeedURL</key>
 	<string>https://raw.githubusercontent.com/serjdmitri/Tuckr/main/updater/appcast.xml</string>
 	<key>SUEnableDownloaderService</key>

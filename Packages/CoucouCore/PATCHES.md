@@ -71,3 +71,6 @@ app adds sits in `CoucouHost.swift` and `AgentsTabView.swift`.
 16. `App/ClaudeService.swift`, `showError`: an error that comes while the chat is showing is added
     to the chat as a message, instead of switching the island to a note (which the notch's
     Agents tab does not show, so the chat seemed to close).
+17. `App/SettingsView.swift`: the "Updates" box of Agents Settings → General (`UpdateSettingsSection`)
+    is left out. It is Coucou's own updater, which looks at Coucou's GitHub releases; Tuckr is
+    updated by Sparkle, from its own signed feed (docs/UPDATES.md).
