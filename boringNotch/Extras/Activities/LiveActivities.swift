@@ -134,7 +134,8 @@ final class DownloadsWatcher {
             size = now
             try? await Task.sleep(for: .milliseconds(800))
         }
-        guard let agent = Self.quarantineAgent(url) else { return }
+        // Nothing was written yet (a browser's placeholder): not a finished download.
+        guard size > 0, let agent = Self.quarantineAgent(url) else { return }
         let bytes = ByteCountFormatter.string(fromByteCount: Int64(size), countStyle: .file)
         if agent.lowercased().contains("sharingd") {
             guard Defaults[.activityAirDrop] else { return }

@@ -22,7 +22,7 @@ class BoringViewModel: NSObject, ObservableObject {
     @Published var dragDetectorTargeting: Bool = false
     @Published var generalDropTargeting: Bool = false
     @Published var dropZoneTargeting: Bool = false
-    @Published var dropEvent: Bool = false
+    @Published var dropEvent: Bool = false { didSet { if dropEvent { NotchHold.dropHandled = true } } }
     /// True while the pointer is over the notch.
     @Published var pointerInside: Bool = false
     @Published var anyDropZoneTargeting: Bool = false
@@ -225,8 +225,15 @@ class BoringViewModel: NSObject, ObservableObject {
         self.coordinator.sneakPeek.show = false
         self.edgeAutoOpenActive = false
 
-        // The tab is remembered for a while (a setting); after that the next open starts at Home
-        NotchHold.notchClosed { [weak self] in self?.forgetTab() }
+        // The tools you pick yourself (Timer, Notes…) are remembered for a while (a setting). The
+        // pages the notch opens by itself (Shelf, Agents, Meetings, Home) are not: the next
+        // open starts where the pointer is, or at Home.
+        let remembered: [NotchViews] = [.timer, .notes, .teleprompter, .inbox]
+        if remembered.contains(coordinator.currentView) {
+            NotchHold.notchClosed { [weak self] in self?.forgetTab() }
+        } else {
+            forgetTab()
+        }
     }
 
     /// Set the current view to shelf if it contains files and the user enables openShelfByDefault

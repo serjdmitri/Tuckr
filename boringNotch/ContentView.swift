@@ -547,13 +547,20 @@ struct ContentView: View {
     /// With music and agents both showing, the side of the closed notch the
     /// pointer is over picks the tab: left for music, right for agents.
     private func pickTabForPointer() {
-        guard vm.notchState == .closed, agentPresence.isActive else { return }
-        // A tab the notch is still remembering (Notes, Timer…) wins over the agents.
-        guard coordinator.currentView == .home || coordinator.currentView == .agents else { return }
-        if musicIsShowing {
-            coordinator.currentView = hoverPointX < computedChinWidth / 2 ? .home : .agents
+        guard vm.notchState == .closed, !coordinator.openLastTabByDefault else { return }
+        // A tool you picked (Notes, Timer…) is remembered for a while and wins.
+        let tools: [NotchViews] = [.timer, .notes, .teleprompter, .inbox]
+        guard !tools.contains(coordinator.currentView) else { return }
+        if agentPresence.isActive {
+            if musicIsShowing {
+                coordinator.currentView = hoverPointX < computedChinWidth / 2 ? .home : .agents
+            } else {
+                coordinator.currentView = .agents
+            }
         } else {
-            coordinator.currentView = .agents
+            // Nothing to pick between: Home, never a page left over from before (the Shelf is
+            // only for dragging a file or opening it yourself).
+            coordinator.currentView = .home
         }
     }
 

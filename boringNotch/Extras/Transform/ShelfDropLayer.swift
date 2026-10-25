@@ -73,9 +73,63 @@ struct ShelfDropLayer: NSViewRepresentable {
 
         required init?(coder: NSCoder) { fatalError() }
 
+        override func viewDidMoveToWindow() {
+            super.viewDidMoveToWindow()
+            hoverTimer?.invalidate()
+            hoverTimer = nil
+            if window != nil {
+                Self.visible = self
+                // The system does not always tell this view that a file is over it, so while one
+                // is held the pointer's own place says which panel (or tile) it is on.
+                hoverTimer = Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) { [weak self] _ in
+                    MainActor.assumeIsolated { self?.followHeldFile() }
+                }
+            } else if Self.visible === self { Self.visible = nil }
+        }
+
+        private var hoverTimer: Timer?
+        private var idleTicks = 0
+
+        @MainActor private func locate(screen: NSPoint) -> (panel: ShelfPanel?, tile: TransformAction?) {
+            guard let window else { return (nil, nil) }
+            let point = convert(window.convertPoint(fromScreen: screen), from: nil)
+            if let tile = frames.tiles.first(where: { $0.value.contains(point) })?.key { return (.transform, tile) }
+            return (frames.panels.first(where: { $0.value.contains(point) })?.key, nil)
+        }
+
+        @MainActor private func followHeldFile() {
+            if NotchHold.dragActive, NSEvent.pressedMouseButtons & 1 != 0 {
+                idleTicks = 0
+                let (panel, tile) = locate(screen: NSEvent.mouseLocation)
+                show(panel: panel, tile: tile)
+            } else if current != nil || TransformModel.shared.hoverTile != nil {
+                // Let go: a moment for the drop to be taken (it needs the panel still open), then reset.
+                idleTicks += 1
+                if idleTicks >= 10 { clear(); idleTicks = 0 }
+            }
+        }
+
+        /// The layer that is on screen now, for a release the panels never heard about.
+        nonisolated(unsafe) static weak var visible: DropView?
+        /// Where a file was let go (screen coordinates): the panel under it takes it, or, with
+        /// the shelf not showing, the notch's own area does.
+        @MainActor static func handleRelease(at screen: NSPoint, vm: BoringViewModel?) {
+            let urls = (NSPasteboard(name: .drag).readObjects(
+                forClasses: [NSURL.self], options: [.urlReadingFileURLsOnly: true]) as? [URL]) ?? []
+            guard !urls.isEmpty else { return }
+            if let view = visible {
+                let (panel, tile) = view.locate(screen: screen)
+                if let panel { view.apply(panel: panel, tile: tile, urls: urls); return }
+            }
+            guard let vm, vm.notchState == .open else { return }
+            vm.dropEvent = true
+            ShelfStateViewModel.shared.load(urls.map { NSItemProvider(object: $0 as NSURL) })
+        }
+
         /// Out of the way of clicks; in the way only while a file is being dragged.
         override func hitTest(_ point: NSPoint) -> NSView? {
-            MainActor.assumeIsolated { NotchHold.dragActive } ? super.hitTest(point) : nil
+            let active = MainActor.assumeIsolated { NotchHold.dragActive }
+            return active ? super.hitTest(point) : nil
         }
 
         // MARK: Dragging
@@ -91,18 +145,21 @@ struct ShelfDropLayer: NSViewRepresentable {
 
         private func track(_ info: NSDraggingInfo) -> NSDragOperation {
             let (panel, tile) = target(for: info)
-            MainActor.assumeIsolated {
-                if panel != current {
-                    if let old = current { ShelfPanelFocus.shared.setTargeted(old, false) }
-                    if let panel { ShelfPanelFocus.shared.setTargeted(panel, true) }
-                    if panel == .transform { TransformModel.shared.refreshDragged() }
-                    current = panel
-                    vm?.dropZoneTargeting = panel == .share
-                    vm?.dragDetectorTargeting = panel == .shelf
-                }
-                if TransformModel.shared.hoverTile != tile { TransformModel.shared.hoverTile = tile }
-            }
+            MainActor.assumeIsolated { show(panel: panel, tile: tile) }
             return panel == nil ? [] : .copy
+        }
+
+        /// Lights up the panel (and Transform tile) the held file is over.
+        @MainActor private func show(panel: ShelfPanel?, tile: TransformAction?) {
+            if panel != current {
+                if let old = current { ShelfPanelFocus.shared.setTargeted(old, false) }
+                if let panel { ShelfPanelFocus.shared.setTargeted(panel, true) }
+                if panel == .transform { TransformModel.shared.refreshDragged() }
+                current = panel
+                vm?.dropZoneTargeting = panel == .share
+                vm?.dragDetectorTargeting = panel == .shelf
+            }
+            if TransformModel.shared.hoverTile != tile { TransformModel.shared.hoverTile = tile }
         }
 
         override func draggingEntered(_ sender: NSDraggingInfo) -> NSDragOperation { track(sender) }
@@ -128,7 +185,14 @@ struct ShelfDropLayer: NSViewRepresentable {
             let urls = (sender.draggingPasteboard.readObjects(
                 forClasses: [NSURL.self], options: [.urlReadingFileURLsOnly: true]) as? [URL]) ?? []
             guard let panel, !urls.isEmpty else { return false }
-            MainActor.assumeIsolated {
+            MainActor.assumeIsolated { apply(panel: panel, tile: tile, urls: urls) }
+            clear()
+            return panel != .transform || tile != nil
+        }
+
+        @MainActor fileprivate func apply(panel: ShelfPanel, tile: TransformAction?, urls: [URL]) {
+            NotchHold.dropHandled = true
+            do {
                 vm?.dropEvent = true
                 switch panel {
                 case .share:
@@ -146,8 +210,6 @@ struct ShelfDropLayer: NSViewRepresentable {
                     if let tile { TransformModel.shared.run(tile, urls: urls) }
                 }
             }
-            clear()
-            return panel != .transform || tile != nil
         }
     }
 }

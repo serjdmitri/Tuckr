@@ -19,9 +19,24 @@ enum NotchHold {
     private static var awayTask: Task<Void, Never>?
     private static var pollTask: Task<Void, Never>?
 
+    /// A drop reached one of the panels since the drag began; if none did by the time the
+    /// button is let go, `releasedWithoutDrop` takes the file instead.
+    static var dropHandled = false
+    /// Last place the held file was seen, and what to do with it when no drop arrived.
+    static var lastDragPoint = NSPoint.zero
+    static var releasedWithoutDrop: @MainActor (NSPoint) -> Void = { _ in }
+    private static var moveMonitor: Any?
+
     static func dragBegan() {
         guard !dragActive else { return }
         dragActive = true
+        dropHandled = false
+        if moveMonitor == nil {
+            moveMonitor = NSEvent.addGlobalMonitorForEvents(matching: .leftMouseDragged) { _ in
+                MainActor.assumeIsolated { lastDragPoint = NSEvent.mouseLocation }
+            }
+        }
+        lastDragPoint = NSEvent.mouseLocation
         // The mouse-up of a drag is not always seen by other apps, so watch the button too.
         pollTask?.cancel()
         pollTask = Task { @MainActor in
@@ -52,6 +67,12 @@ enum NotchHold {
         awayTask?.cancel()
         pollTask?.cancel()
         dragActive = false
+        // The panels did not get the drop (something else took the drag): do it from here.
+        let point = lastDragPoint
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(150))
+            if !dropHandled { releasedWithoutDrop(point) }
+        }
         // A drop is handled first (its result shows), then the notch goes if nobody is on it.
         Task { @MainActor in
             try? await Task.sleep(for: .seconds(1))

@@ -260,6 +260,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         detector.onDragBegan = {
             Task { @MainActor in
                 NotchHold.closingAfterRelease = closeNotch
+                NotchHold.releasedWithoutDrop = { point in
+                    ShelfDropLayer.DropView.handleRelease(at: point, vm: Defaults[.showOnAllDisplays] ? self.viewModels[uuid] : self.vm)
+                }
                 NotchHold.dragBegan()
             }
         }

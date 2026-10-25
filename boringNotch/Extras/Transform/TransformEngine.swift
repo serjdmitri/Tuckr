@@ -100,7 +100,7 @@ struct TransformResult {
 }
 
 private enum TransformError: LocalizedError {
-    case unreadable, noSubject, encode, zip
+    case unreadable, noSubject, encode, zip, noChange(String)
 
     var errorDescription: String? {
         switch self {
@@ -108,6 +108,7 @@ private enum TransformError: LocalizedError {
         case .noSubject: "No subject found to cut out"
         case .encode: "Couldn't write the result"
         case .zip: "Couldn't make the zip"
+        case .noChange(let why): why
         }
     }
 }
@@ -176,6 +177,10 @@ enum TransformEngine {
                     result.outputs.append(out)
                     result.bytesBefore += fileSize(url)
                     result.bytesAfter += fileSize(out)
+                } catch TransformError.noChange(let why) {
+                    // Nothing to gain: the file is left as it is.
+                    result.skipped += 1
+                    result.firstError = result.firstError ?? why
                 } catch {
                     result.failed += 1
                     result.firstError = result.firstError ?? error.localizedDescription
@@ -216,10 +221,14 @@ enum TransformEngine {
 
         switch action {
         case .resize:
-            let image = try decode(source, maxEdge: min(settings.edge, longest))
+            // Only ever smaller: scaling a picture up just makes the file bigger.
+            guard longest > settings.edge else {
+                throw TransformError.noChange("Already \(longest) px, not bigger than \(settings.edge)")
+            }
+            let image = try decode(source, maxEdge: settings.edge)
             let type = writableType(sourceType)
             let out = outputURL(for: url, suffix: action.suffix, ext: fileExtension(type, source: url, sourceType: sourceType), settings: settings)
-            try write(image, props: props, type: type, quality: 0.9, to: out)
+            try write(image, props: props, type: type, quality: 0.85, to: out)
             return out
 
         case .compress:
@@ -230,10 +239,18 @@ enum TransformEngine {
             if type == .jpeg { image = flatten(image) }
             let out = outputURL(for: url, suffix: action.suffix, ext: fileExtension(type, source: url, sourceType: sourceType), settings: settings)
             try write(image, props: props, type: type, quality: settings.quality, to: out)
+            // A re-save that came out no smaller is not a compression: keep only the original.
+            // PNG is lossless, so quality does nothing: it has to shrink noticeably to count.
+            let saved = type == .png ? 0.95 : 1.0
+            if Double(fileSize(out)) >= Double(fileSize(url)) * saved {
+                try? FileManager.default.removeItem(at: out)
+                throw TransformError.noChange(type == .png ? "PNG is already compressed: use Convert" : "Already as small as it gets")
+            }
             return out
 
         case .convert:
             let type: UTType = switch settings.format { case .jpeg: .jpeg; case .png: .png; case .heic: .heic }
+            if type == sourceType { throw TransformError.noChange("Already \(settings.format.rawValue)") }
             var image = try decode(source, maxEdge: longest)
             if type == .jpeg { image = flatten(image) }
             let out = outputURL(for: url, suffix: action.suffix, ext: fileExtension(type, source: url, sourceType: sourceType), settings: settings)
@@ -244,14 +261,17 @@ enum TransformEngine {
             let image = rotate(try decode(source, maxEdge: longest), degrees: settings.rotation)
             let type = writableType(sourceType)
             let out = outputURL(for: url, suffix: action.suffix, ext: fileExtension(type, source: url, sourceType: sourceType), settings: settings)
-            try write(image, props: props, type: type, quality: 0.95, to: out)
+            try write(image, props: props, type: type, quality: 0.9, to: out)
             return out
 
         case .stripMetadata:
-            let image = try decode(source, maxEdge: longest)
             let type = writableType(sourceType)
             let out = outputURL(for: url, suffix: action.suffix, ext: fileExtension(type, source: url, sourceType: sourceType), settings: settings)
-            try write(image, props: nil, type: type, quality: 0.95, to: out)
+            // The pixels are copied as they are; only the tags (camera, place, time) are left out.
+            if type == sourceType, copyWithoutMetadata(source, type: type, to: out) { return out }
+            try? FileManager.default.removeItem(at: out)
+            let image = try decode(source, maxEdge: longest)
+            try write(image, props: nil, type: type, quality: 0.9, to: out)
             return out
 
         case .removeBackground:
@@ -275,6 +295,7 @@ enum TransformEngine {
     /// The file's own extension when the type is unchanged (so .jpg stays .jpg), else the type's.
     private static func fileExtension(_ type: UTType, source: URL, sourceType: UTType?) -> String {
         if type == sourceType, !source.pathExtension.isEmpty { return source.pathExtension }
+        if type == .jpeg { return "jpg" }
         return type.preferredFilenameExtension ?? "png"
     }
 
@@ -302,6 +323,20 @@ enum TransformEngine {
             throw TransformError.unreadable
         }
         return image
+    }
+
+    /// The same picture without its metadata, copied rather than re-encoded so the file does not
+    /// grow. A photo that relies on its orientation tag cannot be done this way (the tag would go
+    /// too), so it returns false and the caller re-encodes upright pixels instead.
+    private static func copyWithoutMetadata(_ source: CGImageSource, type: UTType, to url: URL) -> Bool {
+        let props = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any]
+        if let orientation = props?[kCGImagePropertyOrientation] as? Int, orientation != 1 { return false }
+        guard let destination = CGImageDestinationCreateWithURL(url as CFURL, type.identifier as CFString, 1, nil) else { return false }
+        let options: [CFString: Any] = [
+            kCGImageDestinationMetadata: CGImageMetadataCreateMutable(),
+            kCGImageDestinationMergeMetadata: false,
+        ]
+        return CGImageDestinationCopyImageSource(destination, source, options as CFDictionary, nil)
     }
 
     /// The source's own metadata, minus what no longer matches the new pixels.
