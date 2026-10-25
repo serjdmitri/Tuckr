@@ -1,6 +1,21 @@
-<?xml version="1.0" standalone="yes"?>
-<rss xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" version="2.0">
+<?xml version="1.0" standalone="yes"?><!-- sparkle-sign-warning:
+IMPORTANT: This file was signed by Sparkle. Any modifications to this file requires re-signing this file with generate_appcast or sign_update! The signed signature will be embedded at the end of this file.
+--><rss xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" version="2.0">
     <channel>
         <title>Tuckr</title>
+        <item>
+            <title>1.0.1</title>
+            <pubDate>Sun, 25 Oct 2026 16:09:10 -0400</pubDate>
+            <sparkle:version>272</sparkle:version>
+            <sparkle:shortVersionString>1.0.1</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+            <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+            <description sparkle:format="markdown"><![CDATA[First Tuckr release: new name and icon, a welcome tour with the permissions, a chat with Mochi (double-click the Agents tab) and his quick settings (right-click it), a month calendar (tap the month), scrolling in the teleprompter, Russian and 24 other languages in the Transcribe panel, a quick switch for replacing macOS banners, signed automatic updates, and privacy hardening.
+]]></description>
+            <enclosure url="https://github.com/serjdmitri/Tuckr/releases/download/v1.0.1/Tuckr-1.0.1.dmg" length="36078791" type="application/octet-stream" sparkle:edSignature="g3T6l+NRfGqbCQTz9uiKm8+JAffsDoX6Sr6GqapqEB2WNpSypCC8eHm7MVgRFuzHIFFESQXUQM80ONgJ9g62Ag=="></enclosure>
+        </item>
     </channel>
-</rss>
+</rss><!-- sparkle-signatures:
+edSignature: qae/35b70wQeexwJtQbLwSHW7sbst3QzI0ztzOArEQbPYmeq5DsgyNUzyHzhc6avYiujLAcOPWeUPet9sj1jDA==
+length: 1574
+-->
