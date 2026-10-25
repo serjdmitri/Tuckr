@@ -58,7 +58,7 @@ public enum CoucouHost {
     }
 
     /// How much taller the chat makes the tab than its cards.
-    nonisolated public static let chatExtraHeight: CGFloat = AgentsTabView.chatHeight - 98
+    nonisolated public static let chatExtraHeight: CGFloat = AgentsChatLayout.height - 98
     /// What the notch's window has to grow by to hold the chat: the tab is 158 points tall and
     /// the window holds 190 plus the shadow.
     nonisolated public static let windowExtraHeight: CGFloat = chatExtraHeight - 32 + 22
@@ -465,4 +465,9 @@ public final class MeetingPresence: ObservableObject {
       .receive(on: DispatchQueue.main)
       .sink { [weak self] recording in self?.isRecording = recording }
   }
+}
+
+/// The chat's height on the Agents tab, a plain constant so any thread may read it.
+enum AgentsChatLayout {
+  static let height: CGFloat = 180
 }
