@@ -7,6 +7,7 @@
 //  memory only.
 //
 
+import CoucouCore
 import AppKit
 import Defaults
 import SQLite3
@@ -247,6 +248,8 @@ final class NotificationFeed: ObservableObject {
     // MARK: Popup and inbox
 
     private func show(_ item: NotificationItem) {
+        // Mochi notices: a message surprises him, news like a download pleases him.
+        CoucouHost.react(item.symbol == nil ? .surprised : .happy)
         popups.insert(item, at: 0)
         // Five at most; the oldest makes way.
         if popups.count > 5, let gone = popups.popLast() { hideTasks[gone.id]?.cancel(); hideTasks[gone.id] = nil }

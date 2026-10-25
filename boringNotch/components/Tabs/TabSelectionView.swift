@@ -5,6 +5,8 @@
 //  Created by Hugo Persson on 2024-08-25.
 //
 
+import AppKit
+import CoucouCore
 import SwiftUI
 
 struct TabModel: Identifiable {
@@ -29,7 +31,23 @@ struct TabSelectionView: View {
             ForEach(tabs) { tab in
                     TabButton(label: tab.label, icon: tab.icon, selected: coordinator.currentView == tab.view) {
                         withAnimation(.smooth) {
+                            // A click on the Agents tab while it shows the chat or Mochi's settings goes back to his cards.
+                            if tab.view == .agents, coordinator.currentView == .agents { CoucouHost.AgentsPages.shared.back() }
                             coordinator.currentView = tab.view
+                        }
+                    }
+                    // Agents tab: a double click opens the chat with Mochi, a right click his quick settings.
+                    .simultaneousGesture(TapGesture(count: 2).onEnded {
+                        guard tab.view == .agents else { return }
+                        withAnimation(.smooth) { coordinator.currentView = .agents }
+                        CoucouHost.AgentsPages.shared.openChat()
+                    })
+                    .overlay {
+                        if tab.view == .agents {
+                            RightClickCatcher {
+                                withAnimation(.smooth) { coordinator.currentView = .agents }
+                                CoucouHost.AgentsPages.shared.openSettings()
+                            }
                         }
                     }
                     .frame(height: 26)
@@ -52,4 +70,27 @@ struct TabSelectionView: View {
 
 #Preview {
     BoringHeader().environmentObject(BoringViewModel())
+}
+
+/// Catches a right click on what it covers and lets every other click through to what is below.
+struct RightClickCatcher: NSViewRepresentable {
+    let action: () -> Void
+
+    func makeNSView(context: Context) -> CatcherView {
+        let view = CatcherView()
+        view.action = action
+        return view
+    }
+
+    func updateNSView(_ view: CatcherView, context: Context) { view.action = action }
+
+    final class CatcherView: NSView {
+        var action: () -> Void = {}
+
+        override func hitTest(_ point: NSPoint) -> NSView? {
+            NSApp.currentEvent?.type == .rightMouseDown ? super.hitTest(point) : nil
+        }
+
+        override func rightMouseDown(with event: NSEvent) { action() }
+    }
 }

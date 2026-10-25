@@ -5,6 +5,7 @@
 //  Created by Harsh Vardhan  Goswami  on 05/08/24.
 //
 
+import CoucouCore
 import Defaults
 import Foundation
 import SwiftUI
@@ -16,8 +17,10 @@ let shadowPadding: CGFloat = 20
 let openNotchSize: CGSize = .init(width: 640, height: 190)
 /// The open notch's size for a tab. The Agents tab holds one band of cards, so
 /// it is shorter than the others; its width follows its content.
-func openNotchSize(for view: NotchViews) -> CGSize {
+func openNotchSize(for view: NotchViews, chatOpen: Bool = false) -> CGSize {
     switch view {
+    case .agents where chatOpen:
+        return .init(width: 682, height: 158 + CoucouHost.AgentsPages.chatExtraHeight)
     case .agents, .meetings:
         // Coucou's 620-point band of cards plus the notch's 31-point padding each side.
         return .init(width: 682, height: 158)

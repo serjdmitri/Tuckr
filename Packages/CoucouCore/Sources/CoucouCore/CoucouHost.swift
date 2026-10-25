@@ -21,7 +21,49 @@ public enum CoucouHost {
     return try await asr.transcribe(url, decoderState: &decoder).text
   }
 
+  /// What Mochi can show when something happens in the notch.
+  public enum Reaction { case surprised, happy, love, proud, wink, yawn, annoyed }
+
+  /// Mochi reacts (the same expressions as when he is petted). Seen wherever he is on screen.
+  public static func react(_ reaction: Reaction) {
+    let emote: BotEmote
+    switch reaction {
+    case .surprised: emote = .surprised
+    case .happy: emote = .happy
+    case .love: emote = .love
+    case .proud: emote = .proud
+    case .wink: emote = .wink
+    case .yawn: emote = .yawn
+    case .annoyed: emote = .annoyed
+    }
+    NotificationCenter.default.post(name: .triggerEmote, object: emote)
+  }
+
   private static var started = false
+
+  /// Which page of the Agents tab is showing: the agent cards, the chat with Mochi, or his
+  /// quick settings. The host opens the chat on a double click on the tab and the settings on
+  /// a right click, and makes the notch tall enough and typeable for the chat.
+  @MainActor public final class AgentsPages: ObservableObject {
+    public static let shared = AgentsPages()
+    public enum Page { case overview, chat, settings }
+    @Published public private(set) var page: Page = .overview
+    private var cancellable: AnyCancellable?
+
+    private init() {
+      cancellable = AppState.shared.$view.sink { [weak self] view in
+        let next: Page = view == .prompt ? .chat : (view == .settings ? .settings : .overview)
+        if self?.page != next { self?.page = next }
+      }
+    }
+
+    /// How much taller the chat makes the tab than its cards.
+    public static let chatExtraHeight: CGFloat = AgentsTabView.chatHeight - 98
+
+    public func openChat() { AppState.shared.view = .prompt }
+    public func openSettings() { AppState.shared.view = .settings }
+    public func back() { if page != .overview { AppState.shared.view = .overview } }
+  }
   private static var hookExpandObserver: NSObjectProtocol?
 
   /// Where Coucou's agent UI is shown. The host sets this to follow its notch:
@@ -43,6 +85,7 @@ public enum CoucouHost {
     guard state.mode != mode else { return }
     let previous = state.mode
     state.mode = mode
+    if mode != .expanded, state.view == .prompt || state.view == .settings { state.view = .overview }
     // The pill shown before another pill's alert comes back when the card goes.
     if previous == .expanded { HookServer.shared.restoreAlertFocus() }
   }
@@ -155,8 +198,10 @@ public enum CoucouHost {
   }
 
   /// One ear of the closed notch: Mochi, or the mini grid of the other agents.
-  public static func makeClosedEar(_ ear: ClosedEar, height: CGFloat) -> some View {
-    ClosedEarView(ear: ear, height: height)
+  /// `lively` draws Mochi at the screen's full rate (the pointer is at the notch); otherwise he
+  /// is drawn less often to spare the battery.
+  public static func makeClosedEar(_ ear: ClosedEar, height: CGFloat, lively: Bool = false) -> some View {
+    ClosedEarView(ear: ear, height: height, lively: lively)
   }
 
   private static var settingsWindow: NSWindow?
@@ -362,12 +407,19 @@ public final class AgentPresence: ObservableObject {
 private struct ClosedEarView: View {
   let ear: ClosedEar
   let height: CGFloat
+  let lively: Bool
   @ObservedObject private var state = AppState.shared
+
+  /// The ears are 20 points wide: they need few frames. More while an agent works, and every
+  /// frame while the pointer is at the notch, so Mochi follows it smoothly.
+  private var frameInterval: Double? {
+    if lively { return nil }
+    return state.tasks.contains { $0.state != .idle && $0.state != .sleeping } ? 1.0 / 40 : 1.0 / 24
+  }
 
   var body: some View {
     earContent
-      // The ears are 20 points wide: 20 frames a second is plenty and far cheaper.
-      .environment(\.mochiFrameInterval, 1.0 / 20)
+      .environment(\.mochiFrameInterval, frameInterval)
   }
 
   @ViewBuilder
@@ -378,6 +430,8 @@ private struct ClosedEarView: View {
       let diameter = min(20, max(0, height - 6))
       BotCanvasView(state: state, particleOverhang: 0, paused: state.mochiOnDesktop)
         .frame(width: diameter / 0.6, height: diameter / 0.6)
+        // His eyes find the pointer relative to where he really is in the notch.
+        .background(BotAnchor())
         .frame(width: height, height: height)
         .opacity(state.mochiOnDesktop ? 0 : 1)
     case .trailing:

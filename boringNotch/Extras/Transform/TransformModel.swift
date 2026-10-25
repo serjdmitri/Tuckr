@@ -4,6 +4,7 @@
 //  the state of a Transform job.
 //
 
+import CoucouCore
 import AppKit
 import SwiftUI
 import UniformTypeIdentifiers
@@ -136,6 +137,7 @@ final class TransformModel: ObservableObject {
         Task { @MainActor in
             let result = await TransformEngine.run(action, on: urls, settings: settings)
             phase = .done(result)
+            CoucouHost.react(result.outputs.isEmpty ? .annoyed : .proud)
             // A job that did nothing only needs a glance; one that made files stays a little longer.
             let worked = !result.outputs.isEmpty
             ShelfPanelFocus.shared.hold(.transform, seconds: worked ? 6 : 2.5)

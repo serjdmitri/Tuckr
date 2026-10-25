@@ -6,6 +6,7 @@
 //  popup goes when the alert does, or after a minute.
 //
 
+import CoucouCore
 import AppKit
 import ApplicationServices
 import Defaults
@@ -42,6 +43,7 @@ final class CallPopup: ObservableObject {
         let decline = actions.first { $0.lowercased().hasPrefix("name:decline") }
         guard let answer, let decline else { return false }
         let detail = [subtitle, body].filter { !$0.isEmpty }.joined(separator: " · ")
+        CoucouHost.react(.surprised)
         call = IncomingCall(
             appID: appID, appName: NotificationFeed.name(for: appID), caller: title.isEmpty ? appName : title,
             detail: detail.isEmpty ? "Incoming call" : detail, alert: alert, answer: answer, decline: decline)

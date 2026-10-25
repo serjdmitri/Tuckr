@@ -65,3 +65,6 @@ app adds sits in `CoucouHost.swift` and `AgentsTabView.swift`.
     `upsertWorkspaceTask`) takes the focus when it is the pinned one, not only when nothing is
     focused. Before, a pinned Claude pill never got the big Mochi because VS Code, the main
     pill, already held it.
+15. `App/BotCanvasView.swift`, `lookXY`: Mochi's eyes follow the pointer from a shorter distance
+    (190 and 150 points instead of 260 and 200 before the look saturates), so he tracks it more
+    closely in the small closed notch.

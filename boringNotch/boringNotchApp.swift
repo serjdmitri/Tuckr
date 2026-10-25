@@ -536,6 +536,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // is at it.
         NotchTimer.shared.onFinished = { [weak self] in
             guard let self else { return }
+            CoucouHost.react(.proud)
             BoringViewCoordinator.shared.currentView = .timer
             withAnimation(.spring(response: 0.38, dampingFraction: 0.8)) {
                 self.vm.open()

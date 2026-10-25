@@ -203,7 +203,7 @@ struct BotCanvasView: View {
             let top = IslandWindowController.desktopTop
             let bot = DesktopSpace.topDown(CGPoint(x: rect.midX, y: rect.midY), desktopTop: top)
             let mouse = DesktopSpace.topDown(NSEvent.mouseLocation, desktopTop: top)
-            return (tanh((mouse.x - bot.x) / 260), -tanh((mouse.y - bot.y) / 200))
+            return (tanh((mouse.x - bot.x) / 190), -tanh((mouse.y - bot.y) / 150))
         }
         if let origin = lookOriginOverride {
             return (tanh((state.mousePosition.x - origin.x) / 260),
@@ -230,8 +230,8 @@ struct BotCanvasView: View {
             ? min(300, 240 + CGFloat(state.chatHistory.count) * 40)
             : islandH
         let botY = actualH == islandH ? botX : botPoint(islandH: actualH)
-        return (tanh((mouse.x - botX.x) / 260),
-                -tanh((mouse.y - botY.y) / 200))
+        return (tanh((mouse.x - botX.x) / 190),
+                -tanh((mouse.y - botY.y) / 150))
     }
 }
 

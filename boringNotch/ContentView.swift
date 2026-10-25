@@ -33,6 +33,7 @@ struct ContentView: View {
     @ObservedObject var weatherService = WeatherService.shared
     @ObservedObject var callPopup = CallPopup.shared
     @State private var hoverPointX: CGFloat = 0
+    @ObservedObject private var agentPages = CoucouHost.AgentsPages.shared
     @State private var hoverTask: Task<Void, Never>?
     @State private var isHovering: Bool = false
     @State private var anyDropDebounceTask: Task<Void, Never>?
@@ -319,7 +320,15 @@ struct ContentView: View {
         .onChange(of: coordinator.currentView) { _, view in
             // Each tab has its own open size.
             guard vm.notchState == .open else { return }
-            withAnimation(.smooth) { vm.notchSize = openNotchSize(for: view) }
+            withAnimation(.smooth) { vm.notchSize = openNotchSize(for: view, chatOpen: agentPages.page == .chat) }
+        }
+        // The chat with Mochi is taller than his cards, and is typed in.
+        .onChange(of: agentPages.page) { _, page in
+            NotchKeyboard.allowKey = page == .chat
+            NotchKeyboard.setTyping("mochi-chat", page == .chat)
+            if page == .chat { NotchKeyboard.takeKeyboard() }
+            guard vm.notchState == .open, coordinator.currentView == .agents else { return }
+            withAnimation(.smooth) { vm.notchSize = openNotchSize(for: .agents, chatOpen: page == .chat) }
         }
         .onChange(of: agentSurface) { _, surface in CoucouHost.setSurface(surface) }
         .onChange(of: vm.anyDropZoneTargeting) { _, isTargeted in
@@ -532,14 +541,14 @@ struct ContentView: View {
                     .matchedGeometryEffect(id: "albumArt", in: albumArtNamespace)
                     .frame(width: ear, height: ear)
             } else {
-                CoucouHost.makeClosedEar(.focusedMochi, height: ear)
+                CoucouHost.makeClosedEar(.focusedMochi, height: ear, lively: isHovering)
             }
 
             Rectangle()
                 .fill(.black)
                 .frame(width: vm.closedNotchSize.width - cornerRadiusInsets.closed.top)
 
-            CoucouHost.makeClosedEar(musicIsShowing ? .focusedMochi : .trailing, height: ear)
+            CoucouHost.makeClosedEar(musicIsShowing ? .focusedMochi : .trailing, height: ear, lively: isHovering)
         }
         .frame(height: vm.effectiveClosedNotchHeight, alignment: .center)
     }

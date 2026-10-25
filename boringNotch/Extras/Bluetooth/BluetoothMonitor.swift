@@ -7,6 +7,7 @@
 //  device connects.
 //
 
+import CoucouCore
 import AppKit
 import IOBluetooth
 
@@ -35,6 +36,7 @@ final class BluetoothPopup: ObservableObject {
     private var hideTask: Task<Void, Never>?
 
     func present(_ info: BluetoothInfo) {
+        CoucouHost.react(.wink)
         self.info = info
         scheduleHide(after: 5)
     }

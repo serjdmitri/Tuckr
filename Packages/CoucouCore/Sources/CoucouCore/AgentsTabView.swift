@@ -18,6 +18,8 @@ struct AgentsTabView: View {
   /// belong to features this app does not surface.
   private static let shown: [IslandView] = [
     .overview, .empty, .approval, .question, .error, .finished, .confused,
+    // The chat with Mochi (double click on the Agents tab) and his quick settings (right click).
+    .prompt, .settings,
   ]
 
   private static let islandSize = CGSize(width: 640, height: 160)
@@ -30,12 +32,16 @@ struct AgentsTabView: View {
   /// Coucou's overview is two cards side by side in a 620-point band: a fixed
   /// 322-point card and the pills card taking the rest.
   private static let contentSize = CGSize(width: 620, height: 98)
+  /// The chat needs more room than a card: the answer, the model and the text field.
+  private var contentHeight: CGFloat { effectiveView == .prompt ? Self.chatHeight : Self.contentSize.height }
+  static let chatHeight: CGFloat = 116
 
   var body: some View {
     cards
       .opacity(state.usageAgentID == nil ? 1 : 0)
       .allowsHitTesting(state.usageAgentID == nil)
-      .frame(width: Self.contentSize.width, height: Self.contentSize.height)
+      .frame(width: Self.contentSize.width, height: contentHeight)
+      .animation(.smooth(duration: 0.25), value: contentHeight)
       // One agent's usage in place of the cards.
       .overlay(alignment: .topLeading) {
         if let id = state.usageAgentID {
@@ -99,7 +105,7 @@ struct AgentsTabView: View {
           // stop their endless animations.
           .environment(\.islandViewActive, active)
           .frame(maxWidth: .infinity)
-          .frame(height: 98)
+          .frame(height: view == .prompt ? Self.chatHeight : 98)
           .opacity(active ? 1 : 0)
           .scaleEffect(active ? 1 : 0.97)
           .allowsHitTesting(active)
@@ -171,7 +177,7 @@ struct AgentsTabView: View {
 }
 
 /// An invisible view centred on Mochi, so his eyes can find the pointer relative to him.
-private struct BotAnchor: NSViewRepresentable {
+struct BotAnchor: NSViewRepresentable {
   final class AnchorView: NSView {
     override func hitTest(_ point: NSPoint) -> NSView? { nil }
     override func viewDidMoveToWindow() {
