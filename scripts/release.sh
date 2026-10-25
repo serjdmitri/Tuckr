@@ -27,12 +27,9 @@ sed -i '' -e "s/MARKETING_VERSION = [^;]*;/MARKETING_VERSION = $VERSION;/" -e "s
 scripts/install.sh --no-launch
 
 WORK="dist/release-$VERSION"
-rm -rf "$WORK"; mkdir -p "$WORK/stage"
-cp -R /Applications/Tuckr.app "$WORK/stage/"
-ln -s /Applications "$WORK/stage/Applications"
+rm -rf "$WORK"; mkdir -p "$WORK"
 DMG="Tuckr-$VERSION.dmg"
-hdiutil create -quiet -volname "Tuckr" -srcfolder "$WORK/stage" -ov -format UDZO "$WORK/$DMG"
-rm -rf "$WORK/stage"
+scripts/make-dmg.sh /Applications/Tuckr.app "$WORK/$DMG"
 
 # The feed: the earlier entries are kept, the new one is added and the whole thing signed.
 FEED="$WORK/feed"; mkdir -p "$FEED"
