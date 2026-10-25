@@ -6,6 +6,17 @@ IMPORTANT: This file was signed by Sparkle. Any modifications to this file requi
     <channel>
         <title>Tuckr</title>
         <item>
+            <title>1.0.3</title>
+            <pubDate>Sun, 25 Oct 2026 19:35:12 -0400</pubDate>
+            <sparkle:version>274</sparkle:version>
+            <sparkle:shortVersionString>1.0.3</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+            <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+            <description sparkle:format="markdown"><![CDATA[Safer updates (Sparkle 2.10.1, which includes two security fixes). The notch comes back after the Mac sleeps. The dictation HUD now shows over full-screen apps. Clear all on the shelf. IntelliJ, PyCharm, WebStorm and other JetBrains IDE sessions show up as Claude Code sessions. A new installer window.
+]]></description>
+            <enclosure url="https://github.com/serjdmitri/Tuckr/releases/download/v1.0.3/Tuckr-1.0.3.dmg" length="33037942" type="application/octet-stream" sparkle:edSignature="/ZkBv5LodUQDOLsu7CQwsFByqSfhGeyLwIRFETtPhweLNgONKK/KC8hqIxCwYDjJVRhC4buci1+yKkJp+Kl3Bw=="/>
+        </item>
+        <item>
             <title>1.0.2</title>
             <pubDate>Sun, 25 Oct 2026 19:05:37 -0400</pubDate>
             <sparkle:version>273</sparkle:version>
@@ -30,6 +41,6 @@ IMPORTANT: This file was signed by Sparkle. Any modifications to this file requi
     </channel>
 </rss>
 <!-- sparkle-signatures:
-edSignature: rRbeYogVCgOgrMJwRHR7JipZLKNixUb/6uZ7S4/PyD19zAMHHFXzsihNa7dHKPigD7px33Lg2LeP17XMwKi0BA==
-length: 2551
+edSignature: Mg43GU0w5qD55OK4Vg1kYv/i6qbnV/njMkMe0nQ6Gt+nWdFjkYFmkUKV72LZz3syjzwlBJXHZ/UIYZ3eZVwdDA==
+length: 3611
 -->
