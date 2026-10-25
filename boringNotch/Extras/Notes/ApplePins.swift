@@ -30,7 +30,7 @@ enum ApplePins {
         let scratch = fm.temporaryDirectory.appendingPathComponent("notch-notes-\(UUID().uuidString)", isDirectory: true)
         defer { try? fm.removeItem(at: scratch) }
         do {
-            try fm.createDirectory(at: scratch, withIntermediateDirectories: true)
+            try fm.createDirectory(at: scratch, withIntermediateDirectories: true, attributes: [.posixPermissions: 0o700])
             // The write-ahead files hold the newest changes, so they come along.
             for name in ["NoteStore.sqlite", "NoteStore.sqlite-wal", "NoteStore.sqlite-shm"] {
                 let from = source.appendingPathComponent(name)

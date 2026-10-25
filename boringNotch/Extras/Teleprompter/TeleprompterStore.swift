@@ -173,6 +173,7 @@ final class TeleprompterStore: ObservableObject {
         let dir = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
             .appendingPathComponent("Tuckr", isDirectory: true)
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        PrivateStorage.secure(dir)
         return dir.appendingPathComponent("Teleprompter.json")
     }
 
@@ -197,7 +198,10 @@ final class TeleprompterStore: ObservableObject {
 
     func save() {
         saveTask?.cancel()
-        if let data = try? JSONEncoder().encode(scripts) { try? data.write(to: Self.fileURL, options: .atomic) }
+        if let data = try? JSONEncoder().encode(scripts) {
+            try? data.write(to: Self.fileURL, options: .atomic)
+            PrivateStorage.secure(Self.fileURL)
+        }
         UserDefaults.standard.set(scriptID?.uuidString, forKey: "tpScript")
     }
 }

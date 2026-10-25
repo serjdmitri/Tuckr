@@ -103,6 +103,13 @@ For contributors: the Xcode project lists files explicitly, so a new file is add
 
 Tuckr is made from three open-source projects, **Boring Notch** (The Boring Team, GPL-3.0), **Coucou** (Louis Raillé, MIT) and **Talkify** (Tornike Gomareli, MIT), and uses many libraries and a few online services. Everyone and everything is listed, with licences, in [CREDITS.md](CREDITS.md).
 
+## Privacy
+
+- **Stays on your Mac:** messages shown in the notch (read from macOS's notification list and, in instant mode, from Messages' and WhatsApp's own databases, read-only and never saved), dictation and file transcription (on-device models), notes, teleprompter scripts (a private folder only you can read), Mochi's agent events (a local socket only your account can use).
+- **Passwords and API keys** go in the macOS Keychain (this device only, never synced), never in a file or a setting.
+- **Network:** weather (Open-Meteo, and ipwho.is to find your city), lyrics (LRCLIB gets the song and artist), Sparkle's update check, and, only if you switch them on, the AI and service accounts you add in Agents Settings. Plain-HTTP is allowed to your own network only.
+- **Permissions** are asked for one by one in the welcome screen with what each is for. Full Disk Access is only used to read the notification list.
+
 ## Licensing
 
 Tuckr is **GPL-3.0** (see [LICENSE](LICENSE)), because Boring Notch is. In plain words: you may use, change and share it, as long as what you share is also GPL-3.0 and comes with its source.

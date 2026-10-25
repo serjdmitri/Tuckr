@@ -457,7 +457,7 @@ enum NotificationDatabase {
         let scratch = fm.temporaryDirectory.appendingPathComponent("notch-un-\(UUID().uuidString)", isDirectory: true)
         defer { try? fm.removeItem(at: scratch) }
         do {
-            try fm.createDirectory(at: scratch, withIntermediateDirectories: true)
+            try fm.createDirectory(at: scratch, withIntermediateDirectories: true, attributes: [.posixPermissions: 0o700])
             // The write-ahead files hold the newest rows, so they come along.
             for name in ["db", "db-wal", "db-shm"] {
                 let from = source.appendingPathComponent(name)

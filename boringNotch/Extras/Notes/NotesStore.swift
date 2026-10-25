@@ -348,9 +348,13 @@ final class NotesStore: ObservableObject {
         let folder = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
             .appendingPathComponent("Tuckr/NotesBackup", isDirectory: true)
         try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        PrivateStorage.secure(PrivateStorage.folder)
+        PrivateStorage.secure(folder)
         let safe = note.id.components(separatedBy: CharacterSet.alphanumerics.inverted).joined(separator: "-")
         let stamp = ISO8601DateFormatter().string(from: Date()).replacingOccurrences(of: ":", with: "-")
-        try? note.html.write(to: folder.appendingPathComponent("\(safe)-\(stamp).html"), atomically: true, encoding: .utf8)
+        let backup = folder.appendingPathComponent("\(safe)-\(stamp).html")
+        try? note.html.write(to: backup, atomically: true, encoding: .utf8)
+        PrivateStorage.secure(backup)
     }
 
     private func persist() {

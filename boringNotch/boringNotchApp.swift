@@ -16,7 +16,7 @@ import SwiftUI
 @main
 struct DynamicNotchApp: App {
     /// First, before any setting is read: carries the old name's settings and files over.
-    private let migrated: Void = LegacyMigration.run()
+    private let migrated: Void = { LegacyMigration.run(); PrivateStorage.lockDown() }()
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @Default(.menubarIcon) var showMenuBarIcon
     @Environment(\.openWindow) var openWindow
