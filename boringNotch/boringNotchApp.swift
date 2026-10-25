@@ -336,7 +336,28 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         window.alphaValue = 1
     }
 
+    /// The chat with Mochi is taller than the notch's window: the window grows, top fixed, for as
+    /// long as the chat shows (a taller window would otherwise take clicks meant for other apps).
+    private func watchChatHeight() {
+        CoucouHost.AgentsPages.shared.$page
+            .map { $0 == .chat }
+            .removeDuplicates()
+            .sink { [weak self] chat in
+                guard let self else { return }
+                let extra = chat ? CoucouHost.AgentsPages.windowExtraHeight : 0
+                let all = Array(self.windows.values) + (self.window.map { [$0] } ?? [])
+                for window in all {
+                    guard let screen = window.screen ?? NSScreen.main else { continue }
+                    let height = windowSize.height + extra
+                    let top = screen.frame.maxY
+                    window.setFrame(NSRect(x: window.frame.minX, y: top - height, width: window.frame.width, height: height), display: true)
+                }
+            }
+            .store(in: &agentCancellables)
+    }
+
     func applicationDidFinishLaunching(_ notification: Notification) {
+        watchChatHeight()
 
         NotificationCenter.default.addObserver(
             self,

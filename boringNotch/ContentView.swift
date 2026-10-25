@@ -34,6 +34,8 @@ struct ContentView: View {
     @ObservedObject var callPopup = CallPopup.shared
     @State private var hoverPointX: CGFloat = 0
     @ObservedObject private var agentPages = CoucouHost.AgentsPages.shared
+    /// The notch's window is taller while the chat is open (see AppDelegate).
+    private var chatWindowExtra: CGFloat { agentPages.page == .chat ? CoucouHost.AgentsPages.windowExtraHeight : 0 }
     @State private var hoverTask: Task<Void, Never>?
     @State private var isHovering: Bool = false
     @State private var anyDropDebounceTask: Task<Void, Never>?
@@ -192,7 +194,7 @@ struct ContentView: View {
                             }
                     }
                     // Not on the notes page: scrolling its list must not close the notch.
-                    .conditionalModifier(Defaults[.closeGestureEnabled] && Defaults[.enableGestures] && ![.notes, .inbox, .teleprompter].contains(coordinator.currentView)) { view in
+                    .conditionalModifier(Defaults[.closeGestureEnabled] && Defaults[.enableGestures] && ![.notes, .inbox, .teleprompter].contains(coordinator.currentView) && agentPages.page != .chat) { view in
                         view
                             .panGesture(direction: .up) { translation, phase in
                                 handleUpGesture(translation: translation, phase: phase)
@@ -255,7 +257,7 @@ struct ContentView: View {
             }
         }
         .padding(.bottom, 8)
-        .frame(maxWidth: windowSize.width, maxHeight: windowSize.height, alignment: .top)
+        .frame(maxWidth: windowSize.width, maxHeight: windowSize.height + chatWindowExtra, alignment: .top)
         .background(alignment: .top) {
             // The bubbles' liquid, behind the notch so it cannot cover what the notch shows.
             BubbleDockBackground(

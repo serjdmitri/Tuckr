@@ -34,7 +34,7 @@ struct AgentsTabView: View {
   private static let contentSize = CGSize(width: 620, height: 98)
   /// The chat needs more room than a card: the answer, the model and the text field.
   private var contentHeight: CGFloat { effectiveView == .prompt ? Self.chatHeight : Self.contentSize.height }
-  static let chatHeight: CGFloat = 116
+  static let chatHeight: CGFloat = 180
 
   var body: some View {
     cards

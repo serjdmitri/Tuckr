@@ -739,6 +739,13 @@ final class ClaudeService {
     }
 
     private func showError(_ message: String, state: AppState) async {
+        // Patched: from the chat, the error is said in the chat itself (it used to switch the
+        // island to a note, which the notch's Agents tab does not show: the chat seemed to close).
+        if state.view == .prompt {
+            state.chatHistory.append(ChatMessage(role: .assistant, content: "⚠️ " + message))
+            state.stateOverride = nil
+            return
+        }
         state.stateOverride = .error
         state.noteMessage = message
         state.view = .note

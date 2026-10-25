@@ -68,3 +68,6 @@ app adds sits in `CoucouHost.swift` and `AgentsTabView.swift`.
 15. `App/BotCanvasView.swift`, `lookXY`: Mochi's eyes follow the pointer from a shorter distance
     (190 and 150 points instead of 260 and 200 before the look saturates), so he tracks it more
     closely in the small closed notch.
+16. `App/ClaudeService.swift`, `showError`: an error that comes while the chat is showing is added
+    to the chat as a message, instead of switching the island to a note (which the notch's
+    Agents tab does not show, so the chat seemed to close).
