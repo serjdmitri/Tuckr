@@ -1,8 +1,21 @@
-<?xml version="1.0" standalone="yes"?><!-- sparkle-sign-warning:
+<?xml version="1.0" standalone="yes"?>
+<!-- sparkle-sign-warning:
 IMPORTANT: This file was signed by Sparkle. Any modifications to this file requires re-signing this file with generate_appcast or sign_update! The signed signature will be embedded at the end of this file.
---><rss xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" version="2.0">
+-->
+<rss xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" version="2.0">
     <channel>
         <title>Tuckr</title>
+        <item>
+            <title>1.0.2</title>
+            <pubDate>Sun, 25 Oct 2026 19:05:37 -0400</pubDate>
+            <sparkle:version>273</sparkle:version>
+            <sparkle:shortVersionString>1.0.2</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+            <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+            <description sparkle:format="markdown"><![CDATA[Keys you saved in 1.0.1 move to the renamed Keychain entry on their own. Tidier GitHub project (own issue templates, no inherited funding link), a website, and a daily watcher for new releases of the projects Tuckr is built on.
+]]></description>
+            <enclosure url="https://github.com/serjdmitri/Tuckr/releases/download/v1.0.2/Tuckr-1.0.2.dmg" length="36079286" type="application/octet-stream" sparkle:edSignature="jOi41De6Wj/Qv1qU4Dwol2lue/NcugMFfU6zOyM/+yQzAVyTa7SvvBnhWOjp6r/03CdEHaN6f55N4ViSWBGIAQ=="/>
+        </item>
         <item>
             <title>1.0.1</title>
             <pubDate>Sun, 25 Oct 2026 16:09:10 -0400</pubDate>
@@ -12,10 +25,11 @@ IMPORTANT: This file was signed by Sparkle. Any modifications to this file requi
             <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
             <description sparkle:format="markdown"><![CDATA[First Tuckr release: new name and icon, a welcome tour with the permissions, a chat with Mochi (double-click the Agents tab) and his quick settings (right-click it), a month calendar (tap the month), scrolling in the teleprompter, Russian and 24 other languages in the Transcribe panel, a quick switch for replacing macOS banners, signed automatic updates, and privacy hardening.
 ]]></description>
-            <enclosure url="https://github.com/serjdmitri/Tuckr/releases/download/v1.0.1/Tuckr-1.0.1.dmg" length="36078791" type="application/octet-stream" sparkle:edSignature="g3T6l+NRfGqbCQTz9uiKm8+JAffsDoX6Sr6GqapqEB2WNpSypCC8eHm7MVgRFuzHIFFESQXUQM80ONgJ9g62Ag=="></enclosure>
+            <enclosure url="https://github.com/serjdmitri/Tuckr/releases/download/v1.0.1/Tuckr-1.0.1.dmg" length="36078791" type="application/octet-stream" sparkle:edSignature="g3T6l+NRfGqbCQTz9uiKm8+JAffsDoX6Sr6GqapqEB2WNpSypCC8eHm7MVgRFuzHIFFESQXUQM80ONgJ9g62Ag=="/>
         </item>
     </channel>
-</rss><!-- sparkle-signatures:
-edSignature: qae/35b70wQeexwJtQbLwSHW7sbst3QzI0ztzOArEQbPYmeq5DsgyNUzyHzhc6avYiujLAcOPWeUPet9sj1jDA==
-length: 1574
+</rss>
+<!-- sparkle-signatures:
+edSignature: rRbeYogVCgOgrMJwRHR7JipZLKNixUb/6uZ7S4/PyD19zAMHHFXzsihNa7dHKPigD7px33Lg2LeP17XMwKi0BA==
+length: 2551
 -->
