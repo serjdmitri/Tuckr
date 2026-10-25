@@ -1,5 +1,6 @@
 import AppKit
 import Combine
+@preconcurrency import FluidAudio
 import SwiftUI
 
 /// The host-facing door into Coucou. Everything else in this module is
@@ -8,6 +9,17 @@ import SwiftUI
 @MainActor
 public enum CoucouHost {
   public nonisolated static let isLinked = true
+
+  /// Parakeet (the offline speech model, 25 European languages with automatic detection) is
+  /// downloaded and can be used for files.
+  public static var parakeetReady: Bool { Parakeet.shared.isReady }
+
+  /// A whole audio file to text, in whatever language it is spoken (Parakeet picks it).
+  public static func transcribeFile(_ url: URL) async throws -> String {
+    let asr = try await Parakeet.shared.manager()
+    var decoder = TdtDecoderState.make(decoderLayers: await asr.decoderLayerCount)
+    return try await asr.transcribe(url, decoderState: &decoder).text
+  }
 
   private static var started = false
   private static var hookExpandObserver: NSObjectProtocol?

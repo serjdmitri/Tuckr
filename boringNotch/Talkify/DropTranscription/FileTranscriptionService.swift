@@ -1,4 +1,5 @@
 import AVFoundation
+import CoucouCore
 import Foundation
 import Speech
 
@@ -26,6 +27,7 @@ actor FileTranscriptionService {
     case noAudioTrack
     case unreadable
     case emptyTranscript
+    case needsParakeet
 
     var errorDescription: String? {
       switch self {
@@ -34,6 +36,7 @@ actor FileTranscriptionService {
       case .noAudioTrack: "No audio in that file"
       case .unreadable: "Could not read that file"
       case .emptyTranscript: "No speech found"
+      case .needsParakeet: "This language needs the Parakeet model: download it in the agents' Flow settings"
       }
     }
   }
@@ -46,9 +49,28 @@ actor FileTranscriptionService {
     localeIdentifier: String,
     onProgress: @escaping @Sendable (Double) -> Void
   ) async throws -> Transcript {
+    // Parakeet knows 25 European languages (Russian, Ukrainian, Polish…) and finds the one being
+    // spoken by itself; Apple's engine has to be told, and lacks several of them.
+    let wanted = localeIdentifier.isEmpty ? Locale.current : Locale(identifier: localeIdentifier)
+    let wantedCode = wanted.language.languageCode?.identifier ?? ""
+    let parakeetCovers = Self.parakeetLanguages.contains(wantedCode)
+    let parakeetReady = await CoucouHost.parakeetReady
+
+    if parakeetCovers, parakeetReady {
+      let duration = try await duration(of: url)
+      let audioFile = try await openAsAudio(url)
+      defer { discardTemporaryFile() }
+      onProgress(0.05)
+      let text = try await CoucouHost.transcribeFile(audioFile.url)
+        .trimmingCharacters(in: .whitespacesAndNewlines)
+      guard !text.isEmpty else { throw Failure.emptyTranscript }
+      onProgress(1)
+      return Transcript(text: text, duration: duration)
+    }
+
     guard SpeechTranscriber.isAvailable else { throw Failure.unavailable }
     guard let locale = await Self.resolveLocale(identifier: localeIdentifier) else {
-      throw Failure.unsupportedLocale
+      throw parakeetCovers ? Failure.needsParakeet : Failure.unsupportedLocale
     }
 
     let duration = try await duration(of: url)
@@ -110,6 +132,12 @@ actor FileTranscriptionService {
     }
     return String(text.characters)
   }
+
+  /// The languages of Parakeet v3, by language code.
+  private static let parakeetLanguages: Set<String> = [
+    "bg", "hr", "cs", "da", "nl", "en", "et", "fi", "fr", "de", "el", "hu", "it", "lv", "lt", "mt",
+    "pl", "pt", "ro", "ru", "sk", "sl", "es", "sv", "uk",
+  ]
 
   /// The dictation language, or the Mac's own when the user never picked one.
   /// Resolution is entirely static API, which is why this needs nothing from
