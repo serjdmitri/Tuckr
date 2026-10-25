@@ -1,39 +1,47 @@
-<h1 align="center">
-  <br>
-  <img src="docs/images/icon.png" alt="Tuckr" width="140">
-  <br>
-  Tuckr
-  <br>
-</h1>
+<p align="center">
+  <img src="docs/images/icon.png" alt="Tuckr" width="128">
+</p>
 
-<p align="center"><b>Everything you reach for, tucked into your Mac's notch: music, agents, messages, dictation and more.</b></p>
+<h1 align="center">Tuckr</h1>
+
+<p align="center"><b>Everything you reach for, tucked into your Mac's notch.<br>Music, your calendar, AI coding agents, messages, calls, dictation and file tools, in the space your Mac was wasting.</b></p>
 
 <p align="center">
-  <a href="https://github.com/serjdmitri/Tuckr/releases/latest"><img src="https://img.shields.io/github/v/release/serjdmitri/Tuckr?label=release&color=7b5cff" alt="Latest release"></a>
-  <a href="https://github.com/serjdmitri/Tuckr/releases"><img src="https://img.shields.io/github/downloads/serjdmitri/Tuckr/total?label=downloads&color=2ea44f" alt="Downloads"></a>
-  <a href="https://github.com/serjdmitri/Tuckr/stargazers"><img src="https://img.shields.io/github/stars/serjdmitri/Tuckr?style=flat&color=e3b341" alt="Stars"></a>
-  <a href="https://github.com/serjdmitri/Tuckr/commits/main"><img src="https://img.shields.io/github/last-commit/serjdmitri/Tuckr?color=8957e5" alt="Last commit"></a>
-  <a href="https://github.com/serjdmitri/Tuckr/issues"><img src="https://img.shields.io/github/issues/serjdmitri/Tuckr?color=f0883e" alt="Open issues"></a>
+  Tuckr turns the notch into a small control center. Move the pointer to it and it opens: what's playing, your day, your agents' progress and permission requests, the message that just arrived, a file you want to share, resize or transcribe. Move away and it's gone. Free, open source, nothing leaves your Mac.
 </p>
 
 <p align="center">
+  <a href="https://github.com/serjdmitri/Tuckr/releases/latest"><img src="https://img.shields.io/github/v/release/serjdmitri/Tuckr?label=version&color=7b5cff" alt="Version"></a>
   <img src="https://img.shields.io/badge/macOS-26%2B-000000?logo=apple&logoColor=white" alt="macOS 26+">
-  <img src="https://img.shields.io/badge/Apple%20silicon-arm64-555555?logo=apple&logoColor=white" alt="Apple silicon">
-  <img src="https://img.shields.io/badge/Swift-6-F05138?logo=swift&logoColor=white" alt="Swift">
-  <img src="https://img.shields.io/badge/license-GPL--3.0-blue" alt="GPL-3.0">
-  <img src="https://img.shields.io/badge/own%20code-MIT-green" alt="MIT for Tuckr's own files">
-  <img src="https://img.shields.io/badge/updates-automatic%20(Sparkle)-7b5cff" alt="Automatic updates">
+  <img src="https://img.shields.io/badge/Apple%20silicon-native-555555?logo=apple&logoColor=white" alt="Apple silicon">
+  <img src="https://img.shields.io/badge/Swift-6-F05138?logo=swift&logoColor=white" alt="Swift 6">
+  <img src="https://img.shields.io/badge/SwiftUI-native-0a84ff" alt="SwiftUI">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0-blue" alt="GPL-3.0"></a>
+  <a href="https://github.com/serjdmitri/Tuckr/stargazers"><img src="https://img.shields.io/github/stars/serjdmitri/Tuckr?style=flat&color=e3b341" alt="Stars"></a>
+</p>
+
+<p align="center">
+  <a href="https://github.com/serjdmitri/Tuckr/releases"><img src="https://img.shields.io/github/downloads/serjdmitri/Tuckr/total?label=downloads&color=2ea44f" alt="Downloads"></a>
+  <img src="https://img.shields.io/badge/updates-automatic-7b5cff" alt="Automatic updates">
   <img src="https://img.shields.io/badge/privacy-no%20telemetry-2ea44f" alt="No telemetry">
+  <img src="https://img.shields.io/badge/own%20code-MIT-green" alt="MIT">
   <img src="https://img.shields.io/badge/status-beta-orange" alt="Beta">
 </p>
 
 <p align="center">
-  <img src="docs/images/hero.png" alt="The notch showing an agent card with Mochi" />
+  <a href="https://github.com/serjdmitri/Tuckr/releases/latest"><b>Download for macOS</b></a> ·
+  <a href="#download">Install</a> ·
+  <a href="#privacy">Privacy</a> ·
+  <a href="CREDITS.md">Credits</a>
 </p>
 
-One menu-bar-free app that lives in the notch and brings three open-source projects together: [Boring Notch](https://github.com/TheBoredTeam/boring.notch) for music, calendar and a file shelf, [Coucou](https://github.com/Louis-CFM/coucou) for coding agents and a call recorder, and [Talkify](https://github.com/tornikegomareli/Talkify) for hold-Fn dictation. Four tabs at the top switch between them. When the notch is closed, music shows on the left and the agent's Mochi on the right; point at the middle for Home, at a side to open what is going on there.
+<p align="center">
+  <img src="docs/images/showcase.gif" alt="Tuckr: Home, the month calendar, the Shelf, agents with Mochi, permission requests, chat, meetings and message popups" width="820">
+</p>
 
-> **Status: beta.** It runs daily on one Mac and has not been tested on many others yet. Releases are not notarized by Apple, so macOS asks you to confirm the first launch (see below). After that, updates arrive by themselves. See [Licensing](#licensing) for what is and is not free to reuse.
+> **Status: beta.** It runs daily on one Mac and has not been tested on many others yet. Releases are not notarized by Apple, so macOS asks you to confirm the first launch ([how](#download)). After that, updates arrive by themselves. See [Licensing](#licensing) for what is and is not free to reuse.
+
+Tuckr brings three open-source projects together: [Boring Notch](https://github.com/TheBoredTeam/boring.notch) for music, calendar and a file shelf, [Coucou](https://github.com/Louis-CFM/coucou) for coding agents and a call recorder, and [Talkify](https://github.com/tornikegomareli/Talkify) for hold-Fn dictation, plus a lot that is new: messages and calls in the notch, Transform, a month calendar, the weather, a timer, notes and a teleprompter. When the notch is closed, music shows on the left and the agent's Mochi on the right; point at the middle for Home, at a side to open what is going on there.
 
 ## What's in it
 
