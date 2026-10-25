@@ -1,0 +1,63 @@
+name: Bug report
+description: Something in Tuckr does not work as it should.
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time. The more exact you are, the faster it gets fixed. **Do not paste passwords, API keys or private messages.** For a security problem, use the private report on the Security tab instead.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened, and what did you expect?
+      description: A screenshot or a short screen recording helps a lot.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Point at the notch
+        2. Open the Agents tab
+        3. ...
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Which part of Tuckr?
+      options:
+        - Home (music, calendar, weather)
+        - Shelf (share, transcribe, Transform)
+        - Agents and Mochi
+        - Messages and calls
+        - Meetings (call recorder)
+        - Dictation
+        - Timer, Notes or Teleprompter
+        - Settings or the welcome screen
+        - Updates
+        - Something else
+    validations:
+      required: true
+  - type: input
+    id: tuckr-version
+    attributes:
+      label: Tuckr version
+      description: Settings → About → Version.
+      placeholder: "1.0.1"
+    validations:
+      required: true
+  - type: input
+    id: macos
+    attributes:
+      label: macOS version and Mac
+      placeholder: "macOS 26.1, MacBook Pro 14-inch M3"
+    validations:
+      required: true
+  - type: textarea
+    id: extra
+    attributes:
+      label: Anything else
+      description: Which permissions you gave (Accessibility, Full Disk Access...), other notch apps running, an external display.

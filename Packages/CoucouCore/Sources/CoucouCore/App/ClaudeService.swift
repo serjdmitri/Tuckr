@@ -7,7 +7,7 @@ enum Keychain {
     // Patched: this app's own service name. The standalone Coucou's items under
     // "fr.louisraille.NotchBuddy" are not ours to read: macOS asks for each one and
     // blocks the whole app until the prompt is answered.
-    static let service = "com.serjdmitri.TheBoringCoucouify.keys"
+    static let service = "com.serjdmitri.Tuckr.keys"
 
     static func save(key: String, value: String) {
         guard let data = value.data(using: .utf8) else { return }

@@ -138,7 +138,7 @@ Tuckr is made from three open-source projects, **Boring Notch** (The Boring Team
 
 - **Stays on your Mac:** messages shown in the notch (read from macOS's notification list and, in instant mode, from Messages' and WhatsApp's own databases, read-only and never saved), dictation and file transcription (on-device models), notes, teleprompter scripts (a private folder only you can read), Mochi's agent events (a local socket only your account can use).
 - **Passwords and API keys** go in the macOS Keychain (this device only, never synced), never in a file or a setting.
-- **Network:** weather (Open-Meteo, and ipwho.is to find your city), lyrics (LRCLIB gets the song and artist), Sparkle's update check, and, only if you switch them on, the AI and service accounts you add in Agents Settings. Plain-HTTP is allowed to your own network only.
+- **Network:** weather (Open-Meteo, and ipwho.is to find your city), lyrics (only if you switch lyrics on, LRCLIB gets the song and artist; an animated music visualizer, off by default, loads one animation file from lottiefiles.com), Sparkle's update check, and, only if you switch them on, the AI and service accounts you add in Agents Settings. Plain-HTTP is allowed to your own network only.
 - **Permissions** are asked for one by one in the welcome screen with what each is for. Full Disk Access is only used to read the notification list.
 
 ## No warranty
