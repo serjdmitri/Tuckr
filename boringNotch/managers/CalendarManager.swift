@@ -183,6 +183,24 @@ class CalendarManager: ObservableObject {
         await updateEvents()
     }
 
+    /// The days in a range that have something on them (for the month view's marks).
+    func eventDays(from start: Date, to end: Date) async -> Set<Date> {
+        let cal = Calendar.current
+        let listed = await calendarService.events(from: start, to: end, calendars: selectedCalendars.map { $0.id })
+        var days: Set<Date> = []
+        for event in EventListView.filteredEvents(events: listed) {
+            var day = cal.startOfDay(for: max(event.start, start))
+            // An end at exactly midnight (all-day events) belongs to the day before.
+            let last = max(event.start, event.end.addingTimeInterval(-1))
+            repeat {
+                days.insert(day)
+                guard let next = cal.date(byAdding: .day, value: 1, to: day) else { break }
+                day = next
+            } while day <= min(last, end)
+        }
+        return days
+    }
+
     private func updateEvents() async {
         let calendarIDs = selectedCalendars.map { $0.id }
         let eventsResult = await calendarService.events(

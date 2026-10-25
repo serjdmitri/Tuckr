@@ -312,6 +312,7 @@ private struct ReadingView: View {
     @State private var countdownValue: Int?
     @State private var ended = false
     @FocusState private var focused: Bool
+    @State private var wheelMonitor: Any?
 
     /// How far the text has scrolled at a moment.
     private func offset(at date: Date) -> Double {
@@ -336,7 +337,28 @@ private struct ReadingView: View {
             if playing { base += old * Date().timeIntervalSince(startDate); startDate = Date() }
         }
         .onChange(of: store.partID) { _, _ in restart() }
-        .onAppear { focused = true }
+        .onAppear {
+            focused = true
+            // The wheel or trackpad moves the text, running or paused: it carries on from where it was left.
+            wheelMonitor = NSEvent.addLocalMonitorForEvents(matching: .scrollWheel) { event in
+                guard event.window is BoringNotchSkyLightWindow else { return event }
+                scroll(by: event.scrollingDeltaY * (event.hasPreciseScrollingDeltas ? 1 : 8))
+                return nil
+            }
+        }
+        .onDisappear {
+            if let wheelMonitor { NSEvent.removeMonitor(wheelMonitor) }
+            wheelMonitor = nil
+        }
+    }
+
+    /// Fingers moving down bring earlier lines back; up, later ones.
+    private func scroll(by delta: CGFloat) {
+        guard contentHeight > 0, countdownValue == nil else { return }
+        let now = Date()
+        base = min(max(0, offset(at: now) - Double(delta)), Double(contentHeight))
+        startDate = now
+        if ended, base < Double(contentHeight) - 1 { ended = false }
     }
 
     // MARK: Text

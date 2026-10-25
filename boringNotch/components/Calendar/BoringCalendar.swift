@@ -25,6 +25,8 @@ struct WheelPicker: View {
     @State private var haptics: Bool = false
     @State private var byClick: Bool = false
     let config: Config
+    /// The day the strip is built around (today, unless a day was picked from the month).
+    var anchor: Date = Date()
 
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
@@ -139,17 +141,16 @@ struct WheelPicker: View {
     }
 
     private func scrollToToday(config: Config) {
-        let today = Date()
         byClick = true
-        scrollPosition = indexForDate(today)
-        selectedDate = today
+        scrollPosition = indexForDate(anchor)
+        selectedDate = anchor
     }
 
     // MARK: - Index/Date mapping with steps and spacers
     private func indexForDate(_ date: Date) -> Int {
         let spacerNum = config.offset
         let cal = Calendar.current
-        let today = cal.startOfDay(for: Date())
+        let today = cal.startOfDay(for: anchor)
         let startDate = cal.startOfDay(for: cal.date(byAdding: .day, value: -config.past, to: today) ?? today)
         let target = cal.startOfDay(for: date)
         let days = cal.dateComponents([.day], from: startDate, to: target).day ?? 0
@@ -159,7 +160,7 @@ struct WheelPicker: View {
 
     private func dateForItemIndex(index: Int, spacerNum: Int) -> Date {
         let cal = Calendar.current
-        let today = cal.startOfDay(for: Date())
+        let today = cal.startOfDay(for: anchor)
         let startDate = cal.date(byAdding: .day, value: -config.past, to: today) ?? today
         let stepIndex = index - spacerNum
         return cal.date(byAdding: .day, value: stepIndex * max(config.steps, 1), to: startDate) ?? today
@@ -182,23 +183,81 @@ struct CalendarView: View {
     @EnvironmentObject var vm: BoringViewModel
     @ObservedObject private var calendarManager = CalendarManager.shared
     @State private var selectedDate = Date()
+    @State private var anchor = Calendar.current.startOfDay(for: Date())
+    @State private var showMonth = false
+    @State private var month = Date()
+    @State private var eventDays: Set<Date> = []
 
     var body: some View {
+        Group {
+            if showMonth {
+                MonthGridView(
+                    month: $month, selected: selectedDate, eventDays: eventDays,
+                    onPick: { day in
+                        anchor = Calendar.current.startOfDay(for: day)
+                        selectedDate = day
+                        showMonth = false
+                    },
+                    onClose: { showMonth = false })
+                    .task(id: month) { await loadEventDays() }
+            } else {
+                dayView
+            }
+        }
+        .listRowBackground(Color.clear)
+        .frame(height: 120)
+        .onChange(of: selectedDate) {
+            Task {
+                await calendarManager.updateCurrentDate(selectedDate)
+            }
+        }
+        .onChange(of: vm.notchState) { _, _ in
+            showMonth = false
+            anchor = Calendar.current.startOfDay(for: Date())
+            Task {
+                await calendarManager.updateCurrentDate(Date.now)
+                selectedDate = Date.now
+            }
+        }
+        .onAppear {
+            Task {
+                await calendarManager.updateCurrentDate(Date.now)
+                selectedDate = Date.now
+            }
+        }
+    }
+
+    private func loadEventDays() async {
+        let range = MonthGridView.gridRange(for: month)
+        eventDays = await calendarManager.eventDays(from: range.start, to: range.end)
+    }
+
+    private var dayView: some View {
         VStack(spacing: 0) {
             HStack(alignment: .top, spacing: 8) {
-                VStack(alignment: .leading) {
-                    Text(selectedDate.formatted(.dateTime.month(.abbreviated)))
-                        .font(.title3)
-                        .fontWeight(.semibold)
-                        .foregroundColor(.white)
-                    Text(selectedDate.formatted(.dateTime.year()))
-                        .font(.title3)
-                        .fontWeight(.light)
-                        .foregroundColor(Color(white: 0.65))
+                // A tap on the month opens the whole month.
+                Button {
+                    month = selectedDate
+                    showMonth = true
+                } label: {
+                    VStack(alignment: .leading) {
+                        Text(selectedDate.formatted(.dateTime.month(.abbreviated)))
+                            .font(.title3)
+                            .fontWeight(.semibold)
+                            .foregroundColor(.white)
+                        Text(selectedDate.formatted(.dateTime.year()))
+                            .font(.title3)
+                            .fontWeight(.light)
+                            .foregroundColor(Color(white: 0.65))
+                    }
+                    .contentShape(Rectangle())
                 }
+                .buttonStyle(.plain)
+                .help("Show the whole month")
 
                 ZStack(alignment: .top) {
-                    WheelPicker(selectedDate: $selectedDate, config: Config())
+                    WheelPicker(selectedDate: $selectedDate, config: Config(), anchor: anchor)
+                        .id(anchor)
                     HStack(alignment: .top) {
                         LinearGradient(
                             colors: [Color.black, .clear], startPoint: .leading, endPoint: .trailing
@@ -223,25 +282,121 @@ struct CalendarView: View {
                 EventListView(events: calendarManager.events)
             }
         }
-        .listRowBackground(Color.clear)
-        .frame(height: 120)
-        .onChange(of: selectedDate) {
-            Task {
-                await calendarManager.updateCurrentDate(selectedDate)
+    }
+}
+
+/// The whole month at a glance: a small mark under each day that has something on it. A tap on a
+/// day goes back to that day's list.
+struct MonthGridView: View {
+    @Binding var month: Date
+    let selected: Date
+    let eventDays: Set<Date>
+    let onPick: (Date) -> Void
+    let onClose: () -> Void
+
+    private static var cal: Calendar { Calendar.current }
+
+    private static func monthStart(_ date: Date) -> Date {
+        cal.date(from: cal.dateComponents([.year, .month], from: date)) ?? date
+    }
+
+    /// First and last-plus-one day of the weeks that show the month.
+    static func gridRange(for date: Date) -> (start: Date, end: Date) {
+        let first = monthStart(date)
+        let lead = (cal.component(.weekday, from: first) - cal.firstWeekday + 7) % 7
+        let days = cal.range(of: .day, in: .month, for: first)?.count ?? 30
+        let weeks = Int(ceil(Double(lead + days) / 7))
+        let start = cal.date(byAdding: .day, value: -lead, to: first) ?? first
+        return (start, cal.date(byAdding: .day, value: weeks * 7, to: start) ?? start)
+    }
+
+    private var days: [Date] {
+        let range = Self.gridRange(for: month)
+        let count = Self.cal.dateComponents([.day], from: range.start, to: range.end).day ?? 35
+        return (0..<count).compactMap { Self.cal.date(byAdding: .day, value: $0, to: range.start) }
+    }
+
+    private var weekdayLetters: [String] {
+        let symbols = Self.cal.veryShortStandaloneWeekdaySymbols
+        let shift = Self.cal.firstWeekday - 1
+        return Array(symbols[shift...] + symbols[..<shift])
+    }
+
+    var body: some View {
+        let all = days
+        let rows = all.count / 7
+        let rowHeight: CGFloat = rows >= 6 ? 15 : 18
+        VStack(spacing: 2) {
+            HStack(spacing: 6) {
+                Button(action: onClose) {
+                    Text(month.formatted(.dateTime.month(.wide)).uppercased()
+                         + (Self.cal.isDate(month, equalTo: Date(), toGranularity: .year) ? "" : " " + month.formatted(.dateTime.year())))
+                        .font(.system(size: 11, weight: .bold))
+                        .foregroundColor(.white)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .help("Back to the day")
+                Spacer()
+                chevron("chevron.left", by: -1)
+                chevron("chevron.right", by: 1)
+            }
+            .frame(height: 14)
+            HStack(spacing: 0) {
+                ForEach(Array(weekdayLetters.enumerated()), id: \.offset) { _, letter in
+                    Text(letter).font(.system(size: 9, weight: .semibold)).foregroundColor(Color(white: 0.5))
+                        .frame(maxWidth: .infinity)
+                }
+            }
+            .frame(height: 12)
+            ForEach(0..<rows, id: \.self) { row in
+                HStack(spacing: 0) {
+                    ForEach(0..<7, id: \.self) { column in
+                        cell(all[row * 7 + column], height: rowHeight)
+                    }
+                }
             }
         }
-        .onChange(of: vm.notchState) { _, _ in
-            Task {
-                await calendarManager.updateCurrentDate(Date.now)
-                selectedDate = Date.now
-            }
+    }
+
+    private func chevron(_ symbol: String, by step: Int) -> some View {
+        Button {
+            month = Self.cal.date(byAdding: .month, value: step, to: Self.monthStart(month)) ?? month
+        } label: {
+            Image(systemName: symbol).font(.system(size: 9, weight: .bold))
+                .foregroundColor(Color(white: 0.7))
+                .frame(width: 18, height: 14)
+                .contentShape(Rectangle())
         }
-        .onAppear {
-            Task {
-                await calendarManager.updateCurrentDate(Date.now)
-                selectedDate = Date.now
+        .buttonStyle(.plain)
+    }
+
+    private func cell(_ day: Date, height: CGFloat) -> some View {
+        let inMonth = Self.cal.isDate(day, equalTo: month, toGranularity: .month)
+        let isToday = Self.cal.isDateInToday(day)
+        let isSelected = Self.cal.isDate(day, inSameDayAs: selected)
+        let hasEvents = eventDays.contains(Self.cal.startOfDay(for: day))
+        return Button { onPick(day) } label: {
+            ZStack {
+                if isToday {
+                    Circle().fill(Color.white.opacity(0.88)).frame(width: height - 1, height: height - 1)
+                } else if isSelected {
+                    Circle().stroke(Color.white.opacity(0.6), lineWidth: 1).frame(width: height - 1, height: height - 1)
+                }
+                Text("\(Self.cal.component(.day, from: day))")
+                    .font(.system(size: 10, weight: isToday ? .bold : .medium))
+                    .foregroundColor(isToday ? .black : .white.opacity(inMonth ? 0.92 : 0.35))
+                if hasEvents {
+                    Circle()
+                        .fill(isToday ? Color.black.opacity(0.7) : Color.white.opacity(inMonth ? 0.75 : 0.3))
+                        .frame(width: 3, height: 3)
+                        .offset(y: height / 2 - 1)
+                }
             }
+            .frame(maxWidth: .infinity, minHeight: height, maxHeight: height)
+            .contentShape(Rectangle())
         }
+        .buttonStyle(.plain)
     }
 }
 
