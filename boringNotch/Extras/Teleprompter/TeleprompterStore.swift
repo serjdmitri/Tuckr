@@ -171,7 +171,7 @@ final class TeleprompterStore: ObservableObject {
 
     private static var fileURL: URL {
         let dir = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-            .appendingPathComponent("The BoringCoucouify", isDirectory: true)
+            .appendingPathComponent("Tuckr", isDirectory: true)
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         return dir.appendingPathComponent("Teleprompter.json")
     }

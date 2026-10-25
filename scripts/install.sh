@@ -1,5 +1,5 @@
 #!/bin/bash
-# Builds The BoringCoucouify in Release and installs it in /Applications.
+# Builds Tuckr in Release and installs it in /Applications.
 #
 #   scripts/install.sh              build, install, launch
 #   scripts/install.sh --no-launch  build and install only
@@ -16,8 +16,8 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-APP_NAME="The BoringCoucouify"
-BUNDLE_ID="com.serjdmitri.TheBoringCoucouify"
+APP_NAME="Tuckr"
+BUNDLE_ID="com.serjdmitri.Tuckr"
 CERT_NAME="TheBoringCoucouify Local Signing"
 
 IDENTITY="${SIGN_IDENTITY:-}"

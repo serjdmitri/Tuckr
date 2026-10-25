@@ -40,7 +40,7 @@ enum Replier {
             if guid == nil { guid = await ChatLocator.chatGUID(for: item) }
             guard let guid else { NotificationFeed.shared.toast("Couldn't find that chat", item: item); return }
             let sent = await MessageSender.send(text, toChat: guid)
-            NotificationFeed.shared.toast(sent ? "Sent to \(item.title)" : "Couldn't send: allow The BoringCoucouify to control Messages", item: item)
+            NotificationFeed.shared.toast(sent ? "Sent to \(item.title)" : "Couldn't send: allow Tuckr to control Messages", item: item)
         case "net.whatsapp.whatsapp":
             await sendWhatsApp(text, item)
         default:

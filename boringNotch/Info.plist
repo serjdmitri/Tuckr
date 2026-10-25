@@ -14,13 +14,15 @@
 	<key>NSAudioCaptureUsageDescription</key>
 	<string>Calls are recorded only when you start a recording, to write down what the other people say.</string>
 	<key>SUEnableAutomaticChecks</key>
-	<false/>
+	<true/>
+	<key>SUFeedURL</key>
+	<string>https://raw.githubusercontent.com/serjdmitri/Tuckr/main/updater/appcast.xml</string>
 	<key>SUEnableDownloaderService</key>
 	<true/>
 	<key>SUEnableInstallerLauncherService</key>
 	<true/>
 	<key>SUPublicEDKey</key>
-	<string>B1Y47t8C/v8ImurYA+9arEsuCrpxwJSviekiflMElbI=</string>
+	<string>fYw5m2eIpjLMd5wjBLAqLiw+U6k0zoBrHacUVGJMP8M=</string>
 	<key>UTImportedTypeDeclarations</key>
 	<array>
 		<dict/>

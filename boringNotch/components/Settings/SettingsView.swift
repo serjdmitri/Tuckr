@@ -872,6 +872,18 @@ struct About: View {
          "https://github.com/Louis-CFM/coucou"),
     ]
 
+    private let libraries: [(name: String, license: String, url: String)] = [
+        ("Sparkle", "MIT", "https://github.com/sparkle-project/Sparkle"),
+        ("FluidAudio · NVIDIA Parakeet", "Apache-2.0 · CC-BY-4.0", "https://github.com/FluidInference/FluidAudio"),
+        ("Defaults, KeyboardShortcuts, LaunchAtLogin", "MIT", "https://github.com/sindresorhus"),
+        ("Lottie", "Apache-2.0", "https://github.com/airbnb/lottie-spm"),
+        ("Pow", "MIT", "https://github.com/EmergeTools/Pow"),
+        ("SkyLightWindow, NotchDrop", "MIT", "https://github.com/Lakr233"),
+        ("MediaRemoteAdapter", "BSD-3-Clause", "https://github.com/ungive/mediaremote-adapter"),
+        ("Weather: Open-Meteo.com", "CC-BY-4.0", "https://open-meteo.com"),
+        ("Everything else, with licence texts", "CREDITS.md", "https://github.com/serjdmitri/Tuckr/blob/main/CREDITS.md"),
+    ]
+
     var body: some View {
         VStack {
             Form {
@@ -891,8 +903,9 @@ struct About: View {
                             showBuildNumber.toggle()
                         }
                     }
+                    Button("Show the welcome tour and permissions again") { TuckrWelcome.show() }
                 } header: {
-                    Text("The BoringCoucouify")
+                    Text("Tuckr")
                 }
 
                 Section {
@@ -920,10 +933,28 @@ struct About: View {
                 } header: {
                     Text("Built from")
                 }
+
+                Section {
+                    ForEach(libraries, id: \.name) { library in
+                        Button {
+                            if let url = URL(string: library.url) { NSWorkspace.shared.open(url) }
+                        } label: {
+                            HStack {
+                                Text("\(library.name) · \(library.license)")
+                                Spacer()
+                                Image(systemName: "arrow.up.right").foregroundStyle(.secondary)
+                            }
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                    }
+                } header: {
+                    Text("With thanks to")
+                }
             }
             VStack(spacing: 0) {
                 Divider()
-                Text("Three open-source notch apps in one. Updates are installed by hand with scripts/install.sh.")
+                Text("Three open-source notch apps in one. Updates arrive on their own; Tuckr → Check for Updates… looks right now.")
                     .foregroundStyle(.secondary)
                     .padding(.top, 5)
                     .padding(.bottom, 7)

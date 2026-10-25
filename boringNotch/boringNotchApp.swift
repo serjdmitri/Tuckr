@@ -15,6 +15,8 @@ import SwiftUI
 
 @main
 struct DynamicNotchApp: App {
+    /// First, before any setting is read: carries the old name's settings and files over.
+    private let migrated: Void = LegacyMigration.run()
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @Default(.menubarIcon) var showMenuBarIcon
     @Environment(\.openWindow) var openWindow
@@ -23,7 +25,7 @@ struct DynamicNotchApp: App {
 
     init() {
         updaterController = SPUStandardUpdaterController(
-            startingUpdater: false, updaterDelegate: nil, userDriverDelegate: nil)
+            startingUpdater: true, updaterDelegate: nil, userDriverDelegate: nil)
 
         // Initialize the settings window controller with the updater controller
         SettingsWindowController.shared.setUpdaterController(updaterController)
@@ -477,11 +479,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         setupDragDetectors()
 
-        if coordinator.firstLaunch {
+        if coordinator.firstLaunch || TuckrWelcome.needed {
             DispatchQueue.main.async {
-                self.showOnboardingWindow()
+                TuckrWelcome.show()
             }
-            playWelcomeSound()
+            if coordinator.firstLaunch { playWelcomeSound() }
         } else if MusicManager.shared.isNowPlayingDeprecated
             && Defaults[.mediaController] == .nowPlaying
         {

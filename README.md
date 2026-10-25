@@ -1,12 +1,12 @@
 <h1 align="center">
   <br>
-  <img src="docs/images/icon.png" alt="The BoringCoucouify" width="140">
+  <img src="docs/images/icon.png" alt="Tuckr" width="140">
   <br>
-  The BoringCoucouify
+  Tuckr
   <br>
 </h1>
 
-<p align="center"><b>Your Mac's notch, doing everything: music, agents, dictation and meetings.</b></p>
+<p align="center"><b>Everything you reach for, tucked into your Mac's notch: music, agents, messages, dictation and more.</b></p>
 
 <p align="center">
   <img src="https://img.shields.io/badge/macOS-26%2B-000000?logo=apple&logoColor=white" alt="macOS 26+">
@@ -19,9 +19,9 @@
   <img src="docs/images/hero.png" alt="The notch showing an agent card with Mochi" />
 </p>
 
-One menu-bar-free app that lives in the notch and brings three open-source projects together: [Boring Notch](https://github.com/TheBoredTeam/boring.notch) for music, calendar and a file shelf, [Coucou](https://github.com/Louis-CFM/coucou) for coding agents and a call recorder, and [Talkify](https://github.com/tornikegomareli/Talkify) for hold-Fn dictation. Four tabs at the top switch between them. When the notch is closed, music shows on the left and the agent's Mochi on the right; hover the left half to open Home, the right half to open Agents.
+One menu-bar-free app that lives in the notch and brings three open-source projects together: [Boring Notch](https://github.com/TheBoredTeam/boring.notch) for music, calendar and a file shelf, [Coucou](https://github.com/Louis-CFM/coucou) for coding agents and a call recorder, and [Talkify](https://github.com/tornikegomareli/Talkify) for hold-Fn dictation. Four tabs at the top switch between them. When the notch is closed, music shows on the left and the agent's Mochi on the right; point at the middle for Home, at a side to open what is going on there.
 
-> **Status: personal build.** It runs daily on one Mac. There are no releases, no notarized downloads and no updates yet; you build it yourself (below). Expect rough edges, and see [Licensing](#licensing) before sharing it.
+> **Status: personal build.** It runs daily on one Mac. Releases are unsigned DMGs (no Apple notarization): open the first time with right-click → Open. Updates arrive through Sparkle once the repository is public. See [Licensing](#licensing) before sharing it.
 
 ## What's in it
 
@@ -44,7 +44,7 @@ One menu-bar-free app that lives in the notch and brings three open-source proje
 ## How it works
 
 <p align="center">
-  <img src="docs/images/how-it-works.svg" alt="How The BoringCoucouify works" />
+  <img src="docs/images/how-it-works.svg" alt="How Tuckr works" />
 </p>
 
 Coucou's hook relay (`nb-hook`) sends each agent event to a local unix socket the app listens on, which is what drives the Agents tab. Speech to text runs on device (Parakeet for meetings and Talkify's own engine for dictation), so audio does not leave the Mac.
@@ -54,12 +54,12 @@ Coucou's hook relay (`nb-hook`) sends each agent event to a local unix socket th
 You need macOS 26 or later, Xcode, and the Metal Toolchain (`xcodebuild -downloadComponent MetalToolchain`).
 
 ```bash
-git clone https://github.com/serjdmitri/TheBoringCoucouify.git
-cd TheBoringCoucouify
+git clone https://github.com/serjdmitri/Tuckr.git
+cd Tuckr
 scripts/install.sh              # Release build, sign, copy to /Applications, launch
 ```
 
-That produces `/Applications/The BoringCoucouify.app`. Use `scripts/install.sh --no-launch` to install without starting it. Speech models (about 650 MB) download the first time you use Meetings or Dictation.
+That produces `/Applications/Tuckr.app`. Use `scripts/install.sh --no-launch` to install without starting it. Speech models (about 650 MB) download the first time you use Meetings or Dictation.
 
 ### Sign it once, so permissions stick
 
@@ -101,8 +101,10 @@ For contributors: the Xcode project lists files explicitly, so a new file is add
 
 ## Credits
 
-Built on the work of the three projects above: **Boring Notch** by the Boring.Notch team (base app, GPL-3.0), **Coucou** by Louis-CFM (agents, Mochi and the call recorder, MIT), and **Talkify** by Tornike Gomareli (dictation, MIT).
+Tuckr is made from three open-source projects, **Boring Notch** (The Boring Team, GPL-3.0), **Coucou** (Louis Raillé, MIT) and **Talkify** (Tornike Gomareli, MIT), and uses many libraries and a few online services. Everyone and everything is listed, with licences, in [CREDITS.md](CREDITS.md).
 
 ## Licensing
 
-The combined app is GPL-3.0 because Boring Notch is (see [LICENSE](LICENSE)); the other licenses are in [licenses/](licenses). Not everything is free to redistribute: Coucou's name, the Mochi character and its sounds are not MIT ([details](licenses/Coucou/LICENSE-ASSETS.md)), Talkify's Pop sounds are CC-BY-NC, and one Siri-style image in Talkify has no license. That is fine for personal use and has to be sorted out before any public release.
+Tuckr is **GPL-3.0** (see [LICENSE](LICENSE)), because Boring Notch is. In plain words: you may use, change and share it, as long as what you share is also GPL-3.0 and comes with its source.
+
+Not everything in the repository is free to redistribute: the names "Coucou" and "Mochi", the Mochi character, its sounds and icon belong to their author ([details](licenses/Coucou/LICENSE-ASSETS.md)), and one of Talkify's sound effects ("Plunger pop", CC-BY-NC) may only be used non-commercially. The Siri-style dictation orb uses images with no licence. All of that is fine for personal use and has to be sorted out before any wider release.

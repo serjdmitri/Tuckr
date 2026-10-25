@@ -91,6 +91,7 @@ final class NotificationFeed: ObservableObject {
             MainActor.assumeIsolated {
                 NotificationFeed.shared.refresh()
                 if NotificationFeed.shared.watchers.isEmpty { NotificationFeed.shared.watch() }
+                BannerWatcher.shared.retry()
             }
         }
     }

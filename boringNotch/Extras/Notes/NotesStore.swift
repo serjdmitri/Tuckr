@@ -346,7 +346,7 @@ final class NotesStore: ObservableObject {
     private func backUpOriginal(_ note: NoteItem) {
         guard !note.isLocalOnly, !note.html.isEmpty, backedUp.insert(note.id).inserted else { return }
         let folder = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-            .appendingPathComponent("The BoringCoucouify/NotesBackup", isDirectory: true)
+            .appendingPathComponent("Tuckr/NotesBackup", isDirectory: true)
         try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
         let safe = note.id.components(separatedBy: CharacterSet.alphanumerics.inverted).joined(separator: "-")
         let stamp = ISO8601DateFormatter().string(from: Date()).replacingOccurrences(of: ":", with: "-")

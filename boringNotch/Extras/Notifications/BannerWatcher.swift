@@ -33,6 +33,9 @@ final class BannerWatcher {
         }
     }
 
+    /// Accessibility may be given after launch: look again for the Notification Center.
+    func retry() { attach() }
+
     private func attach() {
         guard observer == nil,
               let app = NSRunningApplication.runningApplications(withBundleIdentifier: Self.bundleID).first

@@ -1,9 +1,9 @@
-// Renders The BoringCoucouify's app icon into the asset catalog.
+// Renders Tuckr's app icon into the asset catalog.
 //
 //   swiftc -O scripts/make-icon.swift -o /tmp/make-icon && /tmp/make-icon boringNotch/Assets.xcassets/AppIcon.appiconset
 //
-// A dark macOS icon with a warm glow, and a notch hanging from the top edge
-// that carries three dots: dictation, call notes and agents.
+// A dark macOS icon: the notch hangs from the top edge and throws a spotlight onto a small
+// purple tile with a winking face, standing on a pink-violet glow.
 import AppKit
 import CoreGraphics
 
@@ -40,37 +40,83 @@ func render(pixels: Int) -> Data {
   ctx.addPath(bodyPath)
   ctx.clip()
 
-  let base = CGGradient(
-    colorsSpace: space, colors: [color(0x20232D), color(0x090A0E)] as CFArray, locations: [0, 1])!
-  ctx.drawLinearGradient(
-    base, start: CGPoint(x: 512, y: 924), end: CGPoint(x: 512, y: 100), options: [])
-
-  func glow(_ center: CGPoint, _ radius: CGFloat, _ stops: [(UInt32, CGFloat)]) {
-    let g = CGGradient(
+  func gradient(_ stops: [(UInt32, CGFloat)]) -> CGGradient {
+    CGGradient(
       colorsSpace: space, colors: stops.map { color($0.0, $0.1) } as CFArray,
       locations: stops.indices.map { CGFloat($0) / CGFloat(stops.count - 1) })!
-    ctx.drawRadialGradient(
-      g, startCenter: center, startRadius: 0, endCenter: center, endRadius: radius, options: [])
   }
-  glow(CGPoint(x: 470, y: 250), 560, [(0xFB923C, 0.95), (0xF0603A, 0.55), (0x8B5CF6, 0.28), (0x8B5CF6, 0)])
-  glow(CGPoint(x: 800, y: 560), 380, [(0x3B9EFF, 0.40), (0x3B9EFF, 0)])
 
-  // Two translucent cards, the shape of the Agents tab.
-  for x in [176.0, 530.0] {
-    let card = CGPath(
-      roundedRect: CGRect(x: x, y: 238, width: 318, height: 214), cornerWidth: 56, cornerHeight: 56,
-      transform: nil)
-    ctx.addPath(card)
-    ctx.setFillColor(color(0x000000, 0.34))
-    ctx.fillPath()
-    ctx.addPath(card)
-    ctx.setStrokeColor(color(0xFFFFFF, 0.14))
-    ctx.setLineWidth(5)
-    ctx.strokePath()
-  }
+  ctx.drawLinearGradient(
+    gradient([(0x232842, 1), (0x0A0B12, 1)]),
+    start: CGPoint(x: 512, y: 924), end: CGPoint(x: 512, y: 100), options: [])
+
+  // The glow on the floor.
+  ctx.saveGState()
+  ctx.translateBy(x: 512, y: 215)
+  ctx.scaleBy(x: 1, y: 0.42)
+  ctx.drawRadialGradient(
+    gradient([(0xFF7ACD, 0.95), (0xB55BFF, 0.65), (0x6E47FF, 0.0)]),
+    startCenter: .zero, startRadius: 0, endCenter: .zero, endRadius: 470, options: [])
+  ctx.restoreGState()
+
+  // The spotlight from the notch.
+  let cone = CGMutablePath()
+  cone.move(to: CGPoint(x: 512 - 150, y: 780))
+  cone.addLine(to: CGPoint(x: 512 + 150, y: 780))
+  cone.addLine(to: CGPoint(x: 512 + 390, y: 215))
+  cone.addLine(to: CGPoint(x: 512 - 390, y: 215))
+  cone.closeSubpath()
+  ctx.saveGState()
+  ctx.addPath(cone)
+  ctx.clip()
+  ctx.drawLinearGradient(
+    gradient([(0xFFF3E6, 0.62), (0xFFD9F0, 0.20), (0xFFFFFF, 0.0)]),
+    start: CGPoint(x: 512, y: 780), end: CGPoint(x: 512, y: 215), options: [])
+  ctx.restoreGState()
+
+  // The tile, with a winking face.
+  let tile = CGRect(x: 512 - 128, y: 290, width: 256, height: 256)
+  let tilePath = CGPath(roundedRect: tile, cornerWidth: 66, cornerHeight: 66, transform: nil)
+  ctx.saveGState()
+  ctx.setShadow(offset: CGSize(width: 0, height: -18), blur: 30, color: color(0x1A0B4A, 0.65))
+  ctx.addPath(tilePath)
+  ctx.setFillColor(color(0x6A47F0))
+  ctx.fillPath()
+  ctx.restoreGState()
+  ctx.saveGState()
+  ctx.addPath(tilePath)
+  ctx.clip()
+  ctx.drawLinearGradient(
+    gradient([(0x9B73FF, 1), (0x5636D8, 1)]),
+    start: CGPoint(x: 512, y: tile.maxY), end: CGPoint(x: 512, y: tile.minY), options: [])
+  ctx.restoreGState()
+  ctx.addPath(tilePath)
+  ctx.setStrokeColor(color(0xFFFFFF, 0.25))
+  ctx.setLineWidth(3)
+  ctx.strokePath()
+
+  ctx.setFillColor(color(0xFFFFFF))
+  ctx.fillEllipse(in: CGRect(x: 512 - 52 - 17, y: 438 - 17, width: 34, height: 34))
+  ctx.setStrokeColor(color(0xFFFFFF))
+  ctx.setLineWidth(13)
+  ctx.setLineCap(.round)
+  ctx.addArc(center: CGPoint(x: 512 + 52, y: 432), radius: 22, startAngle: .pi * 0.12, endAngle: .pi * 0.88, clockwise: false)
+  ctx.strokePath()
+  let mouth = CGMutablePath()
+  mouth.addArc(center: CGPoint(x: 512, y: 392), radius: 62, startAngle: .pi, endAngle: 2 * .pi, clockwise: false)
+  mouth.closeSubpath()
+  ctx.addPath(mouth)
+  ctx.setFillColor(color(0xFFFFFF))
+  ctx.fillPath()
+  ctx.saveGState()
+  ctx.addPath(mouth)
+  ctx.clip()
+  ctx.setFillColor(color(0xFF6F9D))
+  ctx.fillEllipse(in: CGRect(x: 512 - 34, y: 392 - 80, width: 68, height: 56))
+  ctx.restoreGState()
 
   // The notch, hanging from the top edge.
-  let notchW: CGFloat = 400, notchH: CGFloat = 170, radius: CGFloat = 80
+  let notchW: CGFloat = 330, notchH: CGFloat = 150, radius: CGFloat = 72
   let left = 512 - notchW / 2, top: CGFloat = 924, bottom = top - notchH
   let notch = CGMutablePath()
   notch.move(to: CGPoint(x: left, y: top + 2))
@@ -87,16 +133,6 @@ func render(pixels: Int) -> Data {
   ctx.addPath(notch)
   ctx.setFillColor(color(0x000000))
   ctx.fillPath()
-
-  // The three dots in the notch.
-  let dots: [(CGFloat, UInt32)] = [(412, 0x3B9EFF), (512, 0x34D399), (612, 0xFB923C)]
-  for (x, hex) in dots {
-    let rect = CGRect(x: x - 27, y: bottom + notchH / 2 - 27 - 6, width: 54, height: 54)
-    ctx.setFillColor(color(hex))
-    ctx.fillEllipse(in: rect)
-    ctx.setFillColor(color(0xFFFFFF, 0.35))
-    ctx.fillEllipse(in: CGRect(x: rect.minX + 12, y: rect.maxY - 22, width: 16, height: 10))
-  }
   ctx.restoreGState()
 
   // A faint rim light on the body edge.

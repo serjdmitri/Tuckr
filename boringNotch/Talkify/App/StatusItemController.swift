@@ -1,4 +1,5 @@
 import AppKit
+import Defaults
 
 /// A menu entry the host app adds to Talkify's status menu, so the two apps
 /// share one menu-bar icon.
@@ -20,6 +21,7 @@ final class StatusItemController: NSObject {
   private let hostRestart: HostMenuItem
   private let dictationItem: NSMenuItem
   private let readAloudItem: NSMenuItem
+  private let replaceBannersItem = NSMenuItem(title: "Replace macOS Banners", action: nil, keyEquivalent: "")
   private var blinkTimer: Timer?
   private var blinkDimmed = false
   private let templateIcon = NSImage(named: "MenuBarIcon")
@@ -54,7 +56,7 @@ final class StatusItemController: NSObject {
     super.init()
 
     statusItem.button?.image = templateIcon
-    statusItem.button?.image?.accessibilityDescription = "The BoringCoucouify"
+    statusItem.button?.image?.accessibilityDescription = "Tuckr"
 
     let menu = NSMenu()
 
@@ -73,6 +75,14 @@ final class StatusItemController: NSObject {
     )
     transcribeItem.target = self
     menu.addItem(transcribeItem)
+    menu.addItem(.separator())
+
+    // A quick switch for the notch's message popups in place of macOS's own banners.
+    replaceBannersItem.action = #selector(toggleReplaceBanners)
+    replaceBannersItem.target = self
+    replaceBannersItem.state = Defaults[.notificationReplaceBanners] ? .on : .off
+    menu.addItem(replaceBannersItem)
+    menu.delegate = self
     menu.addItem(.separator())
 
     menu.addItem(hostMenuItem(hostSettings))
@@ -260,6 +270,11 @@ final class StatusItemController: NSObject {
     toggleReadAloud()
   }
 
+  @objc private func toggleReplaceBanners() {
+    Defaults[.notificationReplaceBanners].toggle()
+    replaceBannersItem.state = Defaults[.notificationReplaceBanners] ? .on : .off
+  }
+
   @objc private func transcribeFileItem() {
     transcribeFile()
   }
@@ -281,5 +296,12 @@ final class StatusItemController: NSObject {
 
   @objc private func openSettingsItem() {
     openSettings()
+  }
+}
+
+extension StatusItemController: NSMenuDelegate {
+  /// The switch can also be changed in Settings: show what it is now.
+  func menuNeedsUpdate(_ menu: NSMenu) {
+    replaceBannersItem.state = Defaults[.notificationReplaceBanners] ? .on : .off
   }
 }
