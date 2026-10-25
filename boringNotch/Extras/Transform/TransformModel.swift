@@ -136,9 +136,11 @@ final class TransformModel: ObservableObject {
         Task { @MainActor in
             let result = await TransformEngine.run(action, on: urls, settings: settings)
             phase = .done(result)
-            ShelfPanelFocus.shared.hold(.transform, seconds: 6)
+            // A job that did nothing only needs a glance; one that made files stays a little longer.
+            let worked = !result.outputs.isEmpty
+            ShelfPanelFocus.shared.hold(.transform, seconds: worked ? 6 : 2.5)
             clearTask = Task { @MainActor in
-                try? await Task.sleep(for: .seconds(8))
+                try? await Task.sleep(for: .seconds(worked ? 8 : 3))
                 guard !Task.isCancelled else { return }
                 phase = .idle
             }

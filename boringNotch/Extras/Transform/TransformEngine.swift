@@ -238,11 +238,20 @@ enum TransformEngine {
             if type != .jpeg, type != .heic, type != .png { type = .jpeg }
             if type == .jpeg { image = flatten(image) }
             let out = outputURL(for: url, suffix: action.suffix, ext: fileExtension(type, source: url, sourceType: sourceType), settings: settings)
-            try write(image, props: props, type: type, quality: settings.quality, to: out)
-            // A re-save that came out no smaller is not a compression: keep only the original.
+            // The chosen quality is where it starts. A file that was already saved more tightly
+            // than that would grow, so the quality steps down until the file really is smaller.
+            let original = fileSize(url)
+            var quality = settings.quality
+            try write(image, props: props, type: type, quality: quality, to: out)
+            if type == .jpeg || type == .heic {
+                while Double(fileSize(out)) > Double(original) * 0.9, quality > 0.25 {
+                    quality -= 0.1
+                    try write(image, props: props, type: type, quality: quality, to: out)
+                }
+            }
             // PNG is lossless, so quality does nothing: it has to shrink noticeably to count.
             let saved = type == .png ? 0.95 : 1.0
-            if Double(fileSize(out)) >= Double(fileSize(url)) * saved {
+            if Double(fileSize(out)) >= Double(original) * saved {
                 try? FileManager.default.removeItem(at: out)
                 throw TransformError.noChange(type == .png ? "PNG is already compressed: use Convert" : "Already as small as it gets")
             }

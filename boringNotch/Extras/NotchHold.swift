@@ -22,6 +22,8 @@ enum NotchHold {
     /// A drop reached one of the panels since the drag began; if none did by the time the
     /// button is let go, `releasedWithoutDrop` takes the file instead.
     static var dropHandled = false
+    /// The held file is one of the Shelf's own, on its way out: the release is not ours to take.
+    static var ownDrag = false
     /// Last place the held file was seen, and what to do with it when no drop arrived.
     static var lastDragPoint = NSPoint.zero
     static var releasedWithoutDrop: @MainActor (NSPoint) -> Void = { _ in }
@@ -31,6 +33,7 @@ enum NotchHold {
         guard !dragActive else { return }
         dragActive = true
         dropHandled = false
+        ownDrag = false
         if moveMonitor == nil {
             moveMonitor = NSEvent.addGlobalMonitorForEvents(matching: .leftMouseDragged) { _ in
                 MainActor.assumeIsolated { lastDragPoint = NSEvent.mouseLocation }
@@ -71,7 +74,7 @@ enum NotchHold {
         let point = lastDragPoint
         Task { @MainActor in
             try? await Task.sleep(for: .milliseconds(150))
-            if !dropHandled { releasedWithoutDrop(point) }
+            if !dropHandled, !ownDrag { releasedWithoutDrop(point) }
         }
         // A drop is handled first (its result shows), then the notch goes if nobody is on it.
         Task { @MainActor in

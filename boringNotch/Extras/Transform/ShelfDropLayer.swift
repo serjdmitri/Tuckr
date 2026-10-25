@@ -100,6 +100,7 @@ struct ShelfDropLayer: NSViewRepresentable {
         @MainActor private func followHeldFile() {
             if NotchHold.dragActive, NSEvent.pressedMouseButtons & 1 != 0 {
                 idleTicks = 0
+                if ShelfSelectionModel.shared.isDragging { NotchHold.ownDrag = true }
                 let (panel, tile) = locate(screen: NSEvent.mouseLocation)
                 show(panel: panel, tile: tile)
             } else if current != nil || TransformModel.shared.hoverTile != nil {
@@ -111,9 +112,9 @@ struct ShelfDropLayer: NSViewRepresentable {
 
         /// The layer that is on screen now, for a release the panels never heard about.
         nonisolated(unsafe) static weak var visible: DropView?
-        /// Where a file was let go (screen coordinates): the panel under it takes it, or, with
-        /// the shelf not showing, the notch's own area does.
-        @MainActor static func handleRelease(at screen: NSPoint, vm: BoringViewModel?) {
+        /// Where a file was let go (screen coordinates): the panel under it takes it. Anywhere else
+        /// the file is none of the notch's business (it may be one of the Shelf's own, on its way out).
+        @MainActor static func handleRelease(at screen: NSPoint) {
             let urls = (NSPasteboard(name: .drag).readObjects(
                 forClasses: [NSURL.self], options: [.urlReadingFileURLsOnly: true]) as? [URL]) ?? []
             guard !urls.isEmpty else { return }
@@ -121,9 +122,6 @@ struct ShelfDropLayer: NSViewRepresentable {
                 let (panel, tile) = view.locate(screen: screen)
                 if let panel { view.apply(panel: panel, tile: tile, urls: urls); return }
             }
-            guard let vm, vm.notchState == .open else { return }
-            vm.dropEvent = true
-            ShelfStateViewModel.shared.load(urls.map { NSItemProvider(object: $0 as NSURL) })
         }
 
         /// Out of the way of clicks; in the way only while a file is being dragged.

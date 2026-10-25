@@ -261,7 +261,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             Task { @MainActor in
                 NotchHold.closingAfterRelease = closeNotch
                 NotchHold.releasedWithoutDrop = { point in
-                    ShelfDropLayer.DropView.handleRelease(at: point, vm: Defaults[.showOnAllDisplays] ? self.viewModels[uuid] : self.vm)
+                    ShelfDropLayer.DropView.handleRelease(at: point)
                 }
                 NotchHold.dragBegan()
             }
