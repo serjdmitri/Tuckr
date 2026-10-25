@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tuckr: everything you reach for, tucked into your Mac's notch</title>
+<meta name="description" content="Tuckr turns the Mac notch into a small control center: music, calendar, AI coding agents, messages, calls, dictation and file tools. Free, open source, no telemetry.">
+<meta name="theme-color" content="#0a0913">
+<link rel="icon" type="image/png" href="images/icon.png">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Tuckr: everything you reach for, tucked into your Mac's notch">
+<meta property="og:description" content="Music, calendar, AI coding agents, messages, calls, dictation and file tools in the notch. Free, open source, no telemetry.">
+<meta property="og:image" content="https://serjdmitri.github.io/Tuckr/images/og.png">
+<meta property="og:url" content="https://serjdmitri.github.io/Tuckr/">
+<meta name="twitter:card" content="summary_large_image">
+<style>
+  :root {
+    --bg: #0a0913;
+    --bg2: #100e1c;
+    --card: #14122200;
+    --line: rgba(255,255,255,.09);
+    --text: #f4f2fb;
+    --muted: #a9a4c2;
+    --accent: #7b5cff;
+    --accent2: #ff8a4c;
+    --pink: #ff6fae;
+    --ok: #37d67a;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", "Segoe UI", system-ui, sans-serif;
+    line-height: 1.55; -webkit-font-smoothing: antialiased;
+  }
+  a { color: inherit; }
+  .glow {
+    position: absolute; inset: 0 0 auto 0; height: 760px; z-index: -1; pointer-events: none;
+    background:
+      radial-gradient(60% 70% at 12% 0%, rgba(123,92,255,.42), transparent 70%),
+      radial-gradient(55% 60% at 92% 12%, rgba(255,138,76,.26), transparent 70%);
+  }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
+  nav { display: flex; align-items: center; justify-content: space-between; padding: 20px 0; }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 20px; text-decoration: none; }
+  .brand img { width: 34px; height: 34px; border-radius: 9px; }
+  nav ul { display: flex; gap: 26px; list-style: none; margin: 0; padding: 0; font-size: 15px; color: var(--muted); }
+  nav ul a { text-decoration: none; transition: color .15s; }
+  nav ul a:hover { color: var(--text); }
+  @media (max-width: 700px) { nav ul li:not(:last-child) { display: none; } }
+
+  .hero { text-align: center; padding: 56px 0 24px; }
+  .hero h1 {
+    font-size: clamp(38px, 6.2vw, 68px); line-height: 1.04; letter-spacing: -.03em; margin: 0 auto 20px; max-width: 880px; font-weight: 800;
+  }
+  .hero h1 span { background: linear-gradient(90deg, #a590ff, #ff8a4c); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .hero p.lead { font-size: clamp(17px, 2.1vw, 21px); color: var(--muted); max-width: 680px; margin: 0 auto 30px; }
+  .cta { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 9px; padding: 14px 24px; border-radius: 14px;
+    font-weight: 650; font-size: 16px; text-decoration: none; border: 1px solid var(--line); transition: transform .15s, background .15s;
+  }
+  .btn:hover { transform: translateY(-1px); }
+  .btn.primary { background: linear-gradient(135deg, #7b5cff, #9b6bff); border-color: transparent; box-shadow: 0 10px 34px rgba(123,92,255,.4); }
+  .btn.ghost { background: rgba(255,255,255,.04); }
+  .btn.ghost:hover { background: rgba(255,255,255,.08); }
+  .fine { margin-top: 16px; font-size: 14px; color: var(--muted); }
+
+  .showcase { margin: 46px auto 0; max-width: 940px; padding: 10px; border-radius: 26px; border: 1px solid var(--line);
+    background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.015)); box-shadow: 0 40px 120px rgba(80,50,200,.28); }
+  .showcase img { display: block; width: 100%; height: auto; border-radius: 18px; }
+
+  section { padding: 84px 0 0; }
+  h2 { font-size: clamp(28px, 4vw, 42px); letter-spacing: -.02em; line-height: 1.12; margin: 0 0 12px; text-align: center; font-weight: 780; }
+  .sub { color: var(--muted); text-align: center; max-width: 640px; margin: 0 auto 38px; font-size: 18px; }
+
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  @media (max-width: 900px) { .grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 600px) { .grid { grid-template-columns: 1fr; } }
+  .card { padding: 24px; border-radius: 20px; border: 1px solid var(--line); background: linear-gradient(180deg, rgba(255,255,255,.045), rgba(255,255,255,.012)); }
+  .card .ico { width: 42px; height: 42px; border-radius: 12px; display: grid; place-items: center; font-size: 21px; margin-bottom: 14px; }
+  .card h3 { margin: 0 0 6px; font-size: 18px; letter-spacing: -.01em; }
+  .card p { margin: 0; color: var(--muted); font-size: 15px; }
+  .i1 { background: linear-gradient(135deg,#ff5f8f,#ff8a4c); } .i2 { background: linear-gradient(135deg,#7b5cff,#b36bff); }
+  .i3 { background: linear-gradient(135deg,#2a8cff,#35d3c8); } .i4 { background: linear-gradient(135deg,#2fd27a,#9be34a); }
+  .i5 { background: linear-gradient(135deg,#ff9a3c,#ffd23c); } .i6 { background: linear-gradient(135deg,#ff4d5e,#ff8a8a); }
+  .i7 { background: linear-gradient(135deg,#6a7bff,#40c4ff); } .i8 { background: linear-gradient(135deg,#a0a6b8,#d6d9e4); }
+  .i9 { background: linear-gradient(135deg,#ff6fae,#ffa06f); }
+
+  .tabs { margin: 0 auto; max-width: 940px; }
+  .tabs img { width: 100%; height: auto; border-radius: 20px; border: 1px solid var(--line); display: block; }
+
+  .two { display: grid; grid-template-columns: 1.1fr 1fr; gap: 28px; align-items: start; }
+  @media (max-width: 800px) { .two { grid-template-columns: 1fr; } }
+  .panel { padding: 28px; border-radius: 22px; border: 1px solid var(--line); background: linear-gradient(180deg, rgba(255,255,255,.045), rgba(255,255,255,.012)); }
+  .panel h3 { margin: 0 0 12px; font-size: 22px; letter-spacing: -.01em; }
+  .ticks { list-style: none; padding: 0; margin: 0; }
+  .ticks li { position: relative; padding-left: 28px; margin: 11px 0; color: #d8d4ea; }
+  .ticks li::before { content: ""; position: absolute; left: 0; top: .45em; width: 16px; height: 16px; border-radius: 50%;
+    background: var(--ok) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path d='M4 8.4l2.6 2.6L12 5.6' fill='none' stroke='%230a0913' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/></svg>") center/16px no-repeat; }
+  ol.steps { padding-left: 0; list-style: none; counter-reset: s; margin: 0; }
+  ol.steps li { counter-increment: s; position: relative; padding: 0 0 18px 46px; color: #d8d4ea; }
+  ol.steps li::before { content: counter(s); position: absolute; left: 0; top: -2px; width: 32px; height: 32px; border-radius: 50%;
+    background: rgba(123,92,255,.22); border: 1px solid rgba(123,92,255,.6); display: grid; place-items: center; font-weight: 700; font-size: 15px; }
+  code { background: rgba(255,255,255,.08); padding: 2px 7px; border-radius: 7px; font-size: .92em; }
+
+  details { border: 1px solid var(--line); border-radius: 16px; padding: 18px 22px; margin: 10px 0; background: rgba(255,255,255,.025); }
+  summary { cursor: pointer; font-weight: 650; font-size: 17px; list-style: none; display: flex; justify-content: space-between; gap: 14px; }
+  summary::-webkit-details-marker { display: none; }
+  summary::after { content: "+"; color: var(--muted); font-size: 22px; line-height: 1; }
+  details[open] summary::after { content: "−"; }
+  details p { color: var(--muted); margin: 12px 0 0; }
+  .faq { max-width: 760px; margin: 0 auto; }
+
+  .final { text-align: center; padding: 70px 24px; margin-top: 90px; border-radius: 30px; border: 1px solid var(--line);
+    background: radial-gradient(70% 120% at 50% 0%, rgba(123,92,255,.28), transparent 70%), rgba(255,255,255,.02); }
+  .final h2 { margin-bottom: 10px; }
+  footer { padding: 54px 0 60px; color: var(--muted); font-size: 14px; text-align: center; }
+  footer .links { display: flex; flex-wrap: wrap; gap: 8px 22px; justify-content: center; margin-bottom: 14px; }
+  footer a { text-decoration: none; } footer a:hover { color: var(--text); text-decoration: underline; }
+  footer p { max-width: 720px; margin: 8px auto; }
+</style>
+</head>
+<body>
+<div class="glow"></div>
+<div class="wrap">
+  <nav>
+    <a class="brand" href="#"><img src="images/icon.png" alt="">Tuckr</a>
+    <ul>
+      <li><a href="#features">Features</a></li>
+      <li><a href="#privacy">Privacy</a></li>
+      <li><a href="#install">Install</a></li>
+      <li><a href="#faq">FAQ</a></li>
+      <li><a href="https://github.com/serjdmitri/Tuckr">GitHub</a></li>
+    </ul>
+  </nav>
+
+  <header class="hero">
+    <h1>Everything you reach for, <span>tucked into your notch.</span></h1>
+    <p class="lead">Tuckr turns the space your Mac was wasting into a small control center: your music and day, your AI coding agents, the message that just arrived, a file you want to share or shrink. Point at it and it opens. Move away and it's gone.</p>
+    <div class="cta">
+      <a class="btn primary" id="download" href="https://github.com/serjdmitri/Tuckr/releases/latest">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0l-5-5m5 5l5-5M5 21h14"/></svg>
+        <span id="download-label">Download for Mac</span>
+      </a>
+      <a class="btn ghost" href="https://github.com/serjdmitri/Tuckr">
+        <svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.6 7.6 0 0 1 4 0c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+        View on GitHub
+      </a>
+    </div>
+    <p class="fine">macOS 26 or later · Apple silicon · Free and open source (GPL-3.0) · No telemetry</p>
+
+    <div class="showcase">
+      <img src="images/showcase.gif" alt="Tuckr in action: Home, the month calendar, the Shelf, coding agents with Mochi, permission requests, chat, meetings and message popups" width="800" height="360">
+    </div>
+  </header>
+
+  <section id="features">
+    <h2>One notch. A lot of useful.</h2>
+    <p class="sub">Everything lives in four tabs and a few popups, and gets out of the way when you don't need it.</p>
+    <div class="grid">
+      <div class="card"><div class="ico i1">🎵</div><h3>Home</h3><p>What's playing with controls, your calendar (tap the month to see the whole month, with a mark under each busy day) and the weather.</p></div>
+      <div class="card"><div class="ico i3">📥</div><h3>Shelf and Transform</h3><p>Drag a file at the notch to AirDrop it, keep it, transcribe it, or <b>Transform</b> it: resize, compress, convert, rotate, cut out the background, strip metadata, make a PDF, zip.</p></div>
+      <div class="card"><div class="ico i2">✨</div><h3>Coding agents</h3><p>Claude Code, Codex, Gemini CLI, Cursor and more, live. Approve or deny permission requests and answer questions from the notch. Mochi reacts to what happens.</p></div>
+      <div class="card"><div class="ico i4">💬</div><h3>Messages and calls</h3><p>Popups for Messages, WhatsApp, Telegram, Slack and Mail with quick reply and voice playback. Answer or decline FaceTime, phone and WhatsApp calls.</p></div>
+      <div class="card"><div class="ico i6">🎙️</div><h3>Dictation and transcription</h3><p>Hold a key, talk, and the words appear where you're typing. Drop an audio or video file to transcribe it, in Russian and 24 other languages.</p></div>
+      <div class="card"><div class="ico i7">📞</div><h3>Meetings</h3><p>One press records your mic and what your Mac plays, transcribes it on your Mac and writes the summary and to-dos, with no bot in the call.</p></div>
+      <div class="card"><div class="ico i5">⏱️</div><h3>Timer, Notes, Teleprompter</h3><p>A timer that follows you, your Apple Notes, and a teleprompter you can scroll while it runs.</p></div>
+      <div class="card"><div class="ico i9">🎧</div><h3>Live popups</h3><p>AirPods and their battery, finished downloads, AirDrop received, Focus on or off, your next event: each drops from the notch for a moment.</p></div>
+      <div class="card"><div class="ico i8">🔒</div><h3>Made to stay private</h3><p>No account, no telemetry. Messages are read on your Mac and never saved. Keys live in the macOS Keychain. Updates are signed.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>See each tab</h2>
+    <p class="sub">Home, Shelf, Agents and Meetings.</p>
+    <div class="tabs"><img src="images/tabs.png" alt="The Home, Shelf, Agents and Meetings tabs" loading="lazy"></div>
+  </section>
+
+  <section id="privacy">
+    <h2>Nothing leaves your Mac</h2>
+    <p class="sub">Tuckr reads a lot of what you see, so it is built to keep it to itself.</p>
+    <div class="two">
+      <div class="panel">
+        <h3>What it does</h3>
+        <ul class="ticks">
+          <li>Reads notifications and messages <b>on your Mac</b>, read-only, and shows them in the notch. Nothing is saved.</li>
+          <li>Transcribes speech and recorded calls with <b>on-device</b> models.</li>
+          <li>Keeps API keys in the <b>macOS Keychain</b>, this device only.</li>
+          <li>Has <b>no account and no telemetry</b>. The author gets nothing from your Mac.</li>
+          <li>Checks for updates through Sparkle, and refuses any update or update list that is not signed with the author's key.</li>
+        </ul>
+      </div>
+      <div class="panel">
+        <h3>What it asks for, and why</h3>
+        <ul class="ticks">
+          <li><b>Accessibility:</b> swap macOS's banner for the notch popup, and calls.</li>
+          <li><b>Full Disk Access:</b> read macOS's notification list.</li>
+          <li><b>Microphone, Input Monitoring:</b> dictation and call notes.</li>
+          <li><b>Calendar, Bluetooth:</b> your day and AirPods.</li>
+        </ul>
+        <p style="color:var(--muted);margin:14px 0 0;font-size:15px">A welcome screen explains each one and you can skip any.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="install">
+    <h2>Install in a minute</h2>
+    <p class="sub">Tuckr is in beta, so it is not notarized by Apple yet. The first launch needs one extra click.</p>
+    <div class="two">
+      <div class="panel">
+        <ol class="steps">
+          <li><b>Download</b> the DMG from the <a href="https://github.com/serjdmitri/Tuckr/releases/latest">latest release</a>.</li>
+          <li><b>Drag Tuckr</b> into Applications.</li>
+          <li><b>Right-click Tuckr, choose Open, then Open.</b> If macOS still refuses, run <code>xattr -dr com.apple.quarantine /Applications/Tuckr.app</code> in Terminal.</li>
+          <li><b>Follow the welcome screen.</b> After that, updates arrive by themselves.</li>
+        </ol>
+      </div>
+      <div class="panel">
+        <h3>Or build it yourself</h3>
+        <p style="color:var(--muted);margin:0 0 12px">You need macOS 26 and Xcode.</p>
+        <p style="margin:0"><code>git clone https://github.com/serjdmitri/Tuckr.git</code><br><br><code>cd Tuckr &amp;&amp; scripts/install.sh</code></p>
+      </div>
+    </div>
+  </section>
+
+  <section id="faq">
+    <h2>Questions</h2>
+    <div class="faq" style="margin-top:34px">
+      <details><summary>Is it free?</summary><p>Yes. Tuckr is free and open source under the GPL-3.0 licence. There is no account, no subscription and no ads.</p></details>
+      <details><summary>Does my Mac need a notch?</summary><p>It's made for the notch, but it also works on Macs and displays without one, as a small floating bar at the top of the screen.</p></details>
+      <details><summary>Which Macs does it run on?</summary><p>Macs with Apple silicon, on macOS 26 or later. The speech models run on the Neural Engine.</p></details>
+      <details><summary>Does it send my messages or data anywhere?</summary><p>No. Messages are read on your Mac and shown in the notch, and nothing is saved. The only network requests are the weather, the update check, lyrics if you turn them on, and any AI accounts you add yourself.</p></details>
+      <details><summary>Why does macOS warn me the first time?</summary><p>The beta is not notarized by Apple, which needs a paid developer account. Right-click the app and choose Open once; after that it launches normally and updates itself.</p></details>
+      <details><summary>Which coding agents does it support?</summary><p>Claude Code, Codex, Gemini CLI, Cursor and other tools that can call a hook. Tuckr shows their progress, and you can approve their permission requests from the notch.</p></details>
+      <details><summary>Can I change or reuse the code?</summary><p>Yes. The whole app is GPL-3.0, and the files written for Tuckr are also available under the MIT licence. Everything it is built from is credited on the <a href="https://github.com/serjdmitri/Tuckr/blob/main/CREDITS.md">credits page</a>.</p></details>
+    </div>
+  </section>
+
+  <div class="final">
+    <h2>Give the notch a job.</h2>
+    <p class="sub" style="margin-bottom:26px">Free, open source and private.</p>
+    <div class="cta">
+      <a class="btn primary" id="download2" href="https://github.com/serjdmitri/Tuckr/releases/latest"><span id="download-label2">Download for Mac</span></a>
+      <a class="btn ghost" href="https://github.com/serjdmitri/Tuckr">Star it on GitHub</a>
+    </div>
+  </div>
+
+  <footer>
+    <div class="links">
+      <a href="https://github.com/serjdmitri/Tuckr">GitHub</a>
+      <a href="https://github.com/serjdmitri/Tuckr/releases">Releases</a>
+      <a href="https://github.com/serjdmitri/Tuckr/issues">Report a bug</a>
+      <a href="https://github.com/serjdmitri/Tuckr/blob/main/CREDITS.md">Credits</a>
+      <a href="https://github.com/serjdmitri/Tuckr/blob/main/LICENSE">GPL-3.0</a>
+      <a href="https://github.com/serjdmitri/Tuckr/security/advisories/new">Security</a>
+    </div>
+    <p>Tuckr is built on <a href="https://github.com/TheBoredTeam/boring.notch">Boring Notch</a>, <a href="https://github.com/Louis-CFM/coucou">Coucou</a> and <a href="https://github.com/tornikegomareli/Talkify">Talkify</a>, and on libraries listed in the credits. Not affiliated with Apple.</p>
+    <p>Provided as it is, without any warranty. It reads notifications and messages on your own Mac to show them in the notch; nothing leaves your Mac except what the privacy section lists.</p>
+  </footer>
+</div>
+
+<script>
+  // Point the download buttons at the newest release's DMG, and say which version it is.
+  fetch("https://api.github.com/repos/serjdmitri/Tuckr/releases/latest")
+    .then(function (r) { return r.ok ? r.json() : null; })
+    .then(function (release) {
+      if (!release) return;
+      var dmg = (release.assets || []).find(function (a) { return /\.dmg$/i.test(a.name); });
+      var version = (release.tag_name || "").replace(/^v/, "");
+      ["download", "download2"].forEach(function (id) {
+        var link = document.getElementById(id);
+        if (dmg && link) link.href = dmg.browser_download_url;
+      });
+      ["download-label", "download-label2"].forEach(function (id) {
+        var label = document.getElementById(id);
+        if (label && version) label.textContent = "Download Tuckr " + version;
+      });
+    })
+    .catch(function () {});
+</script>
+</body>
+</html>
