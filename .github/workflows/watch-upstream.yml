@@ -28,6 +28,7 @@ jobs:
       - name: Open an issue for each new upstream release
         env:
           GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
           SINCE: ${{ inputs.since || '2026-10-26T00:00:00Z' }}
           DRY: ${{ inputs.dry_run }}
         run: |
