@@ -369,6 +369,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             object: nil
         )
 
+        for name in [NSWorkspace.didWakeNotification, NSWorkspace.screensDidWakeNotification] {
+            NSWorkspace.shared.notificationCenter.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
+                MainActor.assumeIsolated { self?.recoverAfterWake() }
+            }
+        }
+
         NotificationCenter.default.addObserver(
             forName: Notification.Name.selectedScreenChanged, object: nil, queue: nil
         ) { [weak self] _ in
@@ -643,6 +649,28 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             }
         }
         return false
+    }
+
+    private var wakeTask: Task<Void, Never>?
+
+    /// After a long sleep the notch window can be gone, off its screen or no longer in the notch's
+    /// space (Boring Notch #336). A moment after the Mac wakes: put every window back, and build
+    /// the ones that went missing.
+    private func recoverAfterWake() {
+        wakeTask?.cancel()
+        wakeTask = Task { @MainActor [weak self] in
+            // Displays come back a little after the wake itself.
+            try? await Task.sleep(for: .seconds(2))
+            guard let self, !Task.isCancelled else { return }
+            let existing = Array(self.windows.values) + (self.window.map { [$0] } ?? [])
+            if existing.isEmpty || existing.contains(where: { $0.screen == nil }) { self.cleanupWindows() }
+            self.adjustWindowPosition()
+            for window in Array(self.windows.values) + (self.window.map { [$0] } ?? []) {
+                NotchSpaceManager.shared.notchSpace.windows.insert(window)
+                window.orderFrontRegardless()
+            }
+            self.setupDragDetectors()
+        }
     }
 
     @objc func screenConfigurationDidChange() {

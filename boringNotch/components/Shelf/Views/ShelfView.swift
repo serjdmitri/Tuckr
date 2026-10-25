@@ -121,6 +121,27 @@ struct ShelfView: View {
                 content
                     .padding()
             }
+            .overlay(alignment: .topTrailing) {
+                // Clear all (Boring Notch #1248).
+                if !tvm.isEmpty {
+                    Button {
+                        withAnimation { tvm.removeAll() }
+                        selection.clear()
+                    } label: {
+                        HStack(spacing: 4) {
+                            Image(systemName: "trash")
+                            if !isCompact(.shelf) { Text("Clear all") }
+                        }
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(.white.opacity(0.85))
+                        .padding(.horizontal, 8).padding(.vertical, 4)
+                        .background(Capsule().fill(Color.white.opacity(0.14)))
+                    }
+                    .buttonStyle(.plain)
+                    .help("Take everything off the shelf (the files stay where they are)")
+                    .padding(8)
+                }
+            }
             .transaction { transaction in
                 transaction.animation = vm.animation
             }

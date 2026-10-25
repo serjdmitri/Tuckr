@@ -43,6 +43,12 @@ final class ShelfStateViewModel: ObservableObject {
         items = merged
     }
 
+    /// Everything on the shelf goes (the files themselves stay where they are).
+    func removeAll() {
+        items.forEach { $0.cleanupStoredData() }
+        items.removeAll()
+    }
+
     func remove(_ item: ShelfItem) {
         item.cleanupStoredData()
         items.removeAll { $0.id == item.id }

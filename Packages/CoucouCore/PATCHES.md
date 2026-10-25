@@ -76,3 +76,6 @@ app adds sits in `CoucouHost.swift` and `AgentsTabView.swift`.
     updated by Sparkle, from its own signed feed (docs/UPDATES.md).
 18. `App/ClaudeService.swift`, `Keychain`: keys saved by Tuckr 1.0.1 under the old service name are
     moved to the current one once (`migrateLegacyKeys`); `load` and `delete` can take a service.
+19. `App/ClaudeHost.swift`: sessions run in a JetBrains IDE's terminal (IntelliJ IDEA, PyCharm,
+    WebStorm… and Android Studio) are recognised from the IDE's bundle id and routed to the Claude
+    Code pill with the IDE as its host ("Open terminal" brings the IDE forward). Coucou #605.

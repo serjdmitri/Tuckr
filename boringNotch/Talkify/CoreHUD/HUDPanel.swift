@@ -29,6 +29,10 @@ final class HUDPanel: NSPanel {
     isReleasedWhenClosed = false
     collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary, .ignoresCycle]
     self.contentView = contentView
+    // Tuckr patch: the notch's own windows live in a space above everything, full-screen apps
+    // included. The dictation HUD joins it, or it stayed hidden while another app was full screen
+    // (Talkify #84).
+    NotchSpaceManager.shared.notchSpace.windows.insert(self)
   }
 
   /// Whether the shape currently receives the mouse. Kept as a named property
